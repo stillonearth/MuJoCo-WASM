@@ -1,2 +1,2 @@
 # MuJoCo-wasm
-Emscripten builds of MuJoCo
+Emscripten builds of MuJoCo for use in WASM environments
