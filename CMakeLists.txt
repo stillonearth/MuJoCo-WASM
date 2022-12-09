@@ -1,0 +1,19 @@
+cmake_minimum_required(VERSION 3.2)
+option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/public")
+
+project(cmake-project-template)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")
+
+set(CMAKE_INSTALL_PREFIX ${PROJECT_SOURCE_DIR})
+
+set(MUJOCO_INSTALL_INCLUDE_DIR ${PROJECT_SOURCE_DIR}/include)
+set(MUJOCO_INSTALL_BIN_DIR ${PROJECT_SOURCE_DIR}/bin)
+set(MUJOCO_INSTALL_LIB_DIR ${PROJECT_SOURCE_DIR}/lib)
+
+include_directories(${MUJOCO_INSTALL_INCLUDE_DIR})
+link_directories(${MUJOCO_INSTALL_LIB_DIR})
+
+add_subdirectory(src)
