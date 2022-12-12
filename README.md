@@ -24,4 +24,4 @@ emrun mujoco_wasm.html
 
 ## Possible Usecases
 
-One can then make bindings to mj_Model and mj_Body and visualize the simulation with [Three.js](https://threejs.org/)
+One can then make bindings to `mj_Model` and `mj_Body` and visualize the simulation with [Three.js](https://threejs.org/)
