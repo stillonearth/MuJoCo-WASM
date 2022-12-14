@@ -19,21 +19,13 @@
 #include <thread>
 #include <vector>
 
+#include <emscripten/fetch.h>
+#include <emscripten/bind.h>
+
 #include "mujoco/mujoco.h"
 
-// model and per-thread data
-mjModel *m;
-mjData *d;
+using namespace emscripten;
 
-// timer
-std::chrono::system_clock::time_point tm_start;
-mjtNum gettm(void)
-{
-  std::chrono::duration<double> elapsed = std::chrono::system_clock::now() - tm_start;
-  return elapsed.count();
-}
-
-// deallocate and print message
 int finish(const char *msg = NULL, mjModel *m = NULL)
 {
   // deallocate model
@@ -51,39 +43,119 @@ int finish(const char *msg = NULL, mjModel *m = NULL)
   return 0;
 }
 
+class Model
+{
+public:
+  Model()
+  {
+    m = NULL;
+  }
+
+  static Model load_from_xml(const std::string filename)
+  {
+    Model model;
+    char error[1000] = "Could not load xml model";
+    model.m = mj_loadXML(filename.c_str(), 0, error, 1000);
+
+    if (!model.m)
+    {
+      finish(error, model.m);
+    }
+
+    return model;
+  }
+
+  mjModel *ptr()
+  {
+    return m;
+  }
+
+  mjModel val()
+  {
+    return *m;
+  }
+
+private:
+  mjModel *m;
+};
+
+class State
+{
+public:
+  State(Model m)
+  {
+    d = mj_makeData(m.ptr());
+  }
+
+  mjData *ptr()
+  {
+    return d;
+  }
+
+  mjData val()
+  {
+    return *d;
+  }
+
+private:
+  mjData *d;
+};
+
+class Simulation
+{
+public:
+  Simulation(Model *m, State *s)
+  {
+    _model = m;
+    _state = s;
+  }
+
+  State *state()
+  {
+    return _state;
+  }
+
+  Model *model()
+  {
+    return _model;
+  }
+
+  void step()
+  {
+    mj_step(_model->ptr(), _state->ptr());
+  }
+
+private:
+  Model *_model;
+  State *_state;
+};
+
 // main function
 int main(int argc, char **argv)
 {
-  int nstep = 100;
+  std::printf("MuJoCo version: %d\n\n", mj_version());
+  return 0;
+}
 
-  // load model
-  char error[1000] = "Could not load xml model";
-  m = mj_loadXML("simple.xml", 0, error, 1000);
-  if (!m)
-  {
-    return finish(error, m);
-  }
+EMSCRIPTEN_BINDINGS(mujoco_wasm)
+{
+  class_<Model>("Model")
+      .constructor<>()
+      .class_function("load_from_xml", &Model::load_from_xml)
+      .function("ptr", &Model::ptr, allow_raw_pointers())
+      .function("val", &Model::val);
 
-  d = mj_makeData(m);
-  if (!d)
-  {
-    return finish("Could not allocate mjData", m);
-  }
+  class_<State>("State")
+      .constructor<Model>()
+      .function("ptr", &State::ptr, allow_raw_pointers())
+      .function("val", &State::val);
 
-  std::printf("number of bodies: %d\n\n", m->nbody);
+  class_<Simulation>("Simulation")
+      .constructor<Model *, State *>()
+      .function("step", &Simulation::step)
+      .function("state", &Simulation::state, allow_raw_pointers())
+      .function("model", &Simulation::model, allow_raw_pointers());
 
-  // install timer callback for profiling if requested
-  tm_start = std::chrono::system_clock::now();
-
-  for (int i = 0; i < nstep; i++)
-  {
-    mj_step(m, d);
-    for (int j = 0; j < 2 /*m->nbody*/; j++)
-    {
-      std::printf("qpos: %f, %f, %f\n", d->xpos[j * 3], d->xpos[j * 3 + 1], d->xpos[j * 3 + 2]);
-    }
-  }
-
-  mj_deleteData(d);
-  return finish();
+  value_object<mjModel>("mjModel");
+  value_object<mjData>("mjData");
 }

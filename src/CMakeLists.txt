@@ -3,11 +3,10 @@ project(mujoco_wasm)
 
 set(SOURCE_FILES main.cc)
 add_compile_options(-pthread)
-set(EMCC_LINKER_FLAGS "-s ASSERTIONS=1 --preload-file ${CMAKE_CURRENT_BINARY_DIR}/../../assets/simple.xml@simple.xml --use-preload-plugins")
+set(EMCC_LINKER_FLAGS "-s ASSERTIONS=1 --bind")
 set(CMAKE_REQUIRED_FLAGS "${EMCC_LINKER_FLAGS}")
 add_executable(mujoco_wasm ${SOURCE_FILES})
 set_target_properties(mujoco_wasm PROPERTIES LINK_FLAGS "${EMCC_LINKER_FLAGS}")
-set(CMAKE_EXECUTABLE_SUFFIX ".html")
 
 target_link_libraries(mujoco_wasm ccd elasticity lodepng mujoco tinyxml2 qhullstatic_r)
 install(TARGETS mujoco_wasm DESTINATION ${DIVISIBLE_INSTALL_BIN_DIR})
