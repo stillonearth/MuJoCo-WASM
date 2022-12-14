@@ -13,12 +13,11 @@ mkdir build
 cd build
 emcmake cmake ..
 make
-
-``
+```
 
 ## Example
 
-API followins `mujoco-rust` conventions for wrapping c code to JS objects.
+API followins `mujoco-rust` conventions for wrapping C code to JS objects.
 
 ```html
 <!doctype html>
