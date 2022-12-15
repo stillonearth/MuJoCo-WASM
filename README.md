@@ -63,3 +63,4 @@ make
 | model  | Get simulation model |
 | xquat  | Get quaternion       |
 | xpos   | Get position         |
+| xmat   | Get matrix           |
