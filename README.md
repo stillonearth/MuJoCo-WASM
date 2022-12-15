@@ -15,13 +15,51 @@ emcmake cmake ..
 make
 ```
 
-**3. Run in broweser**
+## JavaScript API
 
-``bash
-cd public
-emrun mujoco_wasm.html
-``
+**Model**
 
-## Possible Usecases
+| method        | description                 |
+| ------------- | --------------------------- |
+| load_from_xml | Load model from xml string  |
+| ptr           | Get pointer to MuJoCo model |
+| val           | Get MuJoCo model value      |
+| names         | Get names of model          |
+| mesh_vertadr  | Get mesh vertex address     |
+| mesh_vertnum  | Get mesh vertex number      |
+| mesh_faceadr  | Get mesh face address       |
+| mesh_facenum  | Get mesh face number        |
+| body_parentid | Get body parent id          |
+| body_geomnum  | Get body geometry number    |
+| body_geomadr  | Get body geometry address   |
+| geom_type     | Get geometry type           |
+| geom_bodyid   | Get geometry body id        |
+| geom_group    | Get geometry group          |
+| geom_contype  | Get geometry contact type   |
+| mesh_normal   | Get mesh normal             |
+| mesh_face     | Get mesh face               |
+| mesh_vert     | Get mesh vertex             |
+| name_meshadr  | Get name mesh address       |
+| geom_pos      | Get geometry position       |
+| geom_quat     | Get geometry quaternion     |
+| geom_size     | Get geometry size           |
+| geom_rgba     | Get geometry rgba           |
+| body_pos      | Get body position           |
+| body_quat     | Get body quaternion         |
 
-One can then make bindings to `mj_Model` and `mj_Body` and visualize the simulation with [Three.js](https://threejs.org/)
+**State**
+
+| method | description                 |
+| ------ | --------------------------- |
+| ptr    | Get pointer to MuJoCo state |
+| val    | Get MuJoCo state value      |
+
+**Simulation**
+
+| method | description          |
+| ------ | -------------------- |
+| step   | Step simulation      |
+| state  | Get simulation state |
+| model  | Get simulation model |
+| xquat  | Get quaternion       |
+| xpos   | Get position         |
