@@ -27,7 +27,8 @@ import { Model, Simulation, State, downloadFile } from "mujoco-wasm";
 
 **Utility Functions**
 
-| method | description |
+| method       | description                                                               |
+| ------------ | ------------------------------------------------------------------------- |
 | downloadFile | Download file from url and store in MEMFS so that wasm module can read it |
 
 **Model**
