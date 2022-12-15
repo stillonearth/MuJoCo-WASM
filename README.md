@@ -17,6 +17,19 @@ make
 
 ## JavaScript API
 
+```bash
+npm install mujoco-wasm --save
+```
+
+```javascript
+import { Model, Simulation, State, downloadFile } from "mujoco-wasm";
+```
+
+**Utility Functions**
+
+| method | description |
+| downloadFile | Download file from url and store in MEMFS so that wasm module can read it |
+
 **Model**
 
 | method        | description                 |
@@ -63,4 +76,3 @@ make
 | model  | Get simulation model |
 | xquat  | Get quaternion       |
 | xpos   | Get position         |
-| xmat   | Get matrix           |
