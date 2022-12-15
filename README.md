@@ -19,7 +19,7 @@ make
 
 API followins `mujoco-rust` conventions for wrapping C code to JS objects. 
 
-*All pointer fields from `mjModel` and `mjState` need to be wrapped in `Vec<T>` in `State` and `Model` in order to be exported to JS.
+*All pointer fields from `mjModel` and `mjState` need to be wrapped in `Vec<T>` in `State` and `Model` in order to be exported to JS.*
 
 ```html
 <!doctype html>
