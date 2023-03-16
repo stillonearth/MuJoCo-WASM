@@ -46,7 +46,7 @@ public:
 
   mjModel *ptr() { return m; }
 
-  mjModel val() { return *m; }
+  mjModel getVal() { return *m; }
 
   std::vector<std::string> names() {
     std::vector<std::string> names;
@@ -290,19 +290,6 @@ public:
     return ret;
   }
 
-  //std::vector<val> geom_rgba() {
-  //  std::vector<val> ret;
-  //
-  //  for (int i = 0; i < m->ngeom; i++) {
-  //    //ret.push_back({m->geom_rgba[4 * i], m->geom_rgba[4 * i + 1],
-  //    //               m->geom_rgba[4 * i + 2], m->geom_rgba[4 * i + 3]});
-  //
-  //    val(typed_memory_view(4, m->geom_rgba + (4 * i)))
-  //  }
-  //
-  //  return ret;
-  //}
-
   val geom_rgba() {
     return val(typed_memory_view(m->ngeom * 4, m->geom_rgba));
   }
@@ -317,7 +304,7 @@ public:
 
   mjData *ptr() { return d; }
 
-  mjData val() { return *d; }
+  mjData getVal() { return *d; }
 
 private:
   mjData *d;
@@ -378,7 +365,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .constructor<>()
       .class_function("load_from_xml", &Model::load_from_xml)
       .function("ptr", &Model::ptr, allow_raw_pointers())
-      .function("val", &Model::val)
+      .function("getVal", &Model::getVal)
       .function("names", &Model::names)
       .function("mesh_vertadr", &Model::mesh_vertadr)
       .function("mesh_vertnum", &Model::mesh_vertnum)
@@ -405,7 +392,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
   class_<State>("State")
       .constructor<Model>()
       .function("ptr", &State::ptr, allow_raw_pointers())
-      .function("val", &State::val);
+      .function("getVal", &State::getVal);
 
   class_<Simulation>("Simulation")
       .constructor<Model *, State *>()
@@ -429,11 +416,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
 
   register_vector<std::string>("vector<string>");
   register_vector<int>("vector<int>");
-  register_vector<val>("vector<val>");
-
-  //value_array<Point2f>("Point2f")
-  //    .element(&Point2f::x)
-  //    .element(&Point2f::y);
+  //register_vector<val>("vector<val>");
 
   register_vector<std::array<float, 3>>("vector<std::array<float,3>>");
   register_vector<std::array<int, 3>>("vector<std::array<int,3>>");
