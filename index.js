@@ -1,5 +1,5 @@
 import { Buffer } from "buffer";
-import { mujoco_wasm } from "./publuc/mujoco-wasm";
+import { mujoco_wasm } from "./public/mujoco-wasm";
 
 export async function downloadFile(url, outputPath) {
     const x = await fetch(url);
