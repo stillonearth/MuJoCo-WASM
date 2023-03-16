@@ -33,23 +33,14 @@
 
                 let simulation = new Module.Simulation(model, state);
 
-                for(let i = 0; i < simulation.model().names().size(); i++){
-                    console.log(simulation.model().names().get(i));
-                }
-
-                console.log(model.geom_rgba());
-                //for(let i = 0; i < model.geom_type().size(); i++){
-                //    console.log(model.geom_type().get(i));
-                //}
-//
-                //for(let i = 0; i < model.body_quat().size(); i++){
-                //    console.log(model.body_quat().get(i));
-                //}
+                // Decode the null-terminated string
+                let textDecoder = new TextDecoder("utf-8");
+                let fullString = textDecoder.decode(model.names());
+                console.log(fullString.split(fullString[12]));
 
                 for (var i = 0; i < 100; i++) {
                     simulation.step();
-                    //console.log(simulation.xquat()[0]);
-                    console.log();
+                    console.log("body1 Height:", simulation.xpos()[5]);
                 }
             });
         }
