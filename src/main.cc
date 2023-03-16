@@ -481,7 +481,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm)
       .function("state", &Simulation::state, allow_raw_pointers())
       .function("model", &Simulation::model, allow_raw_pointers())
       .function("xquat", &Simulation::xquat)
-      .function("xquat", &Simulation::xpos);
+      .function("xpos", &Simulation::xpos);
 
   value_object<mjModel>("mjModel")
       .field("ngeom", &mjModel::ngeom)
@@ -496,6 +496,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm)
       .field("nmeshface", &mjModel::nmeshface);
 
   register_vector<std::string>("vector<string>");
+  register_vector<int>("vector<int>");
   register_vector<std::array<float, 3>>("vector<std::array<float,3>>");
   register_vector<std::array<int, 3>>("vector<std::array<int,3>>");
   register_vector<std::array<float, 4>>("vector<std::array<float,4>>");

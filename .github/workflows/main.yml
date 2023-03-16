@@ -1,0 +1,51 @@
+name: Build mujoco-wasm
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  Build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      #- uses: actions/setup-python@v4
+      #  with:
+      #    python-version: '3.10'
+
+      #- name: Install SDL2 and GLEW
+      #  if: runner.os == 'Linux'
+      #  run: |
+      #    sudo add-apt-repository -y "deb http://archive.ubuntu.com/ubuntu `lsb_release -sc` main universe restricted multiverse"
+      #    sudo apt-get update -y -qq
+      #    sudo apt-get install libsdl2-dev libglew-dev
+
+      - uses: mymindstorm/setup-emsdk@v11
+
+      - name: Verify Emscripten is Installed
+        run: emcc -v
+
+      - name: Linux - Build Base Binary
+        if: runner.os == 'Linux'
+        run: |
+          emcmake cmake ..
+          make
+
+      - name: Print Folder Structure
+        if: runner.os == 'Linux'
+        run: |
+          ls -l
+          ls -l ./build
+          ls -l ./dist
+
+      - name: Linux - Upload Build
+        uses: actions/upload-artifact@v3
+        if: runner.os == 'Linux'
+        with:
+          name: mujoco_wasm
+          path: |
+            ./README.md
+            ./dist
+            ./build

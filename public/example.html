@@ -15,6 +15,15 @@
     }
 
     var Module = {
+
+        getFloatArrayFromFunctionCall: function(func_name, size) {
+            var res_ptr = Module._malloc(size * 4);
+            Module.ccall(func_name, null, ["number"], [res_ptr]);
+            var view = Module.HEAPF32.subarray(res_ptr >> 2, (res_ptr >> 2) + size);
+            Module._free(res_ptr);
+            return view;
+        },
+
         onRuntimeInitialized: function () {
             FS.mkdir('/working');
             FS.mount(MEMFS, { root: '.' }, '/working');
@@ -24,8 +33,14 @@
 
                 let simulation = new Module.Simulation(model, state);
 
+                for(let i = 0; i < 7; i++){ //simulation.model().names().size()
+                    console.log(simulation.model().names().get(i));
+                }
+
                 for (var i = 0; i < 100; i++) {
                     simulation.step();
+                    //console.log(simulation.xquat()[0]);
+                    console.log(model.mesh_vert().get(0));
                 }
             });
         }
