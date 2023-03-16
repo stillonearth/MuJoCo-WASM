@@ -35,27 +35,29 @@ public:
   mjModel *ptr  () { return m; }
   mjModel getVal() { return *m; }
 
-  std::vector<std::string> names() {
-    std::vector<std::string> names;
-    int j = 0;
+  //std::vector<std::string> names() {
+  //  std::vector<std::string> names;
+  //  int j = 0;
 
-    for (int i = 0; i < m->nnames; i++) {
-      std::string name;
+  //  for (int i = 0; i < m->nnames; i++) {
+  //    std::string name;
 
-      while (true) {
-        char c = m->names[j];
-        j += 1;
-        if (c == 0) {
-          names.push_back(name);
-          break;
-        } else {
-          name.push_back(c);
-        }
-      }
-    }
+  //    while (true) {
+  //      char c = m->names[j];
+  //      j += 1;
+  //      if (c == 0) {
+  //        names.push_back(name);
+  //        break;
+  //      } else {
+  //        name.push_back(c);
+  //      }
+  //    }
+  //  }
 
-    return names;
-  }
+  //  return names;
+  //}
+
+  val names        () { return val(typed_memory_view(m->nnames       , m->names        )); }
 
   val mesh_vertadr () { return val(typed_memory_view(m->nmesh        , m->mesh_vertadr )); }
   val mesh_vertnum () { return val(typed_memory_view(m->nmesh        , m->mesh_vertnum )); }
