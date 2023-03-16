@@ -32,3 +32,4 @@ jobs:
           path: |
             ./README.md
             ./build
+            ./public
