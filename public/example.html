@@ -37,13 +37,14 @@
                     console.log(simulation.model().names().get(i));
                 }
 
-                for(let i = 0; i < model.geom_type().size(); i++){
-                    console.log(model.geom_type().get(i));
-                }
-
-                for(let i = 0; i < model.body_quat().size(); i++){
-                    console.log(model.body_quat().get(i));
-                }
+                console.log(model.geom_rgba());
+                //for(let i = 0; i < model.geom_type().size(); i++){
+                //    console.log(model.geom_type().get(i));
+                //}
+//
+                //for(let i = 0; i < model.body_quat().size(); i++){
+                //    console.log(model.body_quat().get(i));
+                //}
 
                 for (var i = 0; i < 100; i++) {
                     simulation.step();

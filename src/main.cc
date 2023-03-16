@@ -15,16 +15,8 @@
 using namespace emscripten;
 
 int finish(const char *msg = NULL, mjModel *m = NULL) {
-  // deallocate model
-  if (m) {
-    mj_deleteModel(m);
-  }
-
-  // print message
-  if (msg) {
-    std::printf("%s\n", msg);
-  }
-
+  if (m  ) { mj_deleteModel(m); }
+  if (msg) { std::printf("%s\n", msg); }
   return 0;
 }
 
@@ -36,16 +28,11 @@ public:
     Model model;
     char error[1000] = "Could not load xml model";
     model.m = mj_loadXML(filename.c_str(), 0, error, 1000);
-
-    if (!model.m) {
-      finish(error, model.m);
-    }
-
+    if (!model.m) { finish(error, model.m); }
     return model;
   }
 
-  mjModel *ptr() { return m; }
-
+  mjModel *ptr  () { return m; }
   mjModel getVal() { return *m; }
 
   std::vector<std::string> names() {
@@ -70,229 +57,27 @@ public:
     return names;
   }
 
-  std::vector<int> mesh_vertadr() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->nmesh; i++) {
-      int addr;
-      ret.push_back(m->mesh_vertadr[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<int> mesh_vertnum() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->nmesh; i++) {
-      int addr;
-      ret.push_back(m->mesh_vertnum[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<int> mesh_faceadr() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->nmesh; i++) {
-      int addr;
-      ret.push_back(m->mesh_faceadr[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<int> mesh_facenum() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->nmesh; i++) {
-      int addr;
-      ret.push_back(m->mesh_facenum[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<int> body_parentid() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->nbody; i++) {
-      int addr;
-      ret.push_back(m->body_parentid[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<int> body_geomnum() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->nbody; i++) {
-      int addr;
-      ret.push_back(m->body_geomnum[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<int> body_geomadr() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->nbody; i++) {
-      int addr;
-      ret.push_back(m->body_geomadr[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<int> geom_type() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->ngeom; i++) {
-      int addr;
-      ret.push_back(m->geom_type[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<int> geom_bodyid() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->ngeom; i++) {
-      int addr;
-      ret.push_back(m->geom_bodyid[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<int> geom_group() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->ngeom; i++) {
-      int addr;
-      ret.push_back(m->geom_group[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<int> geom_contype() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->ngeom; i++) {
-      int addr;
-      ret.push_back(m->geom_contype[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<std::array<float, 3>> mesh_normal() {
-    std::vector<std::array<float, 3>> ret;
-
-    for (int i = 0; i < m->nmeshvert; i++) {
-      ret.push_back({m->mesh_normal[3 * i], m->mesh_normal[3 * i + 1],
-                     m->mesh_normal[3 * i + 2]});
-    }
-
-    return ret;
-  }
-
-  std::vector<std::array<int, 3>> mesh_face() {
-    std::vector<std::array<int, 3>> ret;
-
-    for (int i = 0; i < m->nmeshface; i++) {
-      ret.push_back({m->mesh_face[3 * i], m->mesh_face[3 * i + 1],
-                     m->mesh_face[3 * i + 2]});
-    }
-
-    return ret;
-  }
-
-  std::vector<std::array<float, 3>> mesh_vert() {
-    std::vector<std::array<float, 3>> ret;
-
-    for (int i = 0; i < m->nmeshvert; i++) {
-      ret.push_back({m->mesh_vert[3 * i], m->mesh_vert[3 * i + 1],
-                     m->mesh_vert[3 * i + 2]});
-    }
-
-    return ret;
-  }
-
-  std::vector<int> name_meshadr() {
-    std::vector<int> ret;
-
-    for (int i = 0; i < m->nmesh; i++) {
-      int addr;
-      ret.push_back(m->name_meshadr[i]);
-    }
-
-    return ret;
-  }
-
-  std::vector<std::array<double, 3>> geom_size() {
-    std::vector<std::array<double, 3>> ret;
-
-    for (int i = 0; i < m->ngeom; i++) {
-      ret.push_back({m->geom_size[3 * i], m->geom_size[3 * i + 1],
-                     m->geom_size[3 * i + 2]});
-    }
-
-    return ret;
-  }
-
-  std::vector<std::array<double, 3>> geom_pos() {
-    std::vector<std::array<double, 3>> ret;
-
-    for (int i = 0; i < m->ngeom; i++) {
-      ret.push_back(
-          {m->geom_pos[3 * i], m->geom_pos[3 * i + 1], m->geom_pos[3 * i + 2]});
-    }
-
-    return ret;
-  }
-
-  std::vector<std::array<double, 3>> body_pos() {
-    std::vector<std::array<double, 3>> ret;
-
-    for (int i = 0; i < m->nbody; i++) {
-      ret.push_back(
-          {m->body_pos[3 * i], m->body_pos[3 * i + 1], m->body_pos[3 * i + 2]});
-    }
-
-    return ret;
-  }
-
-  std::vector<std::array<double, 4>> geom_quat() {
-    std::vector<std::array<double, 4>> ret;
-
-    for (int i = 0; i < m->ngeom; i++) {
-      ret.push_back({m->geom_quat[4 * i], m->geom_quat[4 * i + 1],
-                     m->geom_quat[4 * i + 2], m->geom_quat[4 * i + 3]});
-    }
-
-    return ret;
-  }
-
-  std::vector<std::array<double, 4>> body_quat() {
-    std::vector<std::array<double, 4>> ret;
-
-    for (int i = 0; i < m->nbody; i++) {
-      ret.push_back({m->body_quat[4 * i], m->body_quat[4 * i + 1],
-                     m->body_quat[4 * i + 2], m->body_quat[4 * i + 3]});
-    }
-
-    return ret;
-  }
-
-  val geom_rgba() {
-    return val(typed_memory_view(m->ngeom * 4, m->geom_rgba));
-  }
+  val mesh_vertadr () { return val(typed_memory_view(m->nmesh        , m->mesh_vertadr )); }
+  val mesh_vertnum () { return val(typed_memory_view(m->nmesh        , m->mesh_vertnum )); }
+  val mesh_faceadr () { return val(typed_memory_view(m->nmesh        , m->mesh_faceadr )); }
+  val mesh_facenum () { return val(typed_memory_view(m->nmesh        , m->mesh_facenum )); }
+  val body_parentid() { return val(typed_memory_view(m->nbody        , m->body_parentid)); }
+  val body_geomnum () { return val(typed_memory_view(m->nbody        , m->body_geomnum )); }
+  val body_geomadr () { return val(typed_memory_view(m->nbody        , m->body_geomadr )); }
+  val geom_type    () { return val(typed_memory_view(m->ngeom        , m->geom_type    )); }
+  val geom_bodyid  () { return val(typed_memory_view(m->ngeom        , m->geom_bodyid  )); }
+  val geom_group   () { return val(typed_memory_view(m->ngeom        , m->geom_group   )); }
+  val geom_contype () { return val(typed_memory_view(m->ngeom        , m->geom_contype )); }
+  val mesh_vert    () { return val(typed_memory_view(m->nmeshvert * 3, m->mesh_vert    )); }
+  val mesh_normal  () { return val(typed_memory_view(m->nmeshvert * 3, m->mesh_normal  )); }
+  val mesh_face    () { return val(typed_memory_view(m->nmeshface * 3, m->mesh_face    )); }
+  val name_meshadr () { return val(typed_memory_view(m->nmesh        , m->name_meshadr )); }
+  val geom_size    () { return val(typed_memory_view(m->ngeom     * 3, m->geom_size    )); }
+  val geom_pos     () { return val(typed_memory_view(m->ngeom     * 3, m->geom_pos     )); }
+  val geom_quat    () { return val(typed_memory_view(m->nbody     * 4, m->geom_quat    )); }
+  val body_pos     () { return val(typed_memory_view(m->nbody     * 3, m->body_pos     )); }
+  val body_quat    () { return val(typed_memory_view(m->nbody     * 4, m->body_quat    )); }
+  val geom_rgba    () { return val(typed_memory_view(m->ngeom     * 4, m->geom_rgba    )); }
 
 private:
   mjModel *m;
@@ -318,36 +103,11 @@ public:
   }
 
   State *state() { return _state; }
-
   Model *model() { return _model; }
+  void    step() { mj_step(_model->ptr(), _state->ptr()); }
 
-  void step() { mj_step(_model->ptr(), _state->ptr()); }
-
-  std::vector<std::array<double, 4>> xquat() {
-    std::vector<std::array<double, 4>> ret;
-
-    for (int i = 0; i < _model->ptr()->ngeom; i++) {
-      ret.push_back(
-          {_state->ptr()->xquat[4 * i    ], 
-           _state->ptr()->xquat[4 * i + 1],
-           _state->ptr()->xquat[4 * i + 2], 
-           _state->ptr()->xquat[4 * i + 3]});
-    }
-
-    return ret;
-  }
-
-  std::vector<std::array<double, 3>> xpos() {
-    std::vector<std::array<double, 3>> ret;
-
-    for (int i = 0; i < _model->ptr()->ngeom; i++) {
-      ret.push_back({_state->ptr()->xpos[3 * i    ], 
-                     _state->ptr()->xpos[3 * i + 1],
-                     _state->ptr()->xpos[3 * i + 2]});
-    }
-
-    return ret;
-  }
+  val    xquat() { return val(typed_memory_view(_model->ptr()->nbody * 4, _state->ptr()->xquat)); }
+  val    xpos () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->xpos )); }
 
 private:
   Model *_model;
@@ -365,64 +125,62 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .constructor<>()
       .class_function("load_from_xml", &Model::load_from_xml)
       .function("ptr", &Model::ptr, allow_raw_pointers())
-      .function("getVal", &Model::getVal)
-      .function("names", &Model::names)
-      .function("mesh_vertadr", &Model::mesh_vertadr)
-      .function("mesh_vertnum", &Model::mesh_vertnum)
-      .function("mesh_faceadr", &Model::mesh_faceadr)
-      .function("mesh_facenum", &Model::mesh_facenum)
+      .function("getVal"       , &Model::getVal)
+      .function("names"        , &Model::names)
+      .function("mesh_vertadr" , &Model::mesh_vertadr)
+      .function("mesh_vertnum" , &Model::mesh_vertnum)
+      .function("mesh_faceadr" , &Model::mesh_faceadr)
+      .function("mesh_facenum" , &Model::mesh_facenum)
       .function("body_parentid", &Model::body_parentid)
-      .function("body_geomnum", &Model::body_geomnum)
-      .function("body_geomadr", &Model::body_geomadr)
-      .function("geom_type", &Model::geom_type)
-      .function("geom_bodyid", &Model::geom_bodyid)
-      .function("geom_group", &Model::geom_group)
-      .function("geom_contype", &Model::geom_contype)
-      .function("mesh_normal", &Model::mesh_normal)
-      .function("mesh_face", &Model::mesh_face)
-      .function("mesh_vert", &Model::mesh_vert)
-      .function("name_meshadr", &Model::name_meshadr)
-      .function("geom_pos", &Model::geom_pos)
-      .function("geom_quat", &Model::geom_quat)
-      .function("geom_size", &Model::geom_size)
-      .function("geom_rgba", &Model::geom_rgba)
-      .function("body_pos", &Model::body_pos)
-      .function("body_quat", &Model::body_quat);
+      .function("body_geomnum" , &Model::body_geomnum)
+      .function("body_geomadr" , &Model::body_geomadr)
+      .function("geom_type"    , &Model::geom_type)
+      .function("geom_bodyid"  , &Model::geom_bodyid)
+      .function("geom_group"   , &Model::geom_group)
+      .function("geom_contype" , &Model::geom_contype)
+      .function("mesh_normal"  , &Model::mesh_normal)
+      .function("mesh_face"    , &Model::mesh_face)
+      .function("mesh_vert"    , &Model::mesh_vert)
+      .function("name_meshadr" , &Model::name_meshadr)
+      .function("geom_pos"     , &Model::geom_pos)
+      .function("geom_quat"    , &Model::geom_quat)
+      .function("geom_size"    , &Model::geom_size)
+      .function("geom_rgba"    , &Model::geom_rgba)
+      .function("body_pos"     , &Model::body_pos)
+      .function("body_quat"    , &Model::body_quat);
 
   class_<State>("State")
       .constructor<Model>()
-      .function("ptr", &State::ptr, allow_raw_pointers())
+      .function("ptr"   , &State::ptr, allow_raw_pointers())
       .function("getVal", &State::getVal);
 
   class_<Simulation>("Simulation")
       .constructor<Model *, State *>()
-      .function("step", &Simulation::step)
+      .function("step" , &Simulation::step)
       .function("state", &Simulation::state, allow_raw_pointers())
       .function("model", &Simulation::model, allow_raw_pointers())
       .function("xquat", &Simulation::xquat)
-      .function("xpos", &Simulation::xpos);
+      .function("xpos" , &Simulation::xpos);
 
   value_object<mjModel>("mjModel")
-      .field("ngeom", &mjModel::ngeom)
-      .field("nq", &mjModel::nq)
-      .field("na", &mjModel::na)
-      .field("nv", &mjModel::nv)
-      .field("nu", &mjModel::nu)
-      .field("nbody", &mjModel::nbody)
+      .field("ngeom"      , &mjModel::ngeom)
+      .field("nq"         , &mjModel::nq)
+      .field("na"         , &mjModel::na)
+      .field("nv"         , &mjModel::nv)
+      .field("nu"         , &mjModel::nu)
+      .field("nbody"      , &mjModel::nbody)
       .field("nsensordata", &mjModel::nsensordata)
-      .field("nmesh", &mjModel::nmesh)
-      .field("nmeshvert", &mjModel::nmeshvert)
-      .field("nmeshface", &mjModel::nmeshface);
+      .field("nmesh"      , &mjModel::nmesh)
+      .field("nmeshvert"  , &mjModel::nmeshvert)
+      .field("nmeshface"  , &mjModel::nmeshface);
 
   register_vector<std::string>("vector<string>");
-  register_vector<int>("vector<int>");
-  //register_vector<val>("vector<val>");
-
-  register_vector<std::array<float, 3>>("vector<std::array<float,3>>");
-  register_vector<std::array<int, 3>>("vector<std::array<int,3>>");
-  register_vector<std::array<float, 4>>("vector<std::array<float,4>>");
-  register_vector<std::array<double, 3>>("vector<std::array<double,3>>");
-  register_vector<std::array<double, 4>>("vector<std::array<double,4>>");
+  //register_vector<int>("vector<int>");
+  //register_vector<std::array<float, 3>>("vector<std::array<float,3>>");
+  //register_vector<std::array<int, 3>>("vector<std::array<int,3>>");
+  //register_vector<std::array<float, 4>>("vector<std::array<float,4>>");
+  //register_vector<std::array<double, 3>>("vector<std::array<double,3>>");
+  //register_vector<std::array<double, 4>>("vector<std::array<double,4>>");
 
   value_object<mjData>("mjData");
 }
