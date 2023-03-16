@@ -30,6 +30,8 @@ jobs:
       - name: Linux - Build Base Binary
         if: runner.os == 'Linux'
         run: |
+          mkdir build
+          cd build
           emcmake cmake ..
           make
 
