@@ -32,33 +32,10 @@ public:
     return model;
   }
 
-  mjModel *ptr  () { return m; }
-  mjModel getVal() { return *m; }
-
-  //std::vector<std::string> names() {
-  //  std::vector<std::string> names;
-  //  int j = 0;
-
-  //  for (int i = 0; i < m->nnames; i++) {
-  //    std::string name;
-
-  //    while (true) {
-  //      char c = m->names[j];
-  //      j += 1;
-  //      if (c == 0) {
-  //        names.push_back(name);
-  //        break;
-  //      } else {
-  //        name.push_back(c);
-  //      }
-  //    }
-  //  }
-
-  //  return names;
-  //}
+  mjModel *ptr     () { return m; }
+  mjModel getVal   () { return *m; }
 
   val names        () { return val(typed_memory_view(m->nnames       , m->names        )); }
-
   val mesh_vertadr () { return val(typed_memory_view(m->nmesh        , m->mesh_vertadr )); }
   val mesh_vertnum () { return val(typed_memory_view(m->nmesh        , m->mesh_vertnum )); }
   val mesh_faceadr () { return val(typed_memory_view(m->nmesh        , m->mesh_faceadr )); }
@@ -87,10 +64,8 @@ private:
 
 class State {
 public:
-  State(Model m) { d = mj_makeData(m.ptr()); }
-
-  mjData *ptr() { return d; }
-
+  State(Model m)  { d = mj_makeData(m.ptr()); }
+  mjData *ptr  () { return d; }
   mjData getVal() { return *d; }
 
 private:
@@ -175,14 +150,6 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .field("nmesh"      , &mjModel::nmesh)
       .field("nmeshvert"  , &mjModel::nmeshvert)
       .field("nmeshface"  , &mjModel::nmeshface);
-
-  register_vector<std::string>("vector<string>");
-  //register_vector<int>("vector<int>");
-  //register_vector<std::array<float, 3>>("vector<std::array<float,3>>");
-  //register_vector<std::array<int, 3>>("vector<std::array<int,3>>");
-  //register_vector<std::array<float, 4>>("vector<std::array<float,4>>");
-  //register_vector<std::array<double, 3>>("vector<std::array<double,3>>");
-  //register_vector<std::array<double, 4>>("vector<std::array<double,4>>");
 
   value_object<mjData>("mjData");
 }
