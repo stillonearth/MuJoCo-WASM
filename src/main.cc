@@ -119,6 +119,12 @@ public:
   val geom_pos     () { return val(typed_memory_view(m->ngeom     * 3, m->geom_pos     )); }
   val geom_quat    () { return val(typed_memory_view(m->ngeom     * 4, m->geom_quat    )); }
   val geom_rgba    () { return val(typed_memory_view(m->ngeom     * 4, m->geom_rgba    )); }
+  val geom_matid   () { return val(typed_memory_view(m->ngeom        , m->geom_matid   )); }
+  val mat_emission   () { return val(typed_memory_view(m->nmat       , m->mat_emission   )); }   
+  val mat_specular   () { return val(typed_memory_view(m->nmat       , m->mat_specular   )); }   
+  val mat_shininess  () { return val(typed_memory_view(m->nmat       , m->mat_shininess  )); }   
+  val mat_reflectance() { return val(typed_memory_view(m->nmat       , m->mat_reflectance)); }   
+  val mat_rgba       () { return val(typed_memory_view(m->nmat * 4   , m->mat_rgba       )); }   
 
 private:
   mjModel *m;
@@ -234,6 +240,8 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("body_parentid" , &Model::body_parentid)
       .function("body_geomnum"  , &Model::body_geomnum)
       .function("body_geomadr"  , &Model::body_geomadr)
+      .function("body_pos"      , &Model::body_pos)
+      .function("body_quat"     , &Model::body_quat)
       .function("geom_type"     , &Model::geom_type)
       .function("geom_bodyid"   , &Model::geom_bodyid)
       .function("geom_group"    , &Model::geom_group)
@@ -246,8 +254,13 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("geom_quat"     , &Model::geom_quat)
       .function("geom_size"     , &Model::geom_size)
       .function("geom_rgba"     , &Model::geom_rgba)
-      .function("body_pos"      , &Model::body_pos)
-      .function("body_quat"     , &Model::body_quat);
+      .function("geom_matid"    , &Model::geom_matid)
+      .function("mat_emission"  , &Model::mat_emission)
+      .function("mat_specular"  , &Model::mat_specular)
+      .function("mat_shininess" , &Model::mat_shininess)
+      .function("mat_reflectance", &Model::mat_reflectance)
+      .function("mat_rgba"      , &Model::mat_rgba);
+
 
   class_<State>("State")
       .constructor<Model>()

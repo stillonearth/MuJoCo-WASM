@@ -91,6 +91,7 @@ async function init() {
   gui.open();
 
   material = new THREE.MeshPhysicalMaterial();
+  material.color = new THREE.Color(1, 1, 1);
 
   let xmlName = 'humanoid.xml';
 
@@ -109,43 +110,71 @@ async function init() {
   // Decode the null-terminated string names
   let textDecoder = new TextDecoder("utf-8");
   let fullString  = textDecoder.decode(model.names());
-  let names       = fullString.split(fullString[12]);
+  let names       = fullString.split(textDecoder.decode(new ArrayBuffer(1)));
   console.log(names);
 
   for (let g = 0; g < model.ngeom(); g++) {
     let b = model.geom_bodyid()[g];
     let type = model.geom_type  ()[g];
     let size = [
-      model.geom_size()[(g*3) + 0] * 2.0,
-      model.geom_size()[(g*3) + 1] * 2.0,
-      model.geom_size()[(g*3) + 2] * 2.0];
-    console.log(size);
+      model.geom_size()[(g*3) + 0],
+      model.geom_size()[(g*3) + 1],
+      model.geom_size()[(g*3) + 2]];
     console.log("Found geometry", g, " for body", b, ", Type:", type, ", named:", names[b + 1]);
 
     if (!(b in bodies)) { bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; }
 
     let geometry = new THREE.SphereGeometry(size[0] * 0.5);
     if (type == 0)        { // Plane is 0
-      //geometry = new THREE.PlaneGeometry(size[0], size[1]);
-      geometry = new THREE.BoxGeometry(size[0], 0.0001, size[1]);
+      //geometry = new THREE.PlaneGeometry(size[0], size[1]); // Can't rotate this...
+      geometry = new THREE.BoxGeometry(size[0] * 2.0, 0.0001, size[1] * 2.0);
     } else if (type == 1) { // Heightfield is 1
     } else if (type == 2) { // Sphere is 2
-      geometry = new THREE.SphereGeometry(size[0] * 0.5);
+      geometry = new THREE.SphereGeometry(size[0]);
     } else if (type == 3) { // Capsule is 3
-      geometry = new THREE.CapsuleGeometry(size[0] * 0.5, size[1]);
+      geometry = new THREE.CapsuleGeometry(size[0], size[1] * 2.0);
     } else if (type == 4) { // Ellipsoid is 4
+      geometry = new THREE.SphereGeometry(1); // Stretch this below
     } else if (type == 5) { // Cylinder is 5
-      geometry = new THREE.CylinderGeometry(size[1], size[1], size[0]);
+      geometry = new THREE.CylinderGeometry(size[1] * 2.0, size[1] * 2.0, size[0] * 2.0);
     } else if (type == 6) { // Box is 6
-      geometry = new THREE.BoxGeometry(size[0], size[2], size[1]);
+      geometry = new THREE.BoxGeometry(size[0] * 2.0, size[2] * 2.0, size[1] * 2.0);
     } else if (type == 100) { // Arrow is 100
     
+    }
+
+    // Set the Material Properties of incoming bodies
+    let color = [
+      model.geom_rgba()[(g * 4) + 0],
+      model.geom_rgba()[(g * 4) + 1],
+      model.geom_rgba()[(g * 4) + 2],
+      model.geom_rgba()[(g * 4) + 3]];
+    if (model.geom_matid()[g] != -1) {
+      color = [
+        model.mat_rgba()[(model.geom_matid()[g] * 4) + 0],
+        model.mat_rgba()[(model.geom_matid()[g] * 4) + 1],
+        model.mat_rgba()[(model.geom_matid()[g] * 4) + 2],
+        model.mat_rgba()[(model.geom_matid()[g] * 4) + 3]];
+    }
+    if (material.color.r != color[0] ||
+        material.color.g != color[1] ||
+        material.color.b != color[2] ||
+        material.opacity != color[3]) {
+      material = new THREE.MeshPhysicalMaterial({
+        color: new THREE.Color(color[0], color[1], color[2]),
+        transparent: color[3] < 1.0,
+        opacity: color[3],
+        specularIntensity: model.geom_matid()[g] != -1 ? model.mat_specular   ()[model.geom_matid()[g]] : undefined,
+        reflectivity     : model.geom_matid()[g] != -1 ? model.mat_reflectance()[model.geom_matid()[g]] : undefined,
+        metalness        : model.geom_matid()[g] != -1 ? model.mat_shininess  ()[model.geom_matid()[g]] : undefined,
+      });
     }
 
     let mesh = new THREE.Mesh(geometry, material);
     bodies[b].add(mesh);
     getPosition  (model.geom_pos (), g, mesh.position  );
     getQuaternion(model.geom_quat(), g, mesh.quaternion);
+    if (type == 4) { mesh.scale.set(size[0], size[2], size[1]) } // Stretch the Ellipsoid
   }
 
   for (let b = 0; b < model.nbody(); b++) {
