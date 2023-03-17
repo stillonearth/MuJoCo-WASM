@@ -124,7 +124,7 @@ public:
   val mat_specular   () { return val(typed_memory_view(m->nmat       , m->mat_specular   )); }   
   val mat_shininess  () { return val(typed_memory_view(m->nmat       , m->mat_shininess  )); }   
   val mat_reflectance() { return val(typed_memory_view(m->nmat       , m->mat_reflectance)); }   
-  val mat_rgba       () { return val(typed_memory_view(m->nmat * 4   , m->mat_rgba       )); }   
+  val mat_rgba       () { return val(typed_memory_view(m->nmat    * 4, m->mat_rgba       )); }   
 
 private:
   mjModel *m;

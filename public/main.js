@@ -144,22 +144,43 @@ async function init() {
     }
 
     // Set the Material Properties of incoming bodies
+    let texture = undefined;
     let color = [
       model.geom_rgba()[(g * 4) + 0],
       model.geom_rgba()[(g * 4) + 1],
       model.geom_rgba()[(g * 4) + 2],
       model.geom_rgba()[(g * 4) + 3]];
     if (model.geom_matid()[g] != -1) {
+      let matId = model.geom_matid()[g];
       color = [
-        model.mat_rgba()[(model.geom_matid()[g] * 4) + 0],
-        model.mat_rgba()[(model.geom_matid()[g] * 4) + 1],
-        model.mat_rgba()[(model.geom_matid()[g] * 4) + 2],
-        model.mat_rgba()[(model.geom_matid()[g] * 4) + 3]];
+        model.mat_rgba()[(matId * 4) + 0],
+        model.mat_rgba()[(matId * 4) + 1],
+        model.mat_rgba()[(matId * 4) + 2],
+        model.mat_rgba()[(matId * 4) + 3]];
+      
+      // Construct Texture from 
+      let texId = model.mat_texid()[matId];
+      if (texId != -1) {
+        let width    = model.tex_width ()[texId];
+        let height   = model.tex_height()[texId];
+        let offset   = model.tex_adr()[texId];
+        let rgbArray = model.tex_rgb();
+        let rgbaArray = new Uint8Array(width * height * 4);
+        for (let p = 0; p < width * height; p++){
+          rgbaArray[(p * 4) + 0] = rgbArray[offset + ((p * 3) + 0)];
+          rgbaArray[(p * 4) + 1] = rgbArray[offset + ((p * 3) + 1)];
+          rgbaArray[(p * 4) + 2] = rgbArray[offset + ((p * 3) + 2)];
+          rgbaArray[(p * 4) + 3] = 1.0;
+        }
+        texture = new THREE.DataTexture(rgbaArray, width, height, THREE.RGBAFormat, THREE.UnsignedByteType);
+        texture.needsUpdate = true;
+      }
     }
     if (material.color.r != color[0] ||
         material.color.g != color[1] ||
         material.color.b != color[2] ||
-        material.opacity != color[3]) {
+        material.opacity != color[3] ||
+        material.map != texture) {
       material = new THREE.MeshPhysicalMaterial({
         color: new THREE.Color(color[0], color[1], color[2]),
         transparent: color[3] < 1.0,
@@ -167,6 +188,7 @@ async function init() {
         specularIntensity: model.geom_matid()[g] != -1 ? model.mat_specular   ()[model.geom_matid()[g]] : undefined,
         reflectivity     : model.geom_matid()[g] != -1 ? model.mat_reflectance()[model.geom_matid()[g]] : undefined,
         metalness        : model.geom_matid()[g] != -1 ? model.mat_shininess  ()[model.geom_matid()[g]] : undefined,
+        map: texture
       });
     }
 
