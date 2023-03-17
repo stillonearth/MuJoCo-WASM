@@ -27,7 +27,7 @@ async function init() {
   // ---------------------------------------------------------------------
   // Perspective Camera
   // ---------------------------------------------------------------------
-  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.001, 10 );
+  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.001, 1000 );
   camera.position.set( 1.6, 1.4, 1.4 );
 
   camera.name = 'PerspectiveCamera';
@@ -54,7 +54,7 @@ async function init() {
   // Grid
   // ---------------------------------------------------------------------
   gridHelper = new THREE.GridHelper( 5, 20, 0x222222, 0x444444 );
-  //gridHelper.position.y = - 0.01;
+  gridHelper.position.y = 0.002;
   gridHelper.name = 'Grid';
   scene.add( gridHelper );
 
@@ -90,21 +90,19 @@ async function init() {
   gui.add(params, "alpha", 0.0, 1.0, 0.001).name('Unfold Amount');
   gui.open();
 
-  sphere = new THREE.Mesh(new THREE.SphereGeometry(0.01), new THREE.MeshPhysicalMaterial());
-  sphere.position.y = 1.0;
-  scene.add( sphere );
-
   material = new THREE.MeshPhysicalMaterial();
+
+  let xmlName = 'humanoid.xml';
 
   // Load the MuJoCo WASM
   const mujoco = await load_mujoco();
   // Set up Emscripten's Virtual File System
   mujoco.FS.mkdir('/working');
   mujoco.FS.mount(mujoco.MEMFS, { root: '.' }, '/working');
-  mujoco.FS.writeFile("/working/simple.xml", await (await fetch("./public/simple.xml")).text());
+  mujoco.FS.writeFile("/working/"+xmlName, await (await fetch("./public/"+xmlName)).text());
 
   // Load in the state from XML
-  model       = mujoco.Model.load_from_xml("/working/simple.xml");
+  model       = mujoco.Model.load_from_xml("/working/"+xmlName);
   state       = new mujoco.State     (model);
   simulation  = new mujoco.Simulation(model, state);
 
@@ -126,16 +124,18 @@ async function init() {
 
     if (!(b in bodies)) { bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; }
 
-    let geometry;
+    let geometry = new THREE.SphereGeometry(size[0] * 0.5);
     if (type == 0)        { // Plane is 0
       //geometry = new THREE.PlaneGeometry(size[0], size[1]);
       geometry = new THREE.BoxGeometry(size[0], 0.0001, size[1]);
     } else if (type == 1) { // Heightfield is 1
     } else if (type == 2) { // Sphere is 2
-      geometry = new THREE.SphereGeometry(size[0]);
+      geometry = new THREE.SphereGeometry(size[0] * 0.5);
     } else if (type == 3) { // Capsule is 3
+      geometry = new THREE.CapsuleGeometry(size[0] * 0.5, size[1]);
     } else if (type == 4) { // Ellipsoid is 4
     } else if (type == 5) { // Cylinder is 5
+      geometry = new THREE.CylinderGeometry(size[1], size[1], size[0]);
     } else if (type == 6) { // Box is 6
       geometry = new THREE.BoxGeometry(size[0], size[2], size[1]);
     } else if (type == 100) { // Arrow is 100
@@ -150,10 +150,11 @@ async function init() {
 
   for (let b = 0; b < model.nbody(); b++) {
     let parent_body = model.body_parentid()[b];
-    if (parent_body == b) {
+    if (parent_body == 0) {
       scene.add(bodies[b]);
     } else {
-      bodies[parent_body].add(bodies[b]);
+      scene.add(bodies[b]);
+      //bodies[parent_body].add(bodies[b]);
     }
   }
 }
@@ -179,7 +180,7 @@ function getPosition(buffer, index, target) {
 function getQuaternion(buffer, index, target) {
   return target.set(
     -buffer[(index * 4) + 1],
-     buffer[(index * 4) + 3],
+    -buffer[(index * 4) + 3],
     -buffer[(index * 4) + 2],
      buffer[(index * 4) + 0]);
 }
