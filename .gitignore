@@ -54,3 +54,4 @@ lib/*
 bin/*
 test/test_runner
 node_modules
+.vscode
