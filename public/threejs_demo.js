@@ -242,7 +242,7 @@ function render(time) {
 
   // Update MuJoCo Simulation
   simulation.step();
-  
+  //simulation.qvel()[2] = 0.01;
   for (let b = 0; b < model.nbody(); b++) {
     getPosition  (simulation.xpos (), b, bodies[b].position  );
     getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
