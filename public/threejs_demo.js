@@ -97,10 +97,11 @@ async function init() {
 
   // Load the MuJoCo WASM
   const mujoco = await load_mujoco();
+  console.log(mujoco);
   // Set up Emscripten's Virtual File System
   mujoco.FS.mkdir('/working');
   mujoco.FS.mount(mujoco.MEMFS, { root: '.' }, '/working');
-  mujoco.FS.writeFile("/working/"+xmlName, await (await fetch("./public/"+xmlName)).text());
+  mujoco.FS.writeFile("/working/"+xmlName, await (await fetch("./public/scenes/"+xmlName)).text());
 
   // Load in the state from XML
   model       = mujoco.Model.load_from_xml("/working/"+xmlName);
@@ -120,7 +121,7 @@ async function init() {
       model.geom_size()[(g*3) + 0],
       model.geom_size()[(g*3) + 1],
       model.geom_size()[(g*3) + 2]];
-    console.log("Found geometry", g, " for body", b, ", Type:", type, ", named:", names[b + 1]);
+    console.log("Found geometry", g, " for body", b, ", Type:", type, ", named:", names[model.name_bodyadr()[b]], "with mesh at:", model.geom_dataid()[g]);
 
     if (!(b in bodies)) { bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; }
 
