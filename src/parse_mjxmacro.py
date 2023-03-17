@@ -2,7 +2,10 @@ mjModel_definitions    = ""
 emscripten_bindings    = ""
 typescript_definitions = ""
 
-types_to_array_types = {"int":"Int32Array", "double":"Float64Array", "float": "Float32Array", "byte": "Uint8Array", "char": "Uint8Array"}
+types_to_array_types = {"int":"Int32Array", "mjtNum":"Float64Array", "float": "Float32Array", "mjtByte": "Uint8Array", "char": "Uint8Array"}
+
+with open("include/mujoco/mjmodel.h") as f:
+    model_lines = f.readlines()
 
 # Parse mjx Macro to get the emscripten bindings and typescript definitions
 with open("include/mujoco/mjxmacro.h") as f:
@@ -12,7 +15,7 @@ with open("include/mujoco/mjxmacro.h") as f:
     for line in lines:
         if parse_pointers and line.startswith("    X("):
             elements = line.strip("    X(").split(""")""")[0].strip().split(",")
-            elements = [e.strip().replace("mjtNum", "double").replace("mjtByte", "byte") for e in elements]
+            elements = [e.strip() for e in elements]
             is_int = elements[3].startswith("mj")
             try:
                 multiplier = int(elements[3])
@@ -22,6 +25,14 @@ with open("include/mujoco/mjxmacro.h") as f:
             if is_int:
                 mjModel_definitions    += '  val '+elements[1].ljust(22)+'() { return val(typed_memory_view(m->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', m->'+elements[1].ljust(22)+' )); }\n'
                 emscripten_bindings    += '      .function('+('"'+elements[1]+'"').ljust(24)+', &Model::'+elements[1].ljust(22)+')\n'
+                
+                # Iterate through the file looking for comments
+                for model_line in model_lines:
+                    if elements[0]+"* " in model_line and elements[1]+";" in model_line:
+                        comment = model_line.split("//")[1].strip()
+                        typescript_definitions += "  /** "+ comment +"*/\n"
+                        break
+                
                 typescript_definitions += '  '+elements[1].ljust(22)+'(): '+types_to_array_types[elements[0]].rjust(12)+';\n'
 
             else:
@@ -34,6 +45,14 @@ with open("include/mujoco/mjxmacro.h") as f:
             name = line.strip("    X(").split(""")""")[0].strip()
             mjModel_definitions    += '  int '+name.ljust(14)+'() { return m->'+name.ljust(14)+'; }\n'
             emscripten_bindings    += '      .function('+('"'+name+'"').ljust(24)+', &Model::'+name.ljust(22)+')\n'
+
+            # Iterate through the file looking for comments
+            for model_line in model_lines:
+                if "int " in model_line and name+";" in model_line:
+                    comment = model_line.split("//")[1].strip()
+                    typescript_definitions += "  /** "+ comment +"*/\n"
+                    break
+
             typescript_definitions += '  '+name.ljust(22)+'(): '+('number').rjust(12)+';\n'
         else:
             parse_ints = False

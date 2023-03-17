@@ -284,7 +284,7 @@ interface Model {
 interface mujoco extends EmscriptenModule {
   FS    : typeof FS;
   MEMFS : typeof MEMFS;
-  Model: Model;
+  Model : Model;
 }
 declare var load_mujoco: EmscriptenModuleFactory<mujoco>;
 export default load_mujoco;
