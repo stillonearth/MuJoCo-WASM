@@ -129,7 +129,7 @@ async function init() {
     let geometry;
     if (type == 0)        { // Plane is 0
       //geometry = new THREE.PlaneGeometry(size[0], size[1]);
-      geometry = new THREE.BoxGeometry(size[0], size[2], size[1]);
+      geometry = new THREE.BoxGeometry(size[0], 0.0001, size[1]);
     } else if (type == 1) { // Heightfield is 1
     } else if (type == 2) { // Sphere is 2
       geometry = new THREE.SphereGeometry(size[0]);
