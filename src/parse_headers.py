@@ -39,12 +39,12 @@ for data in parsed_data.namespace.classes:
         if struct_name.endswith("_"):
             struct_name = struct_name[:-1]
         print("Struct Name:", struct_name)
-        class_definitions += "class "+struct_name[2:]+" {\npublic:\n  "+struct_name[2:]+'() { d = NULL; }\n\n  '+struct_name+' *ptr  () { return d; }\n  '+struct_name+' getVal() { return *d; }\n\n'
-        emscripten_bindings += '  class_<'+struct_name[2:]+'>("'+struct_name[2:]+'")\n      .constructor<>()\n'
+        class_definitions += "class "+struct_name[2:]+" {\npublic:\n  "+struct_name[2:]+'() { m = NULL; }\n\n  '+struct_name+' *ptr  () { return m; }\n  '+struct_name+' getVal() { return *m; }\n\n'
+        emscripten_bindings += '  class_<'+struct_name[2:]+'>("'+struct_name[2:].ljust(22)+'")\n      .constructor<>()\n'
         for field in data.fields:
             field_name = field.name
             if field.access == "public" and not "Visual" in struct_name:
-                emscripten_bindings += '      .function("'+field_name+'", &'+struct_name[2:]+'::'+field_name+')\n'
+                emscripten_bindings += '      .function('+('"'+field_name+'"').ljust(22)+', &'+struct_name[2:]+'::'+field_name.ljust(22)+')\n'
                 #print(field.type)
                 field_type = "void"
                 if isinstance(field.type, Array):
@@ -57,12 +57,13 @@ for data in parsed_data.namespace.classes:
                 else:
                     if isinstance(field.type, Pointer):
                         field_type = "Pointer of " + field.type.ptr_to.typename.segments[0].name
-                        class_definitions += '  val '+field_name+'() { return val(typed_memory_view(d->nmesh, d->'+field_name+' )); } ' + field.doxygen +"\n"
+                        class_definitions += '  val '+field_name.ljust(22)+'() { return val(typed_memory_view(m->nmesh, m->'+field_name.ljust(22)+' )); } ' + field.doxygen +"\n"
                     elif field.type.typename:
                         field_type = field.type.typename.segments[0].name
-                        class_definitions += '  '+field_type+' '+field_name+'() { return d->'+field_name+'; } ' + field.doxygen +"\n"
+                        field_type = field_type.replace("mjtNum", "double")
+                        class_definitions += '  '+field_type.ljust(6)+' '+field_name.ljust(22)+'() { return m->'+field_name.ljust(22)+'; } ' + field.doxygen +"\n"
                 print("  Field Name:", field_name, ", Field Type:", field_type, field.doxygen)
-        class_definitions += 'private:\n  '+struct_name+' *d;\n};\n'
+        class_definitions += 'private:\n  '+struct_name+' *m;\n};\n'
         emscripten_bindings += ";\n\n"
 emscripten_bindings += "}\n"
 

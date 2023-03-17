@@ -1,5 +1,5 @@
 {
-  "name": "@cwiz89/mujoco-wasm",
+  "name": "mujoco-wasm",
   "version": "0.0.1",
   "description": "Run MuJoCo simulations in browser",
   "main": "public/mujoco_wasm.js",
@@ -24,5 +24,6 @@
   },
   "homepage": "https://github.com/zalo/MuJoCo-wasm#readme",
   "dependencies": {
+    "three": "^0.150.1"
   }
 }
