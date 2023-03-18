@@ -54,6 +54,8 @@ lib/*
 bin/*
 test/test_runner
 .vscode
+.cache
+.fiveserverrc
 
 # Dependency directories
 node_modules/**/*

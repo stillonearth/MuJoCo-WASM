@@ -21,14 +21,17 @@
                  user-select: none; /* Non-prefixed version, currently supported by Chrome, Edge, Opera and Firefox */">
         <h1 hidden></h1> <!-- Puts the Lighthouse Score over 90 heheh-->
 
+		<!-- Import maps polyfill -->
+		<script async src="https://unpkg.com/es-module-shims@1.6.3/dist/es-module-shims.js"></script>
+
         <!-- Allows three.js Examples to work without building -->
         <script type="importmap">
             { "imports": { "three": "./node_modules/three/build/three.module.js", "three/addons/": "./node_modules/three/examples/jsm/"} }
         </script>
 
-        <div id="notSupported" style="display:none">Sorry, your graphics card + browser does not support hardware instancing</div>
-
-        <div id="appbody" style="position: absolute;z-index: -100;">
+        <div id="appbody" style="position: absolute;">
+            <!--<div id="error"></div>
+            <script type="module" src="./public/Debug.js"></script>-->
             <script type="module" src="./public/threejs_demo.js"></script>
         </div>
     </body>

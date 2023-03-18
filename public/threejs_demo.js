@@ -2,11 +2,18 @@
 import * as THREE from 'three';
 import { GUI           } from '../node_modules/three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
+import { Reflector } from './Reflector.js';
+import { Debug } from './Debug.js';
 import load_mujoco from "./mujoco_wasm.js"
 
 let container, controls; // ModelLoader
 let camera, scene, renderer, gridHelper, file = {}, material, sphere;
-let model, state, simulation;
+//** @type {mujoco.Model} */
+let model;
+//** @type {mujoco.State} */
+let state;
+//** @type {mujoco.Simulation} */
+let simulation;
 /** @type {THREE.Mesh} */
 let mainModel, connections;
 /** @type {THREE.Vector3} */
@@ -15,7 +22,9 @@ let raycaster, pointer = new THREE.Vector2();
 const params = { acceleration: 0.0 };
 
 /** @type {Object.<number, THREE.Group>} */
-let bodies = { };
+let bodies = {};
+/** @type {THREE.Light[]} */
+let lights = [];
 
 async function init() {
   container = document.createElement( 'div' );
@@ -27,7 +36,7 @@ async function init() {
   // ---------------------------------------------------------------------
   // Perspective Camera
   // ---------------------------------------------------------------------
-  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.001, 1000 );
+  camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.001, 100 );
   camera.position.set( 2.0, 1.7, 1.7 );
 
   camera.name = 'PerspectiveCamera';
@@ -38,19 +47,19 @@ async function init() {
   // ---------------------------------------------------------------------
   // Ambient light
   // ---------------------------------------------------------------------
-  const ambientLight = new THREE.AmbientLight( 0xffffff, 0.2 );
+  const ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
   ambientLight.name = 'AmbientLight';
   scene.add( ambientLight );
 
   // ---------------------------------------------------------------------
   // DirectLight
   // ---------------------------------------------------------------------
-  const dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-  dirLight.target.position.set( 0, 0, - 1 );
-  dirLight.add( dirLight.target );
-  dirLight.lookAt( - 1, - 1, 0 );
-  dirLight.name = 'DirectionalLight';
-  scene.add( dirLight );
+  //const dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
+  //dirLight.target.position.set( 0, 0, - 1 );
+  //dirLight.add( dirLight.target );
+  //dirLight.lookAt( - 1, - 1, 0 );
+  //dirLight.name = 'DirectionalLight';
+  //scene.add( dirLight );
 
   // ---------------------------------------------------------------------
   // Grid
@@ -65,6 +74,8 @@ async function init() {
   renderer = new THREE.WebGLRenderer( { antialias: true } );
   renderer.setPixelRatio( window.devicePixelRatio );
   renderer.setSize( window.innerWidth, window.innerHeight );
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap ; // default THREE.PCFShadowMap
 
   container.appendChild( renderer.domElement );
 
@@ -130,7 +141,7 @@ async function init() {
     let geometry = new THREE.SphereGeometry(size[0] * 0.5);
     if (type == 0)        { // Plane is 0
       //geometry = new THREE.PlaneGeometry(size[0], size[1]); // Can't rotate this...
-      geometry = new THREE.BoxGeometry(100, 0.0001, 100);
+      //geometry = new THREE.BoxGeometry(100, 0.0001, 100);
     } else if (type == 1) { // Heightfield is 1
     } else if (type == 2) { // Sphere is 2
       geometry = new THREE.SphereGeometry(size[0]);
@@ -142,6 +153,9 @@ async function init() {
       geometry = new THREE.CylinderGeometry(size[1] * 2.0, size[1] * 2.0, size[0] * 2.0);
     } else if (type == 6) { // Box is 6
       geometry = new THREE.BoxGeometry(size[0] * 2.0, size[2] * 2.0, size[1] * 2.0);
+    } else if (type == 7) { // Generic Mesh is 7
+      geometry = new THREE.BufferGeometry();
+      // TODO: Populate the Buffer Geometry with Generic Mesh Data
     } else if (type == 100) { // Arrow is 100
     
     }
@@ -177,7 +191,7 @@ async function init() {
           rgbaArray[(p * 4) + 3] = 1.0;
         }
         texture = new THREE.DataTexture(rgbaArray, width, height, THREE.RGBAFormat, THREE.UnsignedByteType);
-        if (height = 512) {
+        if (texId == 2) {
           texture.repeat = new THREE.Vector2(50, 50);
           texture.wrapS = THREE.RepeatWrapping;
           texture.wrapT = THREE.RepeatWrapping;
@@ -199,22 +213,48 @@ async function init() {
         color: new THREE.Color(color[0], color[1], color[2]),
         transparent: color[3] < 1.0,
         opacity: color[3],
-        specularIntensity: model.geom_matid()[g] != -1 ? model.mat_specular   ()[model.geom_matid()[g]] : undefined,
-        reflectivity     : model.geom_matid()[g] != -1 ? model.mat_reflectance()[model.geom_matid()[g]] : undefined,
-        metalness        : model.geom_matid()[g] != -1 ? model.mat_shininess  ()[model.geom_matid()[g]] : undefined,
+        specularIntensity: model.geom_matid()[g] != -1 ?       model.mat_specular   ()[model.geom_matid()[g]] *0.5 : undefined,
+        //reflectivity     : model.geom_matid()[g] != -1 ?       model.mat_reflectance()[model.geom_matid()[g]] : undefined,
+        roughness        : model.geom_matid()[g] != -1 ? 1.0 - model.mat_shininess  ()[model.geom_matid()[g]] : undefined,
+        metalness        : model.geom_matid()[g] != -1 ? 0.1 : undefined,
         map: texture
       });
     }
 
-    let mesh = new THREE.Mesh(geometry, material);
+    let mesh = new THREE.Mesh();
+    if (type == 0) {
+      mesh = new Reflector( new THREE.PlaneGeometry( 100, 100 ), { clipBias: 0.003,texture: texture } );
+      mesh.rotateX( - Math.PI / 2 );
+    } else {
+      mesh = new THREE.Mesh(geometry, material);
+    }
+
+    mesh.castShadow = g == 0 ? false : true;
+    mesh.receiveShadow = true;
     bodies[b].add(mesh);
     getPosition  (model.geom_pos (), g, mesh.position  );
-    getQuaternion(model.geom_quat(), g, mesh.quaternion);
+    if (type != 0) { getQuaternion(model.geom_quat(), g, mesh.quaternion); }
     if (type == 4) { mesh.scale.set(size[0], size[2], size[1]) } // Stretch the Ellipsoid
   }
 
-  for (let g = 0; g < model.nlight(); g++) {
-    // TODO: Spawn Lights
+  for (let l = 0; l < model.nlight(); l++) {
+    let light = new THREE.SpotLight();
+    if (model.light_directional()[l]) {
+      light = new THREE.DirectionalLight();
+    } else {
+      light = new THREE.SpotLight();
+    }
+    light.decay = model.light_attenuation()[l] * 100;
+    light.penumbra = 0.5;
+    light.castShadow = true; // default false
+
+    light.shadow.mapSize.width = 1024; // default
+    light.shadow.mapSize.height = 1024; // default
+    light.shadow.camera.near = 1; // default
+    light.shadow.camera.far = 10; // default
+    //bodies[model.light_bodyid()].add(light);
+    scene.add(light);
+    lights.push(light);
   }
 
   for (let b = 0; b < model.nbody(); b++) {
@@ -241,28 +281,38 @@ function animate(time) {
 
 function getPosition(buffer, index, target) {
   target.set(
-    buffer[(index * 3) + 0],
-    buffer[(index * 3) + 2],
-    buffer[(index * 3) + 1]);
+     buffer[(index * 3) + 0],
+     buffer[(index * 3) + 2],
+    -buffer[(index * 3) + 1]);
 }
 
 function getQuaternion(buffer, index, target) {
   return target.set(
     -buffer[(index * 4) + 1],
     -buffer[(index * 4) + 3],
-    -buffer[(index * 4) + 2],
-     buffer[(index * 4) + 0]);
+     buffer[(index * 4) + 2],
+    -buffer[(index * 4) + 0]);
 }
 
-function render(time) {
+let mujoco_time = 0.0;
+function render(timeMS) {
   controls.update();
 
   // Update MuJoCo Simulation
-  simulation.step();
-  simulation.qvel()[2] += params["acceleration"];
-  for (let b = 0; b < model.nbody(); b++) {
-    getPosition  (simulation.xpos (), b, bodies[b].position  );
-    getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
+  if (timeMS - mujoco_time > 1000.0) { mujoco_time = timeMS; }
+  while (mujoco_time < timeMS) {
+    simulation.step();
+    simulation.qvel()[2] -= params["acceleration"];
+    for (let b = 0; b < model.nbody(); b++) {
+      getPosition(simulation.xpos(), b, bodies[b].position);
+      getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
+    }
+    for (let l = 0; l < model.nlight(); l++) {
+      getPosition(simulation.light_xpos(), l, lights[l].position);
+      getPosition(simulation.light_xdir(), l, tmp1);
+      lights[l].lookAt(tmp1.add(lights[l].position));
+    }
+    mujoco_time += 5.0; // Assume each MuJoCo timestep is 5ms for now
   }
 
   renderer.render( scene, camera );
