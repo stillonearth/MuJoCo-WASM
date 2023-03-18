@@ -4,6 +4,7 @@ import { GUI           } from '../node_modules/three/examples/jsm/libs/lil-gui.m
 import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { Reflector } from './Reflector.js';
 import { Debug } from './Debug.js';
+import { Grabber } from './Grabber.js';
 import load_mujoco from "./mujoco_wasm.js"
 
 let container, controls; // ModelLoader
@@ -22,6 +23,7 @@ let tmpVec = new THREE.Vector3();
 let tmpQuat = new THREE.Quaternion();
 let raycaster, pointer = new THREE.Vector2();
 const params = { acceleration: 0.0 };
+let grabber;
 
 /** @type {Object.<number, THREE.Group>} */
 let bodies = {};
@@ -35,9 +37,6 @@ async function init() {
   scene = new THREE.Scene();
   scene.name = 'scene';
 
-  // ---------------------------------------------------------------------
-  // Perspective Camera
-  // ---------------------------------------------------------------------
   camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.001, 100 );
   camera.position.set( 2.0, 1.7, 1.7 );
 
@@ -46,32 +45,9 @@ async function init() {
   scene.background = new THREE.Color(0.15, 0.25, 0.35);
   scene.fog = new THREE.Fog(scene.background, 15, 25.5 );
 
-  // ---------------------------------------------------------------------
-  // Ambient light
-  // ---------------------------------------------------------------------
   const ambientLight = new THREE.AmbientLight( 0xffffff, 0.1 );
   ambientLight.name = 'AmbientLight';
   scene.add( ambientLight );
-
-  // ---------------------------------------------------------------------
-  // DirectLight
-  // ---------------------------------------------------------------------
-  //const dirLight = new THREE.DirectionalLight( 0xffffff, 1 );
-  //dirLight.target.position.set( 0, 0, - 1 );
-  //dirLight.add( dirLight.target );
-  //dirLight.lookAt( - 1, - 1, 0 );
-  //dirLight.name = 'DirectionalLight';
-  //scene.add( dirLight );
-
-  // ---------------------------------------------------------------------
-  // Grid
-  // ---------------------------------------------------------------------
-  //gridHelper = new THREE.GridHelper( 5, 20, 0x222222, 0x444444 );
-  //gridHelper.position.y = 0.002;
-  //gridHelper.name = 'Grid';
-  //scene.add( gridHelper );
-
-  //
 
   renderer = new THREE.WebGLRenderer( { antialias: true } );
   renderer.setPixelRatio( window.devicePixelRatio );
@@ -90,20 +66,16 @@ async function init() {
   controls.screenSpacePanning = true;
   controls.update();
 
-  //
-
   raycaster = new THREE.Raycaster();
   pointer   = new THREE.Vector2();
 
   window.addEventListener('resize', onWindowResize);
-  document.addEventListener( 'pointermove', ( event ) => {
-    pointer.x =   ( event.clientX / window.innerWidth  ) * 2 - 1;
-    pointer.y = - ( event.clientY / window.innerHeight ) * 2 + 1;
-  });
 
   const gui = new GUI();
   gui.add(params, "acceleration", -0.1, 0.1, 0.001).name('Artificial Acceleration');
   gui.open();
+
+  grabber = new Grabber(scene, renderer, camera, container.parentElement, controls);
 
   material = new THREE.MeshPhysicalMaterial();
   material.color = new THREE.Color(1, 1, 1);
@@ -140,7 +112,7 @@ async function init() {
       model.geom_size()[(g*3) + 2]];
     console.log("Found geometry", g, " for body", b, ", Type:", type, ", named:", names[model.name_bodyadr()[b]], "with mesh at:", model.geom_dataid()[g]);
 
-    if (!(b in bodies)) { bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; }
+    if (!(b in bodies)) { bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; bodies[b].bodyID = b; }
 
     let geometry = new THREE.SphereGeometry(size[0] * 0.5);
     if (type == 0)        { // Plane is 0
@@ -235,6 +207,7 @@ async function init() {
 
     mesh.castShadow = g == 0 ? false : true;
     mesh.receiveShadow = true;
+    mesh.bodyID = b;
     bodies[b].add(mesh);
     getPosition  (model.geom_pos (), g, mesh.position  );
     if (type != 0) { getQuaternion(model.geom_quat(), g, mesh.quaternion); }
@@ -298,7 +271,7 @@ function getQuaternion(buffer, index, target) {
     -buffer[(index * 4) + 0]);
 }
 
-function toMujocoPos(target) { target.set(target.x, -target.z, target.y); }
+function toMujocoPos(target) { return target.set(target.x, -target.z, target.y); }
 //function toMujocoPos(target) { target.set(-target.x, target.z, target.y); }
 
 let mujoco_time = 0.0;
@@ -310,20 +283,28 @@ function render(timeMS) {
   while (mujoco_time < timeMS) {
     simulation.step();
 
+    // Set the transforms of the bodies
+    for (let b = 0; b < model.nbody(); b++) {
+      getPosition  (simulation.xpos (), b, bodies[b].position);
+      getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
+      bodies[b].updateWorldMatrix();
+    }
+
+    grabber.update();
+
     // Reset Applied Forces
     for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; }
-    let force = new THREE.Vector3(0, 0, params["acceleration"] * 10000); // Define force in global space
-    toMujocoPos(getPosition(simulation.xpos(), 1, tmpVec)); // Apply the force to this point in space
-    simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, tmpVec.x, tmpVec.y, tmpVec.z, 1); // Body ID
+    if (grabber.active && grabber.physicsObject) {
+      let force = toMujocoPos(grabber.currentWorld.clone().sub(grabber.worldHit).multiplyScalar(1000));
+      let point = toMujocoPos(grabber.worldHit.clone());
+      simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, grabber.physicsObject.bodyID); // Body ID
+    }
+    
 
     mujoco_time += 5.0; // Assume each MuJoCo timestep is 5ms for now
   }
 
-  // Set the transforms of bodies and lights
-  for (let b = 0; b < model.nbody(); b++) {
-    getPosition  (simulation.xpos (), b, bodies[b].position);
-    getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
-  }
+  // Set the transforms of lights
   for (let l = 0; l < model.nlight(); l++) {
     getPosition(simulation.light_xpos(), l, lights[l].position);
     getPosition(simulation.light_xdir(), l, tmpVec);
