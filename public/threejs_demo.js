@@ -28,10 +28,12 @@ async function init() {
   // Perspective Camera
   // ---------------------------------------------------------------------
   camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.001, 1000 );
-  camera.position.set( 1.6, 1.4, 1.4 );
+  camera.position.set( 2.0, 1.7, 1.7 );
 
   camera.name = 'PerspectiveCamera';
-  scene.add( camera );
+  scene.add(camera);
+  scene.background = new THREE.Color(0.15, 0.25, 0.35);
+  scene.fog = new THREE.Fog(scene.background, 15, 25.5 );
 
   // ---------------------------------------------------------------------
   // Ambient light
@@ -53,10 +55,10 @@ async function init() {
   // ---------------------------------------------------------------------
   // Grid
   // ---------------------------------------------------------------------
-  gridHelper = new THREE.GridHelper( 5, 20, 0x222222, 0x444444 );
-  gridHelper.position.y = 0.002;
-  gridHelper.name = 'Grid';
-  scene.add( gridHelper );
+  //gridHelper = new THREE.GridHelper( 5, 20, 0x222222, 0x444444 );
+  //gridHelper.position.y = 0.002;
+  //gridHelper.name = 'Grid';
+  //scene.add( gridHelper );
 
   //
 
@@ -67,7 +69,7 @@ async function init() {
   container.appendChild( renderer.domElement );
 
   controls = new OrbitControls(camera, renderer.domElement);
-  controls.target.set(0, 0.1, 0);
+  controls.target.set(0, 0.7, 0);
   controls.panSpeed = 2;
   controls.zoomSpeed = 1;
   controls.enableDamping = true;
@@ -128,7 +130,7 @@ async function init() {
     let geometry = new THREE.SphereGeometry(size[0] * 0.5);
     if (type == 0)        { // Plane is 0
       //geometry = new THREE.PlaneGeometry(size[0], size[1]); // Can't rotate this...
-      geometry = new THREE.BoxGeometry(size[0] * 2.0, 0.0001, size[1] * 2.0);
+      geometry = new THREE.BoxGeometry(100, 0.0001, 100);
     } else if (type == 1) { // Heightfield is 1
     } else if (type == 2) { // Sphere is 2
       geometry = new THREE.SphereGeometry(size[0]);
@@ -159,7 +161,8 @@ async function init() {
         model.mat_rgba()[(matId * 4) + 2],
         model.mat_rgba()[(matId * 4) + 3]];
       
-      // Construct Texture from 
+      // Construct Texture from
+      texture = undefined;
       let texId = model.mat_texid()[matId];
       if (texId != -1) {
         let width    = model.tex_width ()[texId];
@@ -174,6 +177,16 @@ async function init() {
           rgbaArray[(p * 4) + 3] = 1.0;
         }
         texture = new THREE.DataTexture(rgbaArray, width, height, THREE.RGBAFormat, THREE.UnsignedByteType);
+        if (height = 512) {
+          texture.repeat = new THREE.Vector2(50, 50);
+          texture.wrapS = THREE.RepeatWrapping;
+          texture.wrapT = THREE.RepeatWrapping;
+        } else {
+          texture.repeat = new THREE.Vector2(1, 1);
+          texture.wrapS = THREE.RepeatWrapping;
+          texture.wrapT = THREE.RepeatWrapping;
+        }
+
         texture.needsUpdate = true;
       }
     }
@@ -198,6 +211,10 @@ async function init() {
     getPosition  (model.geom_pos (), g, mesh.position  );
     getQuaternion(model.geom_quat(), g, mesh.quaternion);
     if (type == 4) { mesh.scale.set(size[0], size[2], size[1]) } // Stretch the Ellipsoid
+  }
+
+  for (let g = 0; g < model.nlight(); g++) {
+    // TODO: Spawn Lights
   }
 
   for (let b = 0; b < model.nbody(); b++) {
