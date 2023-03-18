@@ -276,22 +276,27 @@ type ReturnToType<R extends Emscripten.JSType | null> = R extends null
 : StringToType<Exclude<R, null>>;
 
 
-interface Model {
+export interface Model {
   load_from_xml(str: string): Model;
   // MODEL_INTERFACE
 }
 
-interface Simulation {
+export interface State {
+}
+
+export interface Simulation {
   state() : State;
   model() : Model;
-  step () : void;
+  step(): void;
+  applyForce (fx:number, fy:number, fz:number, tx:number, ty:number, tz:number, px:number, py:number, pz:number, body_id:number) : void;
   // DATA_INTERFACE
 }
 
-interface mujoco extends EmscriptenModule {
+export interface mujoco extends EmscriptenModule {
   FS    : typeof FS;
   MEMFS : typeof MEMFS;
   Model : Model;
+  State : State;
   Simulation : Simulation;
 }
 declare var load_mujoco: EmscriptenModuleFactory<mujoco>;

@@ -8,16 +8,18 @@ import load_mujoco from "./mujoco_wasm.js"
 
 let container, controls; // ModelLoader
 let camera, scene, renderer, gridHelper, file = {}, material, sphere;
-//** @type {mujoco.Model} */
+/** @type {mujoco.Model} */
 let model;
-//** @type {mujoco.State} */
+/** @type {mujoco.State} */
 let state;
-//** @type {mujoco.Simulation} */
+/** @type {mujoco.Simulation} */
 let simulation;
 /** @type {THREE.Mesh} */
 let mainModel, connections;
 /** @type {THREE.Vector3} */
-let tmp1 = new THREE.Vector3();
+let tmpVec = new THREE.Vector3();
+/** @type {THREE.Quaternion} */
+let tmpQuat = new THREE.Quaternion();
 let raycaster, pointer = new THREE.Vector2();
 const params = { acceleration: 0.0 };
 
@@ -120,6 +122,8 @@ async function init() {
   model       = mujoco.Model.load_from_xml("/working/"+xmlName);
   state       = new mujoco.State     (model);
   simulation  = new mujoco.Simulation(model, state);
+
+  console.log(model, model.getVal());
 
   // Decode the null-terminated string names
   let textDecoder = new TextDecoder("utf-8");
@@ -280,7 +284,7 @@ function animate(time) {
 }
 
 function getPosition(buffer, index, target) {
-  target.set(
+  return target.set(
      buffer[(index * 3) + 0],
      buffer[(index * 3) + 2],
     -buffer[(index * 3) + 1]);
@@ -294,6 +298,9 @@ function getQuaternion(buffer, index, target) {
     -buffer[(index * 4) + 0]);
 }
 
+function toMujocoPos(target) { target.set(target.x, -target.z, target.y); }
+//function toMujocoPos(target) { target.set(-target.x, target.z, target.y); }
+
 let mujoco_time = 0.0;
 function render(timeMS) {
   controls.update();
@@ -302,17 +309,25 @@ function render(timeMS) {
   if (timeMS - mujoco_time > 1000.0) { mujoco_time = timeMS; }
   while (mujoco_time < timeMS) {
     simulation.step();
-    simulation.qvel()[2] -= params["acceleration"];
-    for (let b = 0; b < model.nbody(); b++) {
-      getPosition(simulation.xpos(), b, bodies[b].position);
-      getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
-    }
-    for (let l = 0; l < model.nlight(); l++) {
-      getPosition(simulation.light_xpos(), l, lights[l].position);
-      getPosition(simulation.light_xdir(), l, tmp1);
-      lights[l].lookAt(tmp1.add(lights[l].position));
-    }
+
+    // Reset Applied Forces
+    for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; }
+    let force = new THREE.Vector3(0, 0, params["acceleration"] * 10000); // Define force in global space
+    toMujocoPos(getPosition(simulation.xpos(), 1, tmpVec)); // Apply the force to this point in space
+    simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, tmpVec.x, tmpVec.y, tmpVec.z, 1); // Body ID
+
     mujoco_time += 5.0; // Assume each MuJoCo timestep is 5ms for now
+  }
+
+  // Set the transforms of bodies and lights
+  for (let b = 0; b < model.nbody(); b++) {
+    getPosition  (simulation.xpos (), b, bodies[b].position);
+    getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
+  }
+  for (let l = 0; l < model.nlight(); l++) {
+    getPosition(simulation.light_xpos(), l, lights[l].position);
+    getPosition(simulation.light_xdir(), l, tmpVec);
+    lights[l].lookAt(tmpVec.add(lights[l].position));
   }
 
   renderer.render( scene, camera );
