@@ -943,7 +943,6 @@ interface Model {
   name_pluginadr        ():   Int32Array;
   /** names of all objects, 0-terminated       (nnames x 1)*/
   names                 ():   Uint8Array;
-
 }
 
 interface mujoco extends EmscriptenModule {

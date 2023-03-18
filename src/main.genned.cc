@@ -383,7 +383,6 @@ public:
   val name_pluginadr        () { return val(typed_memory_view(m->nplugin         * 1        , m->name_pluginadr         )); }
   val names                 () { return val(typed_memory_view(m->nnames          * 1        , m->names                  )); }
 
-
 private:
   mjModel *m;
 };
@@ -779,7 +778,6 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("name_keyadr"           , &Model::name_keyadr           )
       .function("name_pluginadr"        , &Model::name_pluginadr        )
       .function("names"                 , &Model::names                 )
-
 ;
 
   class_<State>("State")
