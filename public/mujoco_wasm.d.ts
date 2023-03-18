@@ -945,10 +945,160 @@ interface Model {
   names                 ():   Uint8Array;
 }
 
+interface Simulation {
+  state() : State;
+  model() : Model;
+  step () : void;
+  // DATA_INTERFACE
+  /** position                                 (nq x 1)*/
+  qpos                  (): Float64Array;
+  /** velocity                                 (nv x 1)*/
+  qvel                  (): Float64Array;
+  /** actuator activation                      (na x 1)*/
+  act                   (): Float64Array;
+  /** acceleration used for warmstart          (nv x 1)*/
+  qacc_warmstart        (): Float64Array;
+  /** plugin state                             (npluginstate x 1)*/
+  plugin_state          (): Float64Array;
+  /** control                                  (nu x 1)*/
+  ctrl                  (): Float64Array;
+  /** applied generalized force                (nv x 1)*/
+  qfrc_applied          (): Float64Array;
+  /** applied Cartesian force/torque           (nbody x 6)*/
+  xfrc_applied          (): Float64Array;
+  /** positions of mocap bodies                (nmocap x 3)*/
+  mocap_pos             (): Float64Array;
+  /** orientations of mocap bodies             (nmocap x 4)*/
+  mocap_quat            (): Float64Array;
+  /** acceleration                             (nv x 1)*/
+  qacc                  (): Float64Array;
+  /** time-derivative of actuator activation   (na x 1)*/
+  act_dot               (): Float64Array;
+  /** user data, not touched by engine         (nuserdata x 1)*/
+  userdata              (): Float64Array;
+  /** sensor data array                        (nsensordata x 1)*/
+  sensordata            (): Float64Array;
+  /** copy of m->plugin, required for deletion (nplugin x 1)*/
+  plugin                ():   Int32Array;
+  /** pointer to plugin-managed data structure (nplugin x 1)*/
+  plugin_data           (): BigUint64Array;
+  /** Cartesian position of body frame         (nbody x 3)*/
+  xpos                  (): Float64Array;
+  /** Cartesian orientation of body frame      (nbody x 4)*/
+  xquat                 (): Float64Array;
+  /** Cartesian orientation of body frame      (nbody x 9)*/
+  xmat                  (): Float64Array;
+  /** Cartesian position of body com           (nbody x 3)*/
+  xipos                 (): Float64Array;
+  /** Cartesian orientation of body inertia    (nbody x 9)*/
+  ximat                 (): Float64Array;
+  /** Cartesian position of joint anchor       (njnt x 3)*/
+  xanchor               (): Float64Array;
+  /** Cartesian joint axis                     (njnt x 3)*/
+  xaxis                 (): Float64Array;
+  /** Cartesian geom position                  (ngeom x 3)*/
+  geom_xpos             (): Float64Array;
+  /** Cartesian geom orientation               (ngeom x 9)*/
+  geom_xmat             (): Float64Array;
+  /** Cartesian site position                  (nsite x 3)*/
+  site_xpos             (): Float64Array;
+  /** Cartesian site orientation               (nsite x 9)*/
+  site_xmat             (): Float64Array;
+  /** Cartesian camera position                (ncam x 3)*/
+  cam_xpos              (): Float64Array;
+  /** Cartesian camera orientation             (ncam x 9)*/
+  cam_xmat              (): Float64Array;
+  /** Cartesian light position                 (nlight x 3)*/
+  light_xpos            (): Float64Array;
+  /** Cartesian light direction                (nlight x 3)*/
+  light_xdir            (): Float64Array;
+  /** center of mass of each subtree           (nbody x 3)*/
+  subtree_com           (): Float64Array;
+  /** com-based motion axis of each dof        (nv x 6)*/
+  cdof                  (): Float64Array;
+  /** com-based body inertia and mass          (nbody x 10)*/
+  cinert                (): Float64Array;
+  /** start address of tendon's path           (ntendon x 1)*/
+  ten_wrapadr           ():   Int32Array;
+  /** number of wrap points in path            (ntendon x 1)*/
+  ten_wrapnum           ():   Int32Array;
+  /** number of non-zeros in Jacobian row      (ntendon x 1)*/
+  ten_J_rownnz          ():   Int32Array;
+  /** row start address in colind array        (ntendon x 1)*/
+  ten_J_rowadr          ():   Int32Array;
+  /** tendon lengths                           (ntendon x 1)*/
+  ten_length            (): Float64Array;
+  /** geom id; -1: site; -2: pulley            (nwrap*2 x 1)*/
+  wrap_obj              ():   Int32Array;
+  /** Cartesian 3D points in all path          (nwrap*2 x 3)*/
+  wrap_xpos             (): Float64Array;
+  /** actuator lengths                         (nu x 1)*/
+  actuator_length       (): Float64Array;
+  /** com-based composite inertia and mass     (nbody x 10)*/
+  crb                   (): Float64Array;
+  /** total inertia (sparse)                   (nM x 1)*/
+  qM                    (): Float64Array;
+  /** L'*D*L factorization of M (sparse)       (nM x 1)*/
+  qLD                   (): Float64Array;
+  /** 1/diag(D)                                (nv x 1)*/
+  qLDiagInv             (): Float64Array;
+  /** 1/sqrt(diag(D))                          (nv x 1)*/
+  qLDiagSqrtInv         (): Float64Array;
+  /** tendon velocities                        (ntendon x 1)*/
+  ten_velocity          (): Float64Array;
+  /** actuator velocities                      (nu x 1)*/
+  actuator_velocity     (): Float64Array;
+  /** com-based velocity [3D rot; 3D tran]     (nbody x 6)*/
+  cvel                  (): Float64Array;
+  /** time-derivative of cdof                  (nv x 6)*/
+  cdof_dot              (): Float64Array;
+  /** C(qpos,qvel)                             (nv x 1)*/
+  qfrc_bias             (): Float64Array;
+  /** passive force                            (nv x 1)*/
+  qfrc_passive          (): Float64Array;
+  /** linear velocity of subtree com           (nbody x 3)*/
+  subtree_linvel        (): Float64Array;
+  /** angular momentum about subtree com       (nbody x 3)*/
+  subtree_angmom        (): Float64Array;
+  /** L'*D*L factorization of modified M       (nM x 1)*/
+  qH                    (): Float64Array;
+  /** 1/diag(D) of modified M                  (nv x 1)*/
+  qHDiagInv             (): Float64Array;
+  /** non-zeros in each row                    (nv x 1)*/
+  D_rownnz              ():   Int32Array;
+  /** address of each row in D_colind          (nv x 1)*/
+  D_rowadr              ():   Int32Array;
+  /** column indices of non-zeros              (nD x 1)*/
+  D_colind              ():   Int32Array;
+  /** d (passive + actuator - bias) / d qvel   (nD x 1)*/
+  qDeriv                (): Float64Array;
+  /** sparse LU of (qM - dt*qDeriv)            (nD x 1)*/
+  qLU                   (): Float64Array;
+  /** actuator force in actuation space        (nu x 1)*/
+  actuator_force        (): Float64Array;
+  /** actuator force                           (nv x 1)*/
+  qfrc_actuator         (): Float64Array;
+  /** net unconstrained force                  (nv x 1)*/
+  qfrc_smooth           (): Float64Array;
+  /** unconstrained acceleration               (nv x 1)*/
+  qacc_smooth           (): Float64Array;
+  /** constraint force                         (nv x 1)*/
+  qfrc_constraint       (): Float64Array;
+  /** net external force; should equal:        (nv x 1)*/
+  qfrc_inverse          (): Float64Array;
+  /** com-based acceleration                   (nbody x 6)*/
+  cacc                  (): Float64Array;
+  /** com-based interaction force with parent  (nbody x 6)*/
+  cfrc_int              (): Float64Array;
+  /** com-based external force on body         (nbody x 6)*/
+  cfrc_ext              (): Float64Array;
+}
+
 interface mujoco extends EmscriptenModule {
   FS    : typeof FS;
   MEMFS : typeof MEMFS;
   Model : Model;
+  Simulation : Simulation;
 }
 declare var load_mujoco: EmscriptenModuleFactory<mujoco>;
 export default load_mujoco;

@@ -408,11 +408,87 @@ public:
   Model *model() { return _model; }
   void    step() { mj_step(_model->ptr(), _state->ptr()); }
 
-  val    xquat() { return val(typed_memory_view(_model->ptr()->nbody * 4, _state->ptr()->xquat)); }
-  val    xpos () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->xpos )); }
-  val    qpos () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qpos )); }
-  val    qvel () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qvel )); }
-  val    qacc () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qacc )); }
+  // MJDATA_DEFINITIONS
+  val qpos                  () { return val(typed_memory_view(_model->ptr()->nq              * 1        , _state->ptr()->qpos                   )); }
+  val qvel                  () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qvel                   )); }
+  val act                   () { return val(typed_memory_view(_model->ptr()->na              * 1        , _state->ptr()->act                    )); }
+  val qacc_warmstart        () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qacc_warmstart         )); }
+  val plugin_state          () { return val(typed_memory_view(_model->ptr()->npluginstate    * 1        , _state->ptr()->plugin_state           )); }
+  val ctrl                  () { return val(typed_memory_view(_model->ptr()->nu              * 1        , _state->ptr()->ctrl                   )); }
+  val qfrc_applied          () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qfrc_applied           )); }
+  val xfrc_applied          () { return val(typed_memory_view(_model->ptr()->nbody           * 6        , _state->ptr()->xfrc_applied           )); }
+  val mocap_pos             () { return val(typed_memory_view(_model->ptr()->nmocap          * 3        , _state->ptr()->mocap_pos              )); }
+  val mocap_quat            () { return val(typed_memory_view(_model->ptr()->nmocap          * 4        , _state->ptr()->mocap_quat             )); }
+  val qacc                  () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qacc                   )); }
+  val act_dot               () { return val(typed_memory_view(_model->ptr()->na              * 1        , _state->ptr()->act_dot                )); }
+  val userdata              () { return val(typed_memory_view(_model->ptr()->nuserdata       * 1        , _state->ptr()->userdata               )); }
+  val sensordata            () { return val(typed_memory_view(_model->ptr()->nsensordata     * 1        , _state->ptr()->sensordata             )); }
+  val plugin                () { return val(typed_memory_view(_model->ptr()->nplugin         * 1        , _state->ptr()->plugin                 )); }
+  val plugin_data           () { return val(typed_memory_view(_model->ptr()->nplugin         * 1        , _state->ptr()->plugin_data            )); }
+  val xpos                  () { return val(typed_memory_view(_model->ptr()->nbody           * 3        , _state->ptr()->xpos                   )); }
+  val xquat                 () { return val(typed_memory_view(_model->ptr()->nbody           * 4        , _state->ptr()->xquat                  )); }
+  val xmat                  () { return val(typed_memory_view(_model->ptr()->nbody           * 9        , _state->ptr()->xmat                   )); }
+  val xipos                 () { return val(typed_memory_view(_model->ptr()->nbody           * 3        , _state->ptr()->xipos                  )); }
+  val ximat                 () { return val(typed_memory_view(_model->ptr()->nbody           * 9        , _state->ptr()->ximat                  )); }
+  val xanchor               () { return val(typed_memory_view(_model->ptr()->njnt            * 3        , _state->ptr()->xanchor                )); }
+  val xaxis                 () { return val(typed_memory_view(_model->ptr()->njnt            * 3        , _state->ptr()->xaxis                  )); }
+  val geom_xpos             () { return val(typed_memory_view(_model->ptr()->ngeom           * 3        , _state->ptr()->geom_xpos              )); }
+  val geom_xmat             () { return val(typed_memory_view(_model->ptr()->ngeom           * 9        , _state->ptr()->geom_xmat              )); }
+  val site_xpos             () { return val(typed_memory_view(_model->ptr()->nsite           * 3        , _state->ptr()->site_xpos              )); }
+  val site_xmat             () { return val(typed_memory_view(_model->ptr()->nsite           * 9        , _state->ptr()->site_xmat              )); }
+  val cam_xpos              () { return val(typed_memory_view(_model->ptr()->ncam            * 3        , _state->ptr()->cam_xpos               )); }
+  val cam_xmat              () { return val(typed_memory_view(_model->ptr()->ncam            * 9        , _state->ptr()->cam_xmat               )); }
+  val light_xpos            () { return val(typed_memory_view(_model->ptr()->nlight          * 3        , _state->ptr()->light_xpos             )); }
+  val light_xdir            () { return val(typed_memory_view(_model->ptr()->nlight          * 3        , _state->ptr()->light_xdir             )); }
+  val subtree_com           () { return val(typed_memory_view(_model->ptr()->nbody           * 3        , _state->ptr()->subtree_com            )); }
+  val cdof                  () { return val(typed_memory_view(_model->ptr()->nv              * 6        , _state->ptr()->cdof                   )); }
+  val cinert                () { return val(typed_memory_view(_model->ptr()->nbody           * 10       , _state->ptr()->cinert                 )); }
+  val ten_wrapadr           () { return val(typed_memory_view(_model->ptr()->ntendon         * 1        , _state->ptr()->ten_wrapadr            )); }
+  val ten_wrapnum           () { return val(typed_memory_view(_model->ptr()->ntendon         * 1        , _state->ptr()->ten_wrapnum            )); }
+  val ten_J_rownnz          () { return val(typed_memory_view(_model->ptr()->ntendon         * 1        , _state->ptr()->ten_J_rownnz           )); }
+  val ten_J_rowadr          () { return val(typed_memory_view(_model->ptr()->ntendon         * 1        , _state->ptr()->ten_J_rowadr           )); }
+//val ten_J_colind          () { return val(typed_memory_view(m->ntendon         * MJ_M(nv  , m->ten_J_colind           )); }
+  val ten_length            () { return val(typed_memory_view(_model->ptr()->ntendon         * 1        , _state->ptr()->ten_length             )); }
+//val ten_J                 () { return val(typed_memory_view(m->ntendon         * MJ_M(nv  , m->ten_J                  )); }
+  val wrap_obj              () { return val(typed_memory_view(_model->ptr()->nwrap           * 2        , _state->ptr()->wrap_obj               )); }
+  val wrap_xpos             () { return val(typed_memory_view(_model->ptr()->nwrap           * 6        , _state->ptr()->wrap_xpos              )); }
+  val actuator_length       () { return val(typed_memory_view(_model->ptr()->nu              * 1        , _state->ptr()->actuator_length        )); }
+//val actuator_moment       () { return val(typed_memory_view(m->nu              * MJ_M(nv  , m->actuator_moment        )); }
+  val crb                   () { return val(typed_memory_view(_model->ptr()->nbody           * 10       , _state->ptr()->crb                    )); }
+  val qM                    () { return val(typed_memory_view(_model->ptr()->nM              * 1        , _state->ptr()->qM                     )); }
+  val qLD                   () { return val(typed_memory_view(_model->ptr()->nM              * 1        , _state->ptr()->qLD                    )); }
+  val qLDiagInv             () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qLDiagInv              )); }
+  val qLDiagSqrtInv         () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qLDiagSqrtInv          )); }
+  val ten_velocity          () { return val(typed_memory_view(_model->ptr()->ntendon         * 1        , _state->ptr()->ten_velocity           )); }
+  val actuator_velocity     () { return val(typed_memory_view(_model->ptr()->nu              * 1        , _state->ptr()->actuator_velocity      )); }
+  val cvel                  () { return val(typed_memory_view(_model->ptr()->nbody           * 6        , _state->ptr()->cvel                   )); }
+  val cdof_dot              () { return val(typed_memory_view(_model->ptr()->nv              * 6        , _state->ptr()->cdof_dot               )); }
+  val qfrc_bias             () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qfrc_bias              )); }
+  val qfrc_passive          () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qfrc_passive           )); }
+  val subtree_linvel        () { return val(typed_memory_view(_model->ptr()->nbody           * 3        , _state->ptr()->subtree_linvel         )); }
+  val subtree_angmom        () { return val(typed_memory_view(_model->ptr()->nbody           * 3        , _state->ptr()->subtree_angmom         )); }
+  val qH                    () { return val(typed_memory_view(_model->ptr()->nM              * 1        , _state->ptr()->qH                     )); }
+  val qHDiagInv             () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qHDiagInv              )); }
+  val D_rownnz              () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->D_rownnz               )); }
+  val D_rowadr              () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->D_rowadr               )); }
+  val D_colind              () { return val(typed_memory_view(_model->ptr()->nD              * 1        , _state->ptr()->D_colind               )); }
+  val qDeriv                () { return val(typed_memory_view(_model->ptr()->nD              * 1        , _state->ptr()->qDeriv                 )); }
+  val qLU                   () { return val(typed_memory_view(_model->ptr()->nD              * 1        , _state->ptr()->qLU                    )); }
+  val actuator_force        () { return val(typed_memory_view(_model->ptr()->nu              * 1        , _state->ptr()->actuator_force         )); }
+  val qfrc_actuator         () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qfrc_actuator          )); }
+  val qfrc_smooth           () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qfrc_smooth            )); }
+  val qacc_smooth           () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qacc_smooth            )); }
+  val qfrc_constraint       () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qfrc_constraint        )); }
+  val qfrc_inverse          () { return val(typed_memory_view(_model->ptr()->nv              * 1        , _state->ptr()->qfrc_inverse           )); }
+  val cacc                  () { return val(typed_memory_view(_model->ptr()->nbody           * 6        , _state->ptr()->cacc                   )); }
+  val cfrc_int              () { return val(typed_memory_view(_model->ptr()->nbody           * 6        , _state->ptr()->cfrc_int               )); }
+  val cfrc_ext              () { return val(typed_memory_view(_model->ptr()->nbody           * 6        , _state->ptr()->cfrc_ext               )); }
+
+  //val    xquat() { return val(typed_memory_view(_model->ptr()->nbody * 4, _state->ptr()->xquat)); }
+  //val    xpos () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->xpos )); }
+  //val    qpos () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qpos )); }
+  //val    qvel () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qvel )); }
+  //val    qacc () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qacc )); }
 
 private:
   Model *_model;
@@ -790,11 +866,82 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("step" , &Simulation::step)
       .function("state", &Simulation::state, allow_raw_pointers())
       .function("model", &Simulation::model, allow_raw_pointers())
-      .function("xquat", &Simulation::xquat)
-      .function("xpos" , &Simulation::xpos)
-      .function("qpos" , &Simulation::qpos)
-      .function("qvel" , &Simulation::qvel)
-      .function("qacc" , &Simulation::qacc);
+      // MJDATA_BINDINGS
+         .function("qpos"                  , &Simulation::qpos                  )
+      .function("qvel"                  , &Simulation::qvel                  )
+      .function("act"                   , &Simulation::act                   )
+      .function("qacc_warmstart"        , &Simulation::qacc_warmstart        )
+      .function("plugin_state"          , &Simulation::plugin_state          )
+      .function("ctrl"                  , &Simulation::ctrl                  )
+      .function("qfrc_applied"          , &Simulation::qfrc_applied          )
+      .function("xfrc_applied"          , &Simulation::xfrc_applied          )
+      .function("mocap_pos"             , &Simulation::mocap_pos             )
+      .function("mocap_quat"            , &Simulation::mocap_quat            )
+      .function("qacc"                  , &Simulation::qacc                  )
+      .function("act_dot"               , &Simulation::act_dot               )
+      .function("userdata"              , &Simulation::userdata              )
+      .function("sensordata"            , &Simulation::sensordata            )
+      .function("plugin"                , &Simulation::plugin                )
+      .function("plugin_data"           , &Simulation::plugin_data           )
+      .function("xpos"                  , &Simulation::xpos                  )
+      .function("xquat"                 , &Simulation::xquat                 )
+      .function("xmat"                  , &Simulation::xmat                  )
+      .function("xipos"                 , &Simulation::xipos                 )
+      .function("ximat"                 , &Simulation::ximat                 )
+      .function("xanchor"               , &Simulation::xanchor               )
+      .function("xaxis"                 , &Simulation::xaxis                 )
+      .function("geom_xpos"             , &Simulation::geom_xpos             )
+      .function("geom_xmat"             , &Simulation::geom_xmat             )
+      .function("site_xpos"             , &Simulation::site_xpos             )
+      .function("site_xmat"             , &Simulation::site_xmat             )
+      .function("cam_xpos"              , &Simulation::cam_xpos              )
+      .function("cam_xmat"              , &Simulation::cam_xmat              )
+      .function("light_xpos"            , &Simulation::light_xpos            )
+      .function("light_xdir"            , &Simulation::light_xdir            )
+      .function("subtree_com"           , &Simulation::subtree_com           )
+      .function("cdof"                  , &Simulation::cdof                  )
+      .function("cinert"                , &Simulation::cinert                )
+      .function("ten_wrapadr"           , &Simulation::ten_wrapadr           )
+      .function("ten_wrapnum"           , &Simulation::ten_wrapnum           )
+      .function("ten_J_rownnz"          , &Simulation::ten_J_rownnz          )
+      .function("ten_J_rowadr"          , &Simulation::ten_J_rowadr          )
+    //.function("ten_J_colind"          , &Model::ten_J_colind          )
+      .function("ten_length"            , &Simulation::ten_length            )
+    //.function("ten_J"                 , &Model::ten_J                 )
+      .function("wrap_obj"              , &Simulation::wrap_obj              )
+      .function("wrap_xpos"             , &Simulation::wrap_xpos             )
+      .function("actuator_length"       , &Simulation::actuator_length       )
+    //.function("actuator_moment"       , &Model::actuator_moment       )
+      .function("crb"                   , &Simulation::crb                   )
+      .function("qM"                    , &Simulation::qM                    )
+      .function("qLD"                   , &Simulation::qLD                   )
+      .function("qLDiagInv"             , &Simulation::qLDiagInv             )
+      .function("qLDiagSqrtInv"         , &Simulation::qLDiagSqrtInv         )
+      .function("ten_velocity"          , &Simulation::ten_velocity          )
+      .function("actuator_velocity"     , &Simulation::actuator_velocity     )
+      .function("cvel"                  , &Simulation::cvel                  )
+      .function("cdof_dot"              , &Simulation::cdof_dot              )
+      .function("qfrc_bias"             , &Simulation::qfrc_bias             )
+      .function("qfrc_passive"          , &Simulation::qfrc_passive          )
+      .function("subtree_linvel"        , &Simulation::subtree_linvel        )
+      .function("subtree_angmom"        , &Simulation::subtree_angmom        )
+      .function("qH"                    , &Simulation::qH                    )
+      .function("qHDiagInv"             , &Simulation::qHDiagInv             )
+      .function("D_rownnz"              , &Simulation::D_rownnz              )
+      .function("D_rowadr"              , &Simulation::D_rowadr              )
+      .function("D_colind"              , &Simulation::D_colind              )
+      .function("qDeriv"                , &Simulation::qDeriv                )
+      .function("qLU"                   , &Simulation::qLU                   )
+      .function("actuator_force"        , &Simulation::actuator_force        )
+      .function("qfrc_actuator"         , &Simulation::qfrc_actuator         )
+      .function("qfrc_smooth"           , &Simulation::qfrc_smooth           )
+      .function("qacc_smooth"           , &Simulation::qacc_smooth           )
+      .function("qfrc_constraint"       , &Simulation::qfrc_constraint       )
+      .function("qfrc_inverse"          , &Simulation::qfrc_inverse          )
+      .function("cacc"                  , &Simulation::cacc                  )
+      .function("cfrc_int"              , &Simulation::cfrc_int              )
+      .function("cfrc_ext"              , &Simulation::cfrc_ext              )
+      ;
 
   //value_object<mjModel>("mjModel")
   //    .field("ngeom"      , &mjModel::ngeom)

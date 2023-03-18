@@ -62,11 +62,13 @@ public:
   Model *model() { return _model; }
   void    step() { mj_step(_model->ptr(), _state->ptr()); }
 
-  val    xquat() { return val(typed_memory_view(_model->ptr()->nbody * 4, _state->ptr()->xquat)); }
-  val    xpos () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->xpos )); }
-  val    qpos () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qpos )); }
-  val    qvel () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qvel )); }
-  val    qacc () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qacc )); }
+  // MJDATA_DEFINITIONS
+
+  //val    xquat() { return val(typed_memory_view(_model->ptr()->nbody * 4, _state->ptr()->xquat)); }
+  //val    xpos () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->xpos )); }
+  //val    qpos () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qpos )); }
+  //val    qvel () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qvel )); }
+  //val    qacc () { return val(typed_memory_view(_model->ptr()->nbody * 3, _state->ptr()->qacc )); }
 
 private:
   Model *_model;
@@ -98,11 +100,8 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("step" , &Simulation::step)
       .function("state", &Simulation::state, allow_raw_pointers())
       .function("model", &Simulation::model, allow_raw_pointers())
-      .function("xquat", &Simulation::xquat)
-      .function("xpos" , &Simulation::xpos)
-      .function("qpos" , &Simulation::qpos)
-      .function("qvel" , &Simulation::qvel)
-      .function("qacc" , &Simulation::qacc);
+      // MJDATA_BINDINGS
+      ;
 
   //value_object<mjModel>("mjModel")
   //    .field("ngeom"      , &mjModel::ngeom)

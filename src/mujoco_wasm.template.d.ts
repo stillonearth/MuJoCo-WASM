@@ -281,10 +281,18 @@ interface Model {
   // MODEL_INTERFACE
 }
 
+interface Simulation {
+  state() : State;
+  model() : Model;
+  step () : void;
+  // DATA_INTERFACE
+}
+
 interface mujoco extends EmscriptenModule {
   FS    : typeof FS;
   MEMFS : typeof MEMFS;
   Model : Model;
+  Simulation : Simulation;
 }
 declare var load_mujoco: EmscriptenModuleFactory<mujoco>;
 export default load_mujoco;
