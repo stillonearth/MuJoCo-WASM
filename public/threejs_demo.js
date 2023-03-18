@@ -12,7 +12,7 @@ let mainModel, connections;
 /** @type {THREE.Vector3} */
 let tmp1 = new THREE.Vector3();
 let raycaster, pointer = new THREE.Vector2();
-const params = { alpha: 0.0 };
+const params = { acceleration: 0.0 };
 
 /** @type {Object.<number, THREE.Group>} */
 let bodies = { };
@@ -87,7 +87,7 @@ async function init() {
   });
 
   const gui = new GUI();
-  gui.add(params, "alpha", 0.0, 1.0, 0.001).name('Unfold Amount');
+  gui.add(params, "acceleration", -0.1, 0.1, 0.001).name('Artificial Acceleration');
   gui.open();
 
   material = new THREE.MeshPhysicalMaterial();
@@ -242,7 +242,7 @@ function render(time) {
 
   // Update MuJoCo Simulation
   simulation.step();
-  //simulation.qvel()[2] = 0.01;
+  simulation.qvel()[2] += params["acceleration"];
   for (let b = 0; b < model.nbody(); b++) {
     getPosition  (simulation.xpos (), b, bodies[b].position  );
     getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
