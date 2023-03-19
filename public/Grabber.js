@@ -87,15 +87,12 @@ export class Grabber {
         }
     }
     end(evt) {
-        if (this.active) {
-            if (this.physicsObject != null) {
-                //this.physicsObject.endGrab();
-                this.physicsObject = null;
-            }
-            this.active = false;
-            this.controls.enabled = true;
-            //this.controls.onPointerUp(evt);
-        }
+        //this.physicsObject.endGrab();
+        this.physicsObject = null;
+
+        this.active = false;
+        this.controls.enabled = true;
+        //this.controls.onPointerUp(evt);
         this.arrow.visible = false;
     }
     onPointer(evt) {
@@ -105,7 +102,7 @@ export class Grabber {
             this.mouseDown = true;
         } else if (evt.type == "pointermove" && this.mouseDown) {
             if (this.active) { this.move(evt.clientX, evt.clientY); }
-        } else if (evt.type == "pointerup" /*|| evt.type == "pointerout"*/) {
+        } else if (evt.type == "pointerup" || evt.type == "pointerout") {
             this.controls.enabled = true;
             this.end(evt);
             this.mouseDown = false;

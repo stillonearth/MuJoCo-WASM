@@ -3,17 +3,17 @@ import * as THREE from 'three';
 import { GUI           } from '../node_modules/three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
 import { Reflector } from './Reflector.js';
-import { Debug } from './Debug.js';
+//import { Debug } from './Debug.js';
 import { Grabber } from './Grabber.js';
 import load_mujoco from "./mujoco_wasm.js"
 
 let container, controls; // ModelLoader
-let camera, scene, renderer, gridHelper, file = {}, material, sphere;
-/** @type {mujoco.Model} */
+let camera, scene, renderer, material;
+//** @type {mujoco.Model} */
 let model;
-/** @type {mujoco.State} */
+//** @type {mujoco.State} */
 let state;
-/** @type {mujoco.Simulation} */
+//** @type {mujoco.Simulation} */
 let simulation;
 /** @type {THREE.Mesh} */
 let mainModel, connections;
@@ -22,8 +22,9 @@ let tmpVec = new THREE.Vector3();
 /** @type {THREE.Quaternion} */
 let tmpQuat = new THREE.Quaternion();
 let raycaster, pointer = new THREE.Vector2();
-const params = { acceleration: 0.0 };
+const params = { acceleration: 0.0, scene: "humanoid.xml" };
 let grabber;
+let mujoco;
 
 /** @type {Object.<number, THREE.Group>} */
 let bodies = {};
@@ -72,7 +73,9 @@ async function init() {
   window.addEventListener('resize', onWindowResize);
 
   const gui = new GUI();
-  gui.add(params, "acceleration", -0.1, 0.1, 0.001).name('Artificial Acceleration');
+  //gui.add(params, "acceleration", -0.1, 0.1, 0.001).name('Artificial Acceleration');
+  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Balloons": "balloons.xml",  "Hammock": "hammock.xml", "Flag": "flag.xml", "Mug": "mug.xml",  /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
+    .name('Example Scene').onChange(value => { scene.remove(bodies[0]); bodies = {}; lights = [];  loadSceneFromURL(value); } );
   gui.open();
 
   grabber = new Grabber(scene, renderer, camera, container.parentElement, controls);
@@ -80,22 +83,72 @@ async function init() {
   material = new THREE.MeshPhysicalMaterial();
   material.color = new THREE.Color(1, 1, 1);
 
-  let xmlName = 'humanoid.xml';
-
   // Load the MuJoCo WASM
-  const mujoco = await load_mujoco();
-  console.log(mujoco);
+  mujoco = await load_mujoco();
   // Set up Emscripten's Virtual File System
   mujoco.FS.mkdir('/working');
   mujoco.FS.mount(mujoco.MEMFS, { root: '.' }, '/working');
-  mujoco.FS.writeFile("/working/"+xmlName, await (await fetch("./public/scenes/"+xmlName)).text());
 
+  let allFiles = [
+    "agility_cassie/assets/achilles-rod.obj",
+    "agility_cassie/assets/cassie-texture.png",
+    "agility_cassie/assets/foot-crank.obj",
+    "agility_cassie/assets/foot.obj",
+    "agility_cassie/assets/heel-spring.obj",
+    "agility_cassie/assets/hip-pitch.obj",
+    "agility_cassie/assets/hip-roll.obj",
+    "agility_cassie/assets/hip-yaw.obj",
+    "agility_cassie/assets/knee-spring.obj",
+    "agility_cassie/assets/knee.obj",
+    "agility_cassie/assets/pelvis.obj",
+    "agility_cassie/assets/plantar-rod.obj",
+    "agility_cassie/assets/shin.obj",
+    "agility_cassie/assets/tarsus.obj",
+    "agility_cassie/cassie.xml",
+    "agility_cassie/LICENSE",
+    "agility_cassie/README.md",
+    "agility_cassie/scene.xml",
+    "22_humanoids.xml",
+    "adhesion.xml",
+    "arm26.xml",
+    "balloons.xml",
+    "flag.xml",
+    "generate_index.py",
+    "hammock.xml",
+    "humanoid.xml",
+    "humanoid_body.xml",
+    "mug.obj",
+    "mug.png",
+    "mug.xml",
+    "simple.xml",
+    "slider_crank.xml"
+  ];
+
+  let requests  = allFiles.map((url) => fetch("./public/scenes/" + url));
+  let responses = await Promise.all(requests);
+  for (let i = 0; i < responses.length; i++) {
+    if (allFiles[i].endsWith(".png")) {
+      mujoco.FS.writeFile("/working/" + allFiles[i], new Uint8Array(await responses[i].arrayBuffer()));
+    } else {
+      let split = allFiles[i].split("/");
+      let working = '/working/';
+      for (let f = 0; f < split.length - 1; f++){
+        working += split[f];
+        if (!mujoco.FS.analyzePath(working).exists) { mujoco.FS.mkdir(working); }
+        working += "/";
+      }
+      mujoco.FS.writeFile("/working/" + allFiles[i], await responses[i].text());
+    }
+  }
+
+  await loadSceneFromURL("humanoid.xml");
+}
+
+async function loadSceneFromURL(filename) {
   // Load in the state from XML
-  model       = mujoco.Model.load_from_xml("/working/"+xmlName);
+  model       = mujoco.Model.load_from_xml("/working/"+filename);
   state       = new mujoco.State     (model);
   simulation  = new mujoco.Simulation(model, state);
-
-  console.log(model, model.getVal());
 
   // Decode the null-terminated string names
   let textDecoder = new TextDecoder("utf-8");
@@ -109,10 +162,12 @@ async function init() {
     let size = [
       model.geom_size()[(g*3) + 0],
       model.geom_size()[(g*3) + 1],
-      model.geom_size()[(g*3) + 2]];
-    console.log("Found geometry", g, " for body", b, ", Type:", type, ", named:", names[model.name_bodyadr()[b]], "with mesh at:", model.geom_dataid()[g]);
+      model.geom_size()[(g * 3) + 2]];
+    // Figure out how to use model.name_bodyadr()[b]
+    console.log("Found geometry", g, " for body", b, ", Type:", type, ", named:", names[b+1], "with mesh at:", model.geom_dataid()[g]);
 
-    if (!(b in bodies)) { bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; bodies[b].bodyID = b; }
+    if (!(b in bodies)) { bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; bodies[b].bodyID = b; bodies[b].has_custom_mesh = false; }
+    if (bodies[b].has_custom_mesh && type != 7) { continue; }
 
     let geometry = new THREE.SphereGeometry(size[0] * 0.5);
     if (type == 0)        { // Plane is 0
@@ -122,7 +177,7 @@ async function init() {
     } else if (type == 2) { // Sphere is 2
       geometry = new THREE.SphereGeometry(size[0]);
     } else if (type == 3) { // Capsule is 3
-      geometry = new THREE.CapsuleGeometry(size[0], size[1] * 2.0);
+      geometry = new THREE.CapsuleGeometry(size[0], size[1] * 2.0, 20, 20);
     } else if (type == 4) { // Ellipsoid is 4
       geometry = new THREE.SphereGeometry(1); // Stretch this below
     } else if (type == 5) { // Cylinder is 5
@@ -130,10 +185,39 @@ async function init() {
     } else if (type == 6) { // Box is 6
       geometry = new THREE.BoxGeometry(size[0] * 2.0, size[2] * 2.0, size[1] * 2.0);
     } else if (type == 7) { // Generic Mesh is 7
-      geometry = new THREE.BufferGeometry();
-      // TODO: Populate the Buffer Geometry with Generic Mesh Data
-    } else if (type == 100) { // Arrow is 100
-    
+      geometry = new THREE.BufferGeometry(); // TODO: Populate the Buffer Geometry with Generic Mesh Data
+      let meshID = model.geom_dataid()[g];
+      let vertex_buffer = model.mesh_vert().subarray(
+        model.mesh_vertadr()[meshID] * 3,
+        (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
+      for (let v = 0; v < vertex_buffer.length; v+=3){
+        //vertex_buffer[v + 0] =  vertex_buffer[v + 0];
+        let temp             =  vertex_buffer[v + 1];
+        vertex_buffer[v + 1] =  vertex_buffer[v + 2];
+        vertex_buffer[v + 2] = -temp;
+      }
+      
+      let normal_buffer = model.mesh_normal().subarray(
+        model.mesh_vertadr()[meshID] * 3,
+        (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
+      for (let v = 0; v < normal_buffer.length; v+=3){
+        //normal_buffer[v + 0] =  normal_buffer[v + 0];
+        let temp             =  normal_buffer[v + 1];
+        normal_buffer[v + 1] =  normal_buffer[v + 2];
+        normal_buffer[v + 2] = -temp;
+      }
+
+      let uv_buffer = model.mesh_texcoord().subarray(
+        model.mesh_texcoordadr()[meshID] * 2,
+        (model.mesh_texcoordadr()[meshID]  + model.mesh_vertnum()[meshID]) * 2);
+      let triangle_buffer = model.mesh_face().subarray(
+        model.mesh_faceadr()[meshID] * 3,
+        (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
+      geometry.setAttribute("position", new THREE.BufferAttribute(vertex_buffer, 3));
+      geometry.setAttribute("normal"  , new THREE.BufferAttribute(normal_buffer, 3));
+      geometry.setAttribute("uv"      , new THREE.BufferAttribute(    uv_buffer, 2));
+      geometry.setIndex    (Array.from(triangle_buffer));
+      bodies[b].has_custom_mesh = true;
     }
 
     // Set the Material Properties of incoming bodies
@@ -190,10 +274,10 @@ async function init() {
         transparent: color[3] < 1.0,
         opacity: color[3],
         specularIntensity: model.geom_matid()[g] != -1 ?       model.mat_specular   ()[model.geom_matid()[g]] *0.5 : undefined,
-        //reflectivity     : model.geom_matid()[g] != -1 ?       model.mat_reflectance()[model.geom_matid()[g]] : undefined,
+        reflectivity     : model.geom_matid()[g] != -1 ?       model.mat_reflectance()[model.geom_matid()[g]] : undefined,
         roughness        : model.geom_matid()[g] != -1 ? 1.0 - model.mat_shininess  ()[model.geom_matid()[g]] : undefined,
         metalness        : model.geom_matid()[g] != -1 ? 0.1 : undefined,
-        map: texture
+        map              : texture
       });
     }
 
@@ -206,7 +290,7 @@ async function init() {
     }
 
     mesh.castShadow = g == 0 ? false : true;
-    mesh.receiveShadow = true;
+    mesh.receiveShadow = type != 7;
     mesh.bodyID = b;
     bodies[b].add(mesh);
     getPosition  (model.geom_pos (), g, mesh.position  );
@@ -230,17 +314,20 @@ async function init() {
     light.shadow.camera.near = 1; // default
     light.shadow.camera.far = 10; // default
     //bodies[model.light_bodyid()].add(light);
-    scene.add(light);
+    if (bodies[0]) {
+      bodies[0].add(light);
+    } else {
+      scene.add(light);
+    }
     lights.push(light);
   }
 
   for (let b = 0; b < model.nbody(); b++) {
-    let parent_body = model.body_parentid()[b];
-    if (parent_body == 0) {
+    //let parent_body = model.body_parentid()[b];
+    if (b == 0 || !bodies[0]) {
       scene.add(bodies[b]);
     } else {
-      scene.add(bodies[b]);
-      //bodies[parent_body].add(bodies[b]);
+      bodies[0].add(bodies[b]);
     }
   }
 }
@@ -272,7 +359,6 @@ function getQuaternion(buffer, index, target) {
 }
 
 function toMujocoPos(target) { return target.set(target.x, -target.z, target.y); }
-//function toMujocoPos(target) { target.set(-target.x, target.z, target.y); }
 
 let mujoco_time = 0.0;
 function render(timeMS) {
@@ -285,9 +371,11 @@ function render(timeMS) {
 
     // Set the transforms of the bodies
     for (let b = 0; b < model.nbody(); b++) {
-      getPosition  (simulation.xpos (), b, bodies[b].position);
-      getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
-      bodies[b].updateWorldMatrix();
+      if (bodies[b]) {
+        getPosition(simulation.xpos(), b, bodies[b].position);
+        getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
+        bodies[b].updateWorldMatrix();
+      }
     }
 
     grabber.update();
@@ -295,20 +383,22 @@ function render(timeMS) {
     // Reset Applied Forces
     for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; }
     if (grabber.active && grabber.physicsObject) {
-      let force = toMujocoPos(grabber.currentWorld.clone().sub(grabber.worldHit).multiplyScalar(1000));
+      let bodyID = grabber.physicsObject.bodyID;
+      let force = toMujocoPos(grabber.currentWorld.clone().sub(grabber.worldHit).multiplyScalar(model.body_mass()[bodyID] * 250));
       let point = toMujocoPos(grabber.worldHit.clone());
-      simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, grabber.physicsObject.bodyID); // Body ID
+      simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, bodyID); // Body ID
     }
-    
 
-    mujoco_time += 5.0; // Assume each MuJoCo timestep is 5ms for now
+    mujoco_time += params.scene.includes("cassie") ? 0.5 : 5.0; // Assume each MuJoCo timestep is 5ms for now
   }
 
   // Set the transforms of lights
   for (let l = 0; l < model.nlight(); l++) {
-    getPosition(simulation.light_xpos(), l, lights[l].position);
-    getPosition(simulation.light_xdir(), l, tmpVec);
-    lights[l].lookAt(tmpVec.add(lights[l].position));
+    if (lights[l]) {
+      getPosition(simulation.light_xpos(), l, lights[l].position);
+      getPosition(simulation.light_xdir(), l, tmpVec);
+      lights[l].lookAt(tmpVec.add(lights[l].position));
+    }
   }
 
   renderer.render( scene, camera );
