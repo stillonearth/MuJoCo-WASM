@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 option(JS_ONLY "Compiles to native JS (No WASM)" OFF)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/public")
 
-project(mujoco-wasm)
+project(mujoco_wasm)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3")

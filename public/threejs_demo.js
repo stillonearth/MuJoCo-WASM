@@ -7,14 +7,20 @@ import { Reflector } from './Reflector.js';
 import { Grabber } from './Grabber.js';
 import load_mujoco from "./mujoco_wasm.js"
 
+// Load the MuJoCo WASM
+const mujoco = await load_mujoco();
+// Set up Emscripten's Virtual File System
+mujoco.FS.mkdir('/working');
+mujoco.FS.mount(mujoco.MEMFS, { root: '.' }, '/working');
+mujoco.FS.writeFile("/working/humanoid.xml", await (await fetch("./public/scenes/humanoid.xml")).text());
+
+// Load in the state from XML
+let model       = mujoco.Model.load_from_xml("/working/humanoid.xml");
+let state       = new mujoco.State     (model);
+let simulation  = new mujoco.Simulation(model, state);
+
 let container, controls; // ModelLoader
 let camera, scene, renderer, material;
-//** @type {mujoco.Model} */
-let model;
-//** @type {mujoco.State} */
-let state;
-//** @type {mujoco.Simulation} */
-let simulation;
 /** @type {THREE.Mesh} */
 let mainModel, connections;
 /** @type {THREE.Vector3} */
@@ -24,7 +30,6 @@ let tmpQuat = new THREE.Quaternion();
 let raycaster, pointer = new THREE.Vector2();
 const params = { acceleration: 0.0, scene: "humanoid.xml" };
 let grabber;
-let mujoco;
 
 /** @type {Object.<number, THREE.Group>} */
 let bodies = {};
@@ -83,11 +88,7 @@ async function init() {
   material = new THREE.MeshPhysicalMaterial();
   material.color = new THREE.Color(1, 1, 1);
 
-  // Load the MuJoCo WASM
-  mujoco = await load_mujoco();
-  // Set up Emscripten's Virtual File System
-  mujoco.FS.mkdir('/working');
-  mujoco.FS.mount(mujoco.MEMFS, { root: '.' }, '/working');
+
 
   let allFiles = [
     "agility_cassie/assets/achilles-rod.obj",

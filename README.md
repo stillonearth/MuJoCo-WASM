@@ -1,4 +1,4 @@
-# MuJoCo-WASM
+# mujoco_wasm
 
 MuJoCo built with emscripten for use in JavaScript and WebAssembly. This includes MuJoCo 2.3.1 built as static library and a simple example application.
 
@@ -8,7 +8,7 @@ This repo is a fork of @stillonearth 's starter repository, adding tons of funct
 
 **1. Install emscripten**
 
-**2. Build the MuJoCo-WASM Binary**
+**2. Build the mujoco_wasm Binary**
 
 ```bash
 mkdir build
@@ -32,10 +32,10 @@ mujoco = await load_mujoco();
 // Set up Emscripten's Virtual File System
 mujoco.FS.mkdir('/working');
 mujoco.FS.mount(mujoco.MEMFS, { root: '.' }, '/working');
-mujoco.FS.writeFile("/working/"+xmlName, await (await fetch("./public/scenes/humanoid.xml")).text());
+mujoco.FS.writeFile("/working/humanoid.xml", await (await fetch("./public/scenes/humanoid.xml")).text());
 
 // Load in the state from XML
-model       = mujoco.Model.load_from_xml("/working/"+filename);
+model       = mujoco.Model.load_from_xml("/working/humanoid.xml");
 state       = new mujoco.State     (model);
 simulation  = new mujoco.Simulation(model, state);
 ```

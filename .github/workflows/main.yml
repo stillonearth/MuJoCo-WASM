@@ -1,4 +1,4 @@
-name: Build mujoco-wasm
+name: Build mujoco_wasm
 
 on:
   pull_request:
