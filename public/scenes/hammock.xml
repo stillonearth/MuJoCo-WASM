@@ -55,7 +55,7 @@
       <pin coord="10 0"/>
       <pin coord="0 8"/>
       <pin coord="10 8"/>
-      <geom size=".095"/>
+      <geom group="2" size=".095"/>
       <joint kind="main" damping="10"/>
     </composite>
   </worldbody>

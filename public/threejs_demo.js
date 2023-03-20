@@ -180,8 +180,7 @@ async function loadSceneFromURL(filename) {
 
   for (let g = 0; g < model.ngeom(); g++) {
     // Only visualize geom groups up to 2 (same default behavior as simulate).
-    let visualize = model.geom_group()[g] < 3;
-    if (!visualize) { continue; }
+    if (!(model.geom_group()[g] < 3)) { continue; }
 
     let b = model.geom_bodyid()[g];
     let type = model.geom_type  ()[g];
