@@ -120,7 +120,7 @@ public:
   val  body_inertia          () { return val(typed_memory_view(m->nbody           * 3        , m->body_inertia           )); }
   val  body_invweight0       () { return val(typed_memory_view(m->nbody           * 2        , m->body_invweight0        )); }
   val  body_gravcomp         () { return val(typed_memory_view(m->nbody           * 1        , m->body_gravcomp          )); }
-//val body_user             () { return val(typed_memory_view(m->nbody           * MJ_M(nuser_body, m->body_user              )); }
+  val  body_user             () { return val(typed_memory_view(m->nbody           * m->nuser_body, m->body_user              )); }
   val  body_plugin           () { return val(typed_memory_view(m->nbody           * 1        , m->body_plugin            )); }
   val  jnt_type              () { return val(typed_memory_view(m->njnt            * 1        , m->jnt_type               )); }
   val  jnt_qposadr           () { return val(typed_memory_view(m->njnt            * 1        , m->jnt_qposadr            )); }
@@ -135,7 +135,7 @@ public:
   val  jnt_stiffness         () { return val(typed_memory_view(m->njnt            * 1        , m->jnt_stiffness          )); }
   val  jnt_range             () { return val(typed_memory_view(m->njnt            * 2        , m->jnt_range              )); }
   val  jnt_margin            () { return val(typed_memory_view(m->njnt            * 1        , m->jnt_margin             )); }
-//val jnt_user              () { return val(typed_memory_view(m->njnt            * MJ_M(nuser_jnt, m->jnt_user               )); }
+  val  jnt_user              () { return val(typed_memory_view(m->njnt            * m->nuser_jnt, m->jnt_user               )); }
   val  dof_bodyid            () { return val(typed_memory_view(m->nv              * 1        , m->dof_bodyid             )); }
   val  dof_jntid             () { return val(typed_memory_view(m->nv              * 1        , m->dof_jntid              )); }
   val  dof_parentid          () { return val(typed_memory_view(m->nv              * 1        , m->dof_parentid           )); }
@@ -169,7 +169,7 @@ public:
   val  geom_margin           () { return val(typed_memory_view(m->ngeom           * 1        , m->geom_margin            )); }
   val  geom_gap              () { return val(typed_memory_view(m->ngeom           * 1        , m->geom_gap               )); }
   val  geom_fluid            () { return val(typed_memory_view(m->ngeom           * mjNFLUID , m->geom_fluid             )); }
-//val geom_user             () { return val(typed_memory_view(m->ngeom           * MJ_M(nuser_geom, m->geom_user              )); }
+  val  geom_user             () { return val(typed_memory_view(m->ngeom           * m->nuser_geom, m->geom_user              )); }
   val  geom_rgba             () { return val(typed_memory_view(m->ngeom           * 4        , m->geom_rgba              )); }
   val  site_type             () { return val(typed_memory_view(m->nsite           * 1        , m->site_type              )); }
   val  site_bodyid           () { return val(typed_memory_view(m->nsite           * 1        , m->site_bodyid            )); }
@@ -179,7 +179,7 @@ public:
   val  site_size             () { return val(typed_memory_view(m->nsite           * 3        , m->site_size              )); }
   val  site_pos              () { return val(typed_memory_view(m->nsite           * 3        , m->site_pos               )); }
   val  site_quat             () { return val(typed_memory_view(m->nsite           * 4        , m->site_quat              )); }
-//val site_user             () { return val(typed_memory_view(m->nsite           * MJ_M(nuser_site, m->site_user              )); }
+  val  site_user             () { return val(typed_memory_view(m->nsite           * m->nuser_site, m->site_user              )); }
   val  site_rgba             () { return val(typed_memory_view(m->nsite           * 4        , m->site_rgba              )); }
   val  cam_mode              () { return val(typed_memory_view(m->ncam            * 1        , m->cam_mode               )); }
   val  cam_bodyid            () { return val(typed_memory_view(m->ncam            * 1        , m->cam_bodyid             )); }
@@ -191,7 +191,7 @@ public:
   val  cam_mat0              () { return val(typed_memory_view(m->ncam            * 9        , m->cam_mat0               )); }
   val  cam_fovy              () { return val(typed_memory_view(m->ncam            * 1        , m->cam_fovy               )); }
   val  cam_ipd               () { return val(typed_memory_view(m->ncam            * 1        , m->cam_ipd                )); }
-//val cam_user              () { return val(typed_memory_view(m->ncam            * MJ_M(nuser_cam, m->cam_user               )); }
+  val  cam_user              () { return val(typed_memory_view(m->ncam            * m->nuser_cam, m->cam_user               )); }
   val  light_mode            () { return val(typed_memory_view(m->nlight          * 1        , m->light_mode             )); }
   val  light_bodyid          () { return val(typed_memory_view(m->nlight          * 1        , m->light_bodyid           )); }
   val  light_targetbodyid    () { return val(typed_memory_view(m->nlight          * 1        , m->light_targetbodyid     )); }
@@ -294,7 +294,7 @@ public:
   val  tendon_lengthspring   () { return val(typed_memory_view(m->ntendon         * 2        , m->tendon_lengthspring    )); }
   val  tendon_length0        () { return val(typed_memory_view(m->ntendon         * 1        , m->tendon_length0         )); }
   val  tendon_invweight0     () { return val(typed_memory_view(m->ntendon         * 1        , m->tendon_invweight0      )); }
-//val tendon_user           () { return val(typed_memory_view(m->ntendon         * MJ_M(nuser_tendon, m->tendon_user            )); }
+  val  tendon_user           () { return val(typed_memory_view(m->ntendon         * m->nuser_tendon, m->tendon_user            )); }
   val  tendon_rgba           () { return val(typed_memory_view(m->ntendon         * 4        , m->tendon_rgba            )); }
   val  wrap_type             () { return val(typed_memory_view(m->nwrap           * 1        , m->wrap_type              )); }
   val  wrap_objid            () { return val(typed_memory_view(m->nwrap           * 1        , m->wrap_objid             )); }
@@ -321,7 +321,7 @@ public:
   val  actuator_acc0         () { return val(typed_memory_view(m->nu              * 1        , m->actuator_acc0          )); }
   val  actuator_length0      () { return val(typed_memory_view(m->nu              * 1        , m->actuator_length0       )); }
   val  actuator_lengthrange  () { return val(typed_memory_view(m->nu              * 2        , m->actuator_lengthrange   )); }
-//val actuator_user         () { return val(typed_memory_view(m->nu              * MJ_M(nuser_actuator, m->actuator_user          )); }
+  val  actuator_user         () { return val(typed_memory_view(m->nu              * m->nuser_actuator, m->actuator_user          )); }
   val  actuator_plugin       () { return val(typed_memory_view(m->nu              * 1        , m->actuator_plugin        )); }
   val  sensor_type           () { return val(typed_memory_view(m->nsensor         * 1        , m->sensor_type            )); }
   val  sensor_datatype       () { return val(typed_memory_view(m->nsensor         * 1        , m->sensor_datatype        )); }
@@ -334,7 +334,7 @@ public:
   val  sensor_adr            () { return val(typed_memory_view(m->nsensor         * 1        , m->sensor_adr             )); }
   val  sensor_cutoff         () { return val(typed_memory_view(m->nsensor         * 1        , m->sensor_cutoff          )); }
   val  sensor_noise          () { return val(typed_memory_view(m->nsensor         * 1        , m->sensor_noise           )); }
-//val sensor_user           () { return val(typed_memory_view(m->nsensor         * MJ_M(nuser_sensor, m->sensor_user            )); }
+  val  sensor_user           () { return val(typed_memory_view(m->nsensor         * m->nuser_sensor, m->sensor_user            )); }
   val  sensor_plugin         () { return val(typed_memory_view(m->nsensor         * 1        , m->sensor_plugin          )); }
   val  plugin                () { return val(typed_memory_view(m->nplugin         * 1        , m->plugin                 )); }
   val  plugin_stateadr       () { return val(typed_memory_view(m->nplugin         * 1        , m->plugin_stateadr        )); }
@@ -353,12 +353,12 @@ public:
   val  tuple_objid           () { return val(typed_memory_view(m->ntupledata      * 1        , m->tuple_objid            )); }
   val  tuple_objprm          () { return val(typed_memory_view(m->ntupledata      * 1        , m->tuple_objprm           )); }
   val  key_time              () { return val(typed_memory_view(m->nkey            * 1        , m->key_time               )); }
-//val key_qpos              () { return val(typed_memory_view(m->nkey            * MJ_M(nq  , m->key_qpos               )); }
-//val key_qvel              () { return val(typed_memory_view(m->nkey            * MJ_M(nv  , m->key_qvel               )); }
-//val key_act               () { return val(typed_memory_view(m->nkey            * MJ_M(na  , m->key_act                )); }
-//val key_mpos              () { return val(typed_memory_view(m->nkey            * MJ_M(nmocap, m->key_mpos               )); }
-//val key_mquat             () { return val(typed_memory_view(m->nkey            * MJ_M(nmocap, m->key_mquat              )); }
-//val key_ctrl              () { return val(typed_memory_view(m->nkey            * MJ_M(nu  , m->key_ctrl               )); }
+  val  key_qpos              () { return val(typed_memory_view(m->nkey            * m->nq    , m->key_qpos               )); }
+  val  key_qvel              () { return val(typed_memory_view(m->nkey            * m->nv    , m->key_qvel               )); }
+  val  key_act               () { return val(typed_memory_view(m->nkey            * m->na    , m->key_act                )); }
+  val  key_mpos              () { return val(typed_memory_view(m->nkey            * m->nmocap, m->key_mpos               )); }
+  val  key_mquat             () { return val(typed_memory_view(m->nkey            * m->nmocap, m->key_mquat              )); }
+  val  key_ctrl              () { return val(typed_memory_view(m->nkey            * m->nu    , m->key_ctrl               )); }
   val  name_bodyadr          () { return val(typed_memory_view(m->nbody           * 1        , m->name_bodyadr           )); }
   val  name_jntadr           () { return val(typed_memory_view(m->njnt            * 1        , m->name_jntadr            )); }
   val  name_geomadr          () { return val(typed_memory_view(m->ngeom           * 1        , m->name_geomadr           )); }
@@ -458,13 +458,13 @@ public:
   val  ten_wrapnum           () { return val(typed_memory_view(_model->ptr()->ntendon         * 1        , _state->ptr()->ten_wrapnum            )); }
   val  ten_J_rownnz          () { return val(typed_memory_view(_model->ptr()->ntendon         * 1        , _state->ptr()->ten_J_rownnz           )); }
   val  ten_J_rowadr          () { return val(typed_memory_view(_model->ptr()->ntendon         * 1        , _state->ptr()->ten_J_rowadr           )); }
-//val ten_J_colind          () { return val(typed_memory_view(m->ntendon         * MJ_M(nv  , m->ten_J_colind           )); }
+  val  ten_J_colind          () { return val(typed_memory_view(_model->ptr()->ntendon         * _model->ptr()->nv, _state->ptr()->ten_J_colind           )); }
   val  ten_length            () { return val(typed_memory_view(_model->ptr()->ntendon         * 1        , _state->ptr()->ten_length             )); }
-//val ten_J                 () { return val(typed_memory_view(m->ntendon         * MJ_M(nv  , m->ten_J                  )); }
+  val  ten_J                 () { return val(typed_memory_view(_model->ptr()->ntendon         * _model->ptr()->nv, _state->ptr()->ten_J                  )); }
   val  wrap_obj              () { return val(typed_memory_view(_model->ptr()->nwrap           * 2        , _state->ptr()->wrap_obj               )); }
   val  wrap_xpos             () { return val(typed_memory_view(_model->ptr()->nwrap           * 6        , _state->ptr()->wrap_xpos              )); }
   val  actuator_length       () { return val(typed_memory_view(_model->ptr()->nu              * 1        , _state->ptr()->actuator_length        )); }
-//val actuator_moment       () { return val(typed_memory_view(m->nu              * MJ_M(nv  , m->actuator_moment        )); }
+  val  actuator_moment       () { return val(typed_memory_view(_model->ptr()->nu              * _model->ptr()->nv, _state->ptr()->actuator_moment        )); }
   val  crb                   () { return val(typed_memory_view(_model->ptr()->nbody           * 10       , _state->ptr()->crb                    )); }
   val  qM                    () { return val(typed_memory_view(_model->ptr()->nM              * 1        , _state->ptr()->qM                     )); }
   val  qLD                   () { return val(typed_memory_view(_model->ptr()->nM              * 1        , _state->ptr()->qLD                    )); }
@@ -637,7 +637,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("body_inertia"          , &Model::body_inertia          )
       .function("body_invweight0"       , &Model::body_invweight0       )
       .function("body_gravcomp"         , &Model::body_gravcomp         )
-    //.function("body_user"             , &Model::body_user             )
+      .function("body_user"             , &Model::body_user             )
       .function("body_plugin"           , &Model::body_plugin           )
       .function("jnt_type"              , &Model::jnt_type              )
       .function("jnt_qposadr"           , &Model::jnt_qposadr           )
@@ -652,7 +652,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("jnt_stiffness"         , &Model::jnt_stiffness         )
       .function("jnt_range"             , &Model::jnt_range             )
       .function("jnt_margin"            , &Model::jnt_margin            )
-    //.function("jnt_user"              , &Model::jnt_user              )
+      .function("jnt_user"              , &Model::jnt_user              )
       .function("dof_bodyid"            , &Model::dof_bodyid            )
       .function("dof_jntid"             , &Model::dof_jntid             )
       .function("dof_parentid"          , &Model::dof_parentid          )
@@ -686,7 +686,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("geom_margin"           , &Model::geom_margin           )
       .function("geom_gap"              , &Model::geom_gap              )
       .function("geom_fluid"            , &Model::geom_fluid            )
-    //.function("geom_user"             , &Model::geom_user             )
+      .function("geom_user"             , &Model::geom_user             )
       .function("geom_rgba"             , &Model::geom_rgba             )
       .function("site_type"             , &Model::site_type             )
       .function("site_bodyid"           , &Model::site_bodyid           )
@@ -696,7 +696,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("site_size"             , &Model::site_size             )
       .function("site_pos"              , &Model::site_pos              )
       .function("site_quat"             , &Model::site_quat             )
-    //.function("site_user"             , &Model::site_user             )
+      .function("site_user"             , &Model::site_user             )
       .function("site_rgba"             , &Model::site_rgba             )
       .function("cam_mode"              , &Model::cam_mode              )
       .function("cam_bodyid"            , &Model::cam_bodyid            )
@@ -708,7 +708,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("cam_mat0"              , &Model::cam_mat0              )
       .function("cam_fovy"              , &Model::cam_fovy              )
       .function("cam_ipd"               , &Model::cam_ipd               )
-    //.function("cam_user"              , &Model::cam_user              )
+      .function("cam_user"              , &Model::cam_user              )
       .function("light_mode"            , &Model::light_mode            )
       .function("light_bodyid"          , &Model::light_bodyid          )
       .function("light_targetbodyid"    , &Model::light_targetbodyid    )
@@ -811,7 +811,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("tendon_lengthspring"   , &Model::tendon_lengthspring   )
       .function("tendon_length0"        , &Model::tendon_length0        )
       .function("tendon_invweight0"     , &Model::tendon_invweight0     )
-    //.function("tendon_user"           , &Model::tendon_user           )
+      .function("tendon_user"           , &Model::tendon_user           )
       .function("tendon_rgba"           , &Model::tendon_rgba           )
       .function("wrap_type"             , &Model::wrap_type             )
       .function("wrap_objid"            , &Model::wrap_objid            )
@@ -838,7 +838,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("actuator_acc0"         , &Model::actuator_acc0         )
       .function("actuator_length0"      , &Model::actuator_length0      )
       .function("actuator_lengthrange"  , &Model::actuator_lengthrange  )
-    //.function("actuator_user"         , &Model::actuator_user         )
+      .function("actuator_user"         , &Model::actuator_user         )
       .function("actuator_plugin"       , &Model::actuator_plugin       )
       .function("sensor_type"           , &Model::sensor_type           )
       .function("sensor_datatype"       , &Model::sensor_datatype       )
@@ -851,7 +851,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("sensor_adr"            , &Model::sensor_adr            )
       .function("sensor_cutoff"         , &Model::sensor_cutoff         )
       .function("sensor_noise"          , &Model::sensor_noise          )
-    //.function("sensor_user"           , &Model::sensor_user           )
+      .function("sensor_user"           , &Model::sensor_user           )
       .function("sensor_plugin"         , &Model::sensor_plugin         )
       .function("plugin"                , &Model::plugin                )
       .function("plugin_stateadr"       , &Model::plugin_stateadr       )
@@ -870,12 +870,12 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("tuple_objid"           , &Model::tuple_objid           )
       .function("tuple_objprm"          , &Model::tuple_objprm          )
       .function("key_time"              , &Model::key_time              )
-    //.function("key_qpos"              , &Model::key_qpos              )
-    //.function("key_qvel"              , &Model::key_qvel              )
-    //.function("key_act"               , &Model::key_act               )
-    //.function("key_mpos"              , &Model::key_mpos              )
-    //.function("key_mquat"             , &Model::key_mquat             )
-    //.function("key_ctrl"              , &Model::key_ctrl              )
+      .function("key_qpos"              , &Model::key_qpos              )
+      .function("key_qvel"              , &Model::key_qvel              )
+      .function("key_act"               , &Model::key_act               )
+      .function("key_mpos"              , &Model::key_mpos              )
+      .function("key_mquat"             , &Model::key_mquat             )
+      .function("key_ctrl"              , &Model::key_ctrl              )
       .function("name_bodyadr"          , &Model::name_bodyadr          )
       .function("name_jntadr"           , &Model::name_jntadr           )
       .function("name_geomadr"          , &Model::name_geomadr          )
@@ -951,13 +951,13 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("ten_wrapnum"           , &Simulation::ten_wrapnum           )
       .function("ten_J_rownnz"          , &Simulation::ten_J_rownnz          )
       .function("ten_J_rowadr"          , &Simulation::ten_J_rowadr          )
-    //.function("ten_J_colind"          , &Model::ten_J_colind          )
+      .function("ten_J_colind"          , &Simulation::ten_J_colind          )
       .function("ten_length"            , &Simulation::ten_length            )
-    //.function("ten_J"                 , &Model::ten_J                 )
+      .function("ten_J"                 , &Simulation::ten_J                 )
       .function("wrap_obj"              , &Simulation::wrap_obj              )
       .function("wrap_xpos"             , &Simulation::wrap_xpos             )
       .function("actuator_length"       , &Simulation::actuator_length       )
-    //.function("actuator_moment"       , &Model::actuator_moment       )
+      .function("actuator_moment"       , &Simulation::actuator_moment       )
       .function("crb"                   , &Simulation::crb                   )
       .function("qM"                    , &Simulation::qM                    )
       .function("qLD"                   , &Simulation::qLD                   )

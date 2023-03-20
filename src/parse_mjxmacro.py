@@ -12,29 +12,22 @@ types_to_array_types = {"int":"Int32Array", "mjtNum":"Float64Array", "float": "F
 def parse_pointer_line(line:str, header_lines:list[str], mj_definitions:list[str], emscripten_bindings:list[str], typescript_definitions:list[str]):
     elements = line.strip("    X(").split(""")""")[0].strip().split(",")
     elements = [e.strip() for e in elements]
-    dim_is_int   = elements[3].startswith("mj")
-    try:
-        multiplier = int(elements[3]) # This excepts if it's not an integer
-        dim_is_int = True
-    except:
-        pass
-    if dim_is_int:
-        if parse_mode[1] == "model":
-            mj_definitions .append('  val  '+elements[1].ljust(22)+'() { return val(typed_memory_view(m->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', m->'+elements[1].ljust(22)+' )); }')
-        else:
-            mj_definitions .append('  val  '+elements[1].ljust(22)+'() { return val(typed_memory_view(_model->ptr()->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', _state->ptr()->'+elements[1].ljust(22)+' )); }')
-        emscripten_bindings.append('      .function('+('"'+elements[1]+'"').ljust(24)+', &'+("Model" if parse_mode[1] == "model" else "Simulation")+'::'+elements[1].ljust(22)+')')
-        # Iterate through the original header file looking for comments
-        for model_line in header_lines:
-            if elements[0]+"* " in model_line and elements[1]+";" in model_line:
-                comment = model_line.split("//")[1].strip()
-                typescript_definitions.append("  /** "+ comment +"*/")
-                break
-        typescript_definitions.append('  '+elements[1].ljust(22)+'(): '+types_to_array_types[elements[0]].rjust(12)+';')
 
+    model_ptr = "m" if parse_mode[1] == "model" else "_model->ptr()"
+    if elements[3].startswith("MJ_M("):
+        elements[3] = model_ptr+"->"+elements[3][5:]
+    if parse_mode[1] == "model":
+        mj_definitions .append('  val  '+elements[1].ljust(22)+'() { return val(typed_memory_view(m->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', m->'+elements[1].ljust(22)+' )); }')
     else:
-        mj_definitions     .append('//val '+elements[1].ljust(22)+'() { return val(typed_memory_view(m->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', m->'+elements[1].ljust(22)+' )); }')
-        emscripten_bindings.append('    //.function('+('"'+elements[1]+'"').ljust(24)+', &Model::'+elements[1].ljust(22)+')')
+        mj_definitions .append('  val  '+elements[1].ljust(22)+'() { return val(typed_memory_view(_model->ptr()->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', _state->ptr()->'+elements[1].ljust(22)+' )); }')
+    emscripten_bindings.append('      .function('+('"'+elements[1]+'"').ljust(24)+', &'+("Model" if parse_mode[1] == "model" else "Simulation")+'::'+elements[1].ljust(22)+')')
+    # Iterate through the original header file looking for comments
+    for model_line in header_lines:
+        if elements[0]+"* " in model_line and elements[1]+";" in model_line:
+            comment = model_line.split("//")[1].strip()
+            typescript_definitions.append("  /** "+ comment +"*/")
+            break
+    typescript_definitions.append('  '+elements[1].ljust(22)+'(): '+types_to_array_types[elements[0]].rjust(12)+';')
 
 def parse_int_line(line:str, header_lines:list[str], mj_definitions:list[str], emscripten_bindings:list[str], typescript_definitions:list[str]):
     name = line.strip("    X(").split(""")""")[0].strip()

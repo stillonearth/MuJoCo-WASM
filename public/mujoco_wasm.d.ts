@@ -447,6 +447,8 @@ export interface Model {
   body_invweight0       (): Float64Array;
   /** antigravity force, units of body weight  (nbody x 1)*/
   body_gravcomp         (): Float64Array;
+  /** user data                                (nbody x nuser_body)*/
+  body_user             (): Float64Array;
   /** plugin instance id (-1 if not in use)    (nbody x 1)*/
   body_plugin           ():   Int32Array;
   /** type of joint (mjtJoint)                 (njnt x 1)*/
@@ -475,6 +477,8 @@ export interface Model {
   jnt_range             (): Float64Array;
   /** min distance for limit detection         (njnt x 1)*/
   jnt_margin            (): Float64Array;
+  /** user data                                (njnt x nuser_jnt)*/
+  jnt_user              (): Float64Array;
   /** id of dof's body                         (nv x 1)*/
   dof_bodyid            ():   Int32Array;
   /** id of dof's joint                        (nv x 1)*/
@@ -541,6 +545,8 @@ export interface Model {
   geom_gap              (): Float64Array;
   /** fluid interaction parameters             (ngeom x mjNFLUID)*/
   geom_fluid            (): Float64Array;
+  /** user data                                (ngeom x nuser_geom)*/
+  geom_user             (): Float64Array;
   /** rgba when material is omitted            (ngeom x 4)*/
   geom_rgba             (): Float32Array;
   /** geom type for rendering (mjtGeom)        (nsite x 1)*/
@@ -559,6 +565,8 @@ export interface Model {
   site_pos              (): Float64Array;
   /** local orientation offset rel. to body    (nsite x 4)*/
   site_quat             (): Float64Array;
+  /** user data                                (nsite x nuser_site)*/
+  site_user             (): Float64Array;
   /** rgba when material is omitted            (nsite x 4)*/
   site_rgba             (): Float32Array;
   /** camera tracking mode (mjtCamLight)       (ncam x 1)*/
@@ -581,6 +589,8 @@ export interface Model {
   cam_fovy              (): Float64Array;
   /** inter-pupilary distance                  (ncam x 1)*/
   cam_ipd               (): Float64Array;
+  /** user data                                (ncam x nuser_cam)*/
+  cam_user              (): Float64Array;
   /** light tracking mode (mjtCamLight)        (nlight x 1)*/
   light_mode            ():   Int32Array;
   /** id of light's body                       (nlight x 1)*/
@@ -785,6 +795,8 @@ export interface Model {
   tendon_length0        (): Float64Array;
   /** inv. weight in qpos0                     (ntendon x 1)*/
   tendon_invweight0     (): Float64Array;
+  /** user data                                (ntendon x nuser_tendon)*/
+  tendon_user           (): Float64Array;
   /** rgba when material is omitted            (ntendon x 4)*/
   tendon_rgba           (): Float32Array;
   /** wrap object type (mjtWrap)               (nwrap x 1)*/
@@ -837,6 +849,8 @@ export interface Model {
   actuator_length0      (): Float64Array;
   /** feasible actuator length range           (nu x 2)*/
   actuator_lengthrange  (): Float64Array;
+  /** user data                                (nu x nuser_actuator)*/
+  actuator_user         (): Float64Array;
   /** plugin instance id; -1: not a plugin     (nu x 1)*/
   actuator_plugin       ():   Int32Array;
   /** sensor type (mjtSensor)                  (nsensor x 1)*/
@@ -861,6 +875,8 @@ export interface Model {
   sensor_cutoff         (): Float64Array;
   /** noise standard deviation                 (nsensor x 1)*/
   sensor_noise          (): Float64Array;
+  /** user data                                (nsensor x nuser_sensor)*/
+  sensor_user           (): Float64Array;
   /** plugin instance id; -1: not a plugin     (nsensor x 1)*/
   sensor_plugin         ():   Int32Array;
   /** plugin instance id (-1 if not in use)    (nbody x 1)*/
@@ -897,6 +913,18 @@ export interface Model {
   tuple_objprm          (): Float64Array;
   /** key time                                 (nkey x 1)*/
   key_time              (): Float64Array;
+  /** key position                             (nkey x nq)*/
+  key_qpos              (): Float64Array;
+  /** key velocity                             (nkey x nv)*/
+  key_qvel              (): Float64Array;
+  /** key activation                           (nkey x na)*/
+  key_act               (): Float64Array;
+  /** key mocap position                       (nkey x 3*nmocap)*/
+  key_mpos              (): Float64Array;
+  /** key mocap quaternion                     (nkey x 4*nmocap)*/
+  key_mquat             (): Float64Array;
+  /** key control                              (nkey x nu)*/
+  key_ctrl              (): Float64Array;
   /** body name pointers                       (nbody x 1)*/
   name_bodyadr          ():   Int32Array;
   /** joint name pointers                      (njnt x 1)*/
@@ -1030,14 +1058,20 @@ export interface Simulation {
   ten_J_rownnz          ():   Int32Array;
   /** row start address in colind array        (ntendon x 1)*/
   ten_J_rowadr          ():   Int32Array;
+  /** column indices in sparse Jacobian        (ntendon x nv)*/
+  ten_J_colind          ():   Int32Array;
   /** tendon lengths                           (ntendon x 1)*/
   ten_length            (): Float64Array;
+  /** tendon Jacobian                          (ntendon x nv)*/
+  ten_J                 (): Float64Array;
   /** geom id; -1: site; -2: pulley            (nwrap*2 x 1)*/
   wrap_obj              ():   Int32Array;
   /** Cartesian 3D points in all path          (nwrap*2 x 3)*/
   wrap_xpos             (): Float64Array;
   /** actuator lengths                         (nu x 1)*/
   actuator_length       (): Float64Array;
+  /** actuator moments                         (nu x nv)*/
+  actuator_moment       (): Float64Array;
   /** com-based composite inertia and mass     (nbody x 10)*/
   crb                   (): Float64Array;
   /** total inertia (sparse)                   (nM x 1)*/
