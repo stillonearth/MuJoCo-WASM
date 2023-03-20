@@ -184,7 +184,7 @@ async function loadSceneFromURL(filename) {
     let size = [
       model.geom_size()[(g*3) + 0],
       model.geom_size()[(g*3) + 1],
-      model.geom_size()[(g * 3) + 2]];
+      model.geom_size()[(g*3) + 2]];
     // Figure out how to use model.name_bodyadr()[b]
     console.log("Found geometry", g, " for body", b, ", Type:", type, ", named:", names[b+1], "with mesh at:", model.geom_dataid()[g]);
 
@@ -356,7 +356,11 @@ async function loadSceneFromURL(filename) {
     //let parent_body = model.body_parentid()[b];
     if (b == 0 || !bodies[0]) {
       scene.add(bodies[b]);
+    } else if(bodies[b]){
+      bodies[0].add(bodies[b]);
     } else {
+      console.log("Body without Geometry detected; adding to bodies", b, bodies[b]);
+      bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; bodies[b].bodyID = b; bodies[b].has_custom_mesh = false;
       bodies[0].add(bodies[b]);
     }
   }
