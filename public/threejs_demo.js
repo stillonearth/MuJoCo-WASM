@@ -237,7 +237,7 @@ async function loadSceneFromURL(filename) {
           (model.mesh_texcoordadr()[meshID]  + model.mesh_vertnum()[meshID]) * 2);
         let triangle_buffer = model.mesh_face().subarray(
            model.mesh_faceadr()[meshID] * 3,
-          (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
+          (model.mesh_faceadr()[meshID]  + model.mesh_facenum()[meshID]) * 3);
         geometry.setAttribute("position", new THREE.BufferAttribute(vertex_buffer, 3));
         geometry.setAttribute("normal"  , new THREE.BufferAttribute(normal_buffer, 3));
         geometry.setAttribute("uv"      , new THREE.BufferAttribute(    uv_buffer, 2));
