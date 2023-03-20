@@ -179,6 +179,10 @@ async function loadSceneFromURL(filename) {
   console.log(names);
 
   for (let g = 0; g < model.ngeom(); g++) {
+    // Only visualize geom groups up to 2 (same default behavior as simulate).
+    let visualize = model.geom_group()[g] < 3;
+    if (!visualize) { continue; }
+
     let b = model.geom_bodyid()[g];
     let type = model.geom_type  ()[g];
     let size = [
@@ -209,7 +213,7 @@ async function loadSceneFromURL(filename) {
     } else if (type == 7) { // Generic Mesh is 7
       let meshID = model.geom_dataid()[g];
 
-      if (!(meshID in meshes)) { 
+      if (!(meshID in meshes)) {
         geometry = new THREE.BufferGeometry(); // TODO: Populate the Buffer Geometry with Generic Mesh Data
 
         let vertex_buffer = model.mesh_vert().subarray(
@@ -221,7 +225,7 @@ async function loadSceneFromURL(filename) {
           vertex_buffer[v + 1] =  vertex_buffer[v + 2];
           vertex_buffer[v + 2] = -temp;
         }
-        
+
         let normal_buffer = model.mesh_normal().subarray(
            model.mesh_vertadr()[meshID] * 3,
           (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
@@ -231,7 +235,7 @@ async function loadSceneFromURL(filename) {
           normal_buffer[v + 1] =  normal_buffer[v + 2];
           normal_buffer[v + 2] = -temp;
         }
-  
+
         let uv_buffer = model.mesh_texcoord().subarray(
            model.mesh_texcoordadr()[meshID] * 2,
           (model.mesh_texcoordadr()[meshID]  + model.mesh_vertnum()[meshID]) * 2);
