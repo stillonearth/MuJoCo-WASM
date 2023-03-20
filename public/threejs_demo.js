@@ -149,16 +149,17 @@ async function init() {
   let requests  = allFiles.map((url) => fetch("./public/scenes/" + url));
   let responses = await Promise.all(requests);
   for (let i = 0; i < responses.length; i++) {
-    if (allFiles[i].endsWith(".png")) {
+    let split = allFiles[i].split("/");
+    let working = '/working/';
+    for (let f = 0; f < split.length - 1; f++){
+      working += split[f];
+      if (!mujoco.FS.analyzePath(working).exists) { mujoco.FS.mkdir(working); }
+      working += "/";
+    }
+
+    if (allFiles[i].endsWith(".png") || allFiles[i].endsWith(".stl") || allFiles[i].endsWith(".skn")) {
       mujoco.FS.writeFile("/working/" + allFiles[i], new Uint8Array(await responses[i].arrayBuffer()));
     } else {
-      let split = allFiles[i].split("/");
-      let working = '/working/';
-      for (let f = 0; f < split.length - 1; f++){
-        working += split[f];
-        if (!mujoco.FS.analyzePath(working).exists) { mujoco.FS.mkdir(working); }
-        working += "/";
-      }
       mujoco.FS.writeFile("/working/" + allFiles[i], await responses[i].text());
     }
   }
