@@ -203,7 +203,7 @@ async function loadSceneFromURL(filename) {
     } else if (type == 4) { // Ellipsoid is 4
       geometry = new THREE.SphereGeometry(1); // Stretch this below
     } else if (type == 5) { // Cylinder is 5
-      geometry = new THREE.CylinderGeometry(size[1] * 2.0, size[1] * 2.0, size[0] * 2.0);
+      geometry = new THREE.CylinderGeometry(size[1], size[1], size[0] * 2.0);
     } else if (type == 6) { // Box is 6
       geometry = new THREE.BoxGeometry(size[0] * 2.0, size[2] * 2.0, size[1] * 2.0);
     } else if (type == 7) { // Generic Mesh is 7
@@ -264,7 +264,7 @@ async function loadSceneFromURL(filename) {
         model.mat_rgba()[(matId * 4) + 1],
         model.mat_rgba()[(matId * 4) + 2],
         model.mat_rgba()[(matId * 4) + 3]];
-      
+
       // Construct Texture from
       texture = undefined;
       let texId = model.mat_texid()[matId];
