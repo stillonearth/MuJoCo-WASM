@@ -45,8 +45,8 @@ export class Grabber {
         this.physicsObject = null;
         this.updateRaycaster(x, y);
         let intersects = this.raycaster.intersectObjects(this.scene.children);
-        if (intersects.length > 0) {
-            let obj = intersects[0].object;
+        for (let i = 0; i < intersects.length; i++) {
+            let obj = intersects[i].object;
             if (obj.bodyID && obj.bodyID > 0) {
                 this.physicsObject = obj;
                 this.grabDistance = intersects[0].distance;
@@ -60,6 +60,7 @@ export class Grabber {
                 this.worldHit.copy(hit);
                 this.currentWorld.copy(hit);
                 this.arrow.visible = true;
+                break;
             }
         }
     }
@@ -94,6 +95,7 @@ export class Grabber {
         this.controls.enabled = true;
         //this.controls.onPointerUp(evt);
         this.arrow.visible = false;
+        this.mouseDown = false;
     }
     onPointer(evt) {
         //evt.preventDefault();
@@ -102,10 +104,8 @@ export class Grabber {
             this.mouseDown = true;
         } else if (evt.type == "pointermove" && this.mouseDown) {
             if (this.active) { this.move(evt.clientX, evt.clientY); }
-        } else if (evt.type == "pointerup" || evt.type == "pointerout") {
-            this.controls.enabled = true;
+        } else if (evt.type == "pointerup" /*|| evt.type == "pointerout"*/) {
             this.end(evt);
-            this.mouseDown = false;
         }
     }
 }

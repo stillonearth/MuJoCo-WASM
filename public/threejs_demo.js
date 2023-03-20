@@ -33,6 +33,8 @@ let grabber;
 
 /** @type {Object.<number, THREE.Group>} */
 let bodies = {};
+/** @type {Object.<number, THREE.BufferGeometry>} */
+let meshes = {};
 /** @type {THREE.Light[]} */
 let lights = [];
 
@@ -79,16 +81,14 @@ async function init() {
 
   const gui = new GUI();
   //gui.add(params, "acceleration", -0.1, 0.1, 0.001).name('Artificial Acceleration');
-  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Balloons": "balloons.xml",  "Hammock": "hammock.xml", "Flag": "flag.xml", "Mug": "mug.xml",  /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
-    .name('Example Scene').onChange(value => { scene.remove(bodies[0]); bodies = {}; lights = [];  loadSceneFromURL(value); } );
+  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hand": "shadow_hand/scene_right.xml", "Balloons": "balloons.xml",  "Hammock": "hammock.xml", "Flag": "flag.xml", "Mug": "mug.xml",  /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
+    .name('Example Scene').onChange(value => { scene.remove(bodies[0]); bodies = {}; meshes = {}; lights = [];  loadSceneFromURL(value); } );
   gui.open();
 
   grabber = new Grabber(scene, renderer, camera, container.parentElement, controls);
 
   material = new THREE.MeshPhysicalMaterial();
   material.color = new THREE.Color(1, 1, 1);
-
-
 
   let allFiles = [
     "agility_cassie/assets/achilles-rod.obj",
@@ -109,6 +109,26 @@ async function init() {
     "agility_cassie/LICENSE",
     "agility_cassie/README.md",
     "agility_cassie/scene.xml",
+    "shadow_hand/assets/forearm_0.obj",
+    "shadow_hand/assets/forearm_1.obj",
+    "shadow_hand/assets/forearm_collision.obj",
+    "shadow_hand/assets/f_distal_pst.obj",
+    "shadow_hand/assets/f_knuckle.obj",
+    "shadow_hand/assets/f_middle.obj",
+    "shadow_hand/assets/f_proximal.obj",
+    "shadow_hand/assets/lf_metacarpal.obj",
+    "shadow_hand/assets/mounting_plate.obj",
+    "shadow_hand/assets/palm.obj",
+    "shadow_hand/assets/th_distal_pst.obj",
+    "shadow_hand/assets/th_middle.obj",
+    "shadow_hand/assets/th_proximal.obj",
+    "shadow_hand/assets/wrist.obj",
+    "shadow_hand/left_hand.xml",
+    "shadow_hand/LICENSE",
+    "shadow_hand/README.md",
+    "shadow_hand/right_hand.xml",
+    "shadow_hand/scene_left.xml",
+    "shadow_hand/scene_right.xml",
     "22_humanoids.xml",
     "adhesion.xml",
     "arm26.xml",
@@ -118,6 +138,7 @@ async function init() {
     "hammock.xml",
     "humanoid.xml",
     "humanoid_body.xml",
+    "index.json",
     "mug.obj",
     "mug.png",
     "mug.xml",
@@ -186,38 +207,46 @@ async function loadSceneFromURL(filename) {
     } else if (type == 6) { // Box is 6
       geometry = new THREE.BoxGeometry(size[0] * 2.0, size[2] * 2.0, size[1] * 2.0);
     } else if (type == 7) { // Generic Mesh is 7
-      geometry = new THREE.BufferGeometry(); // TODO: Populate the Buffer Geometry with Generic Mesh Data
       let meshID = model.geom_dataid()[g];
-      let vertex_buffer = model.mesh_vert().subarray(
-        model.mesh_vertadr()[meshID] * 3,
-        (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
-      for (let v = 0; v < vertex_buffer.length; v+=3){
-        //vertex_buffer[v + 0] =  vertex_buffer[v + 0];
-        let temp             =  vertex_buffer[v + 1];
-        vertex_buffer[v + 1] =  vertex_buffer[v + 2];
-        vertex_buffer[v + 2] = -temp;
-      }
-      
-      let normal_buffer = model.mesh_normal().subarray(
-        model.mesh_vertadr()[meshID] * 3,
-        (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
-      for (let v = 0; v < normal_buffer.length; v+=3){
-        //normal_buffer[v + 0] =  normal_buffer[v + 0];
-        let temp             =  normal_buffer[v + 1];
-        normal_buffer[v + 1] =  normal_buffer[v + 2];
-        normal_buffer[v + 2] = -temp;
+
+      if (!(meshID in meshes)) { 
+        geometry = new THREE.BufferGeometry(); // TODO: Populate the Buffer Geometry with Generic Mesh Data
+
+        let vertex_buffer = model.mesh_vert().subarray(
+           model.mesh_vertadr()[meshID] * 3,
+          (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
+        for (let v = 0; v < vertex_buffer.length; v+=3){
+          //vertex_buffer[v + 0] =  vertex_buffer[v + 0];
+          let temp             =  vertex_buffer[v + 1];
+          vertex_buffer[v + 1] =  vertex_buffer[v + 2];
+          vertex_buffer[v + 2] = -temp;
+        }
+        
+        let normal_buffer = model.mesh_normal().subarray(
+           model.mesh_vertadr()[meshID] * 3,
+          (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
+        for (let v = 0; v < normal_buffer.length; v+=3){
+          //normal_buffer[v + 0] =  normal_buffer[v + 0];
+          let temp             =  normal_buffer[v + 1];
+          normal_buffer[v + 1] =  normal_buffer[v + 2];
+          normal_buffer[v + 2] = -temp;
+        }
+  
+        let uv_buffer = model.mesh_texcoord().subarray(
+           model.mesh_texcoordadr()[meshID] * 2,
+          (model.mesh_texcoordadr()[meshID]  + model.mesh_vertnum()[meshID]) * 2);
+        let triangle_buffer = model.mesh_face().subarray(
+           model.mesh_faceadr()[meshID] * 3,
+          (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
+        geometry.setAttribute("position", new THREE.BufferAttribute(vertex_buffer, 3));
+        geometry.setAttribute("normal"  , new THREE.BufferAttribute(normal_buffer, 3));
+        geometry.setAttribute("uv"      , new THREE.BufferAttribute(    uv_buffer, 2));
+        geometry.setIndex    (Array.from(triangle_buffer));
+        meshes[meshID] = geometry;
+      } else {
+        geometry = meshes[meshID];
       }
 
-      let uv_buffer = model.mesh_texcoord().subarray(
-        model.mesh_texcoordadr()[meshID] * 2,
-        (model.mesh_texcoordadr()[meshID]  + model.mesh_vertnum()[meshID]) * 2);
-      let triangle_buffer = model.mesh_face().subarray(
-        model.mesh_faceadr()[meshID] * 3,
-        (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
-      geometry.setAttribute("position", new THREE.BufferAttribute(vertex_buffer, 3));
-      geometry.setAttribute("normal"  , new THREE.BufferAttribute(normal_buffer, 3));
-      geometry.setAttribute("uv"      , new THREE.BufferAttribute(    uv_buffer, 2));
-      geometry.setIndex    (Array.from(triangle_buffer));
       bodies[b].has_custom_mesh = true;
     }
 
