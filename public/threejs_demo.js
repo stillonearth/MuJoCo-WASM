@@ -27,7 +27,6 @@ let mainModel, connections;
 let tmpVec = new THREE.Vector3();
 /** @type {THREE.Quaternion} */
 let tmpQuat = new THREE.Quaternion();
-let raycaster, pointer = new THREE.Vector2();
 const params = { acceleration: 0.0, scene: "humanoid.xml" };
 let grabber;
 
@@ -73,9 +72,6 @@ async function init() {
   controls.dampingFactor = 0.10;
   controls.screenSpacePanning = true;
   controls.update();
-
-  raycaster = new THREE.Raycaster();
-  pointer   = new THREE.Vector2();
 
   window.addEventListener('resize', onWindowResize);
 

@@ -1096,6 +1096,84 @@ export interface Simulation {
   cfrc_int              (): Float64Array;
   /** com-based external force on body         (nbody x 6)*/
   cfrc_ext              (): Float64Array;
+  /** Advance simulation, use control callback to obtain external force and control.*/
+  step                  (): void;
+  /** Advance simulation in two steps: before external force and control is set by user.*/
+  step1                 (): void;
+  /** Advance simulation in two steps: after external force and control is set by user.*/
+  step2                 (): void;
+  /** Forward dynamics: same as mj_step but do not integrate in time.*/
+  forward               (): void;
+  /** Inverse dynamics: qacc must be set before calling.*/
+  inverse               (): void;
+  /** Reset data to defaults.*/
+  resetData             (): void;
+  /** Run position-dependent computations.*/
+  fwdPosition           (): void;
+  /** Run velocity-dependent computations.*/
+  fwdVelocity           (): void;
+  /** Compute actuator force qfrc_actuator.*/
+  fwdActuation          (): void;
+  /** Add up all non-constraint forces, compute qacc_smooth.*/
+  fwdAcceleration       (): void;
+  /** Run selected constraint solver.*/
+  fwdConstraint         (): void;
+  /** Euler integrator, semi-implicit in velocity.*/
+  Euler                 (): void;
+  /** Run position-dependent computations in inverse dynamics.*/
+  invPosition           (): void;
+  /** Run velocity-dependent computations in inverse dynamics.*/
+  invVelocity           (): void;
+  /** Apply the analytical formula for inverse constraint dynamics.*/
+  invConstraint         (): void;
+  /** Compare forward and inverse dynamics, save results in fwdinv.*/
+  compareFwdInv         (): void;
+  /** Evaluate position-dependent sensors.*/
+  sensorPos             (): void;
+  /** Evaluate velocity-dependent sensors.*/
+  sensorVel             (): void;
+  /** Evaluate acceleration and force-dependent sensors.*/
+  sensorAcc             (): void;
+  /** Evaluate position-dependent energy (potential).*/
+  energyPos             (): void;
+  /** Evaluate velocity-dependent energy (kinetic).*/
+  energyVel             (): void;
+  /** Check qpos, reset if any element is too big or nan.*/
+  checkPos              (): void;
+  /** Check qvel, reset if any element is too big or nan.*/
+  checkVel              (): void;
+  /** Check qacc, reset if any element is too big or nan.*/
+  checkAcc              (): void;
+  /** Run forward kinematics.*/
+  kinematics            (): void;
+  /** Map inertias and motion dofs to global frame centered at CoM.*/
+  comPos                (): void;
+  /** Compute camera and light positions and orientations.*/
+  camlight              (): void;
+  /** Compute tendon lengths, velocities and moment arms.*/
+  tendon                (): void;
+  /** Compute actuator transmission lengths and moments.*/
+  transmission          (): void;
+  /** Run composite rigid body inertia algorithm (CRB).*/
+  crbCalculate          (): void;
+  /** Compute sparse L'*D*L factorizaton of inertia matrix.*/
+  factorM               (): void;
+  /** Compute cvel, cdof_dot.*/
+  comVel                (): void;
+  /** Compute qfrc_passive from spring-dampers, viscosity and density.*/
+  passive               (): void;
+  /** subtree linear velocity and angular momentum*/
+  subtreeVel            (): void;
+  /** RNE with complete data: compute cacc, cfrc_ext, cfrc_int.*/
+  rnePostConstraint     (): void;
+  /** Run collision detection.*/
+  collision             (): void;
+  /** Construct constraints.*/
+  makeConstraint        (): void;
+  /** Compute inverse constraint inertia efc_AR.*/
+  projectConstraint     (): void;
+  /** Compute efc_vel, efc_aref.*/
+  referenceConstraint   (): void;
 }
 
 export interface mujoco extends EmscriptenModule {

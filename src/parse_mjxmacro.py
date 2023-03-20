@@ -20,9 +20,9 @@ def parse_pointer_line(line:str, header_lines:list[str], mj_definitions:list[str
         pass
     if dim_is_int:
         if parse_mode[1] == "model":
-            mj_definitions .append('  val '+elements[1].ljust(22)+'() { return val(typed_memory_view(m->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', m->'+elements[1].ljust(22)+' )); }')
+            mj_definitions .append('  val  '+elements[1].ljust(22)+'() { return val(typed_memory_view(m->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', m->'+elements[1].ljust(22)+' )); }')
         else:
-            mj_definitions .append('  val '+elements[1].ljust(22)+'() { return val(typed_memory_view(_model->ptr()->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', _state->ptr()->'+elements[1].ljust(22)+' )); }')
+            mj_definitions .append('  val  '+elements[1].ljust(22)+'() { return val(typed_memory_view(_model->ptr()->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', _state->ptr()->'+elements[1].ljust(22)+' )); }')
         emscripten_bindings.append('      .function('+('"'+elements[1]+'"').ljust(24)+', &'+("Model" if parse_mode[1] == "model" else "Simulation")+'::'+elements[1].ljust(22)+')')
         # Iterate through the original header file looking for comments
         for model_line in header_lines:
@@ -38,7 +38,7 @@ def parse_pointer_line(line:str, header_lines:list[str], mj_definitions:list[str
 
 def parse_int_line(line:str, header_lines:list[str], mj_definitions:list[str], emscripten_bindings:list[str], typescript_definitions:list[str]):
     name = line.strip("    X(").split(""")""")[0].strip()
-    mj_definitions     .append('  int '+name.ljust(14)+'() { return m->'+name.ljust(14)+'; }')
+    mj_definitions     .append('  int  '+name.ljust(14)+'() { return m->'+name.ljust(14)+'; }')
     emscripten_bindings.append('      .function('+('"'+name+'"').ljust(24)+', &Model::'+name.ljust(22)+')')
 
     # Iterate through the file looking for comments
@@ -90,6 +90,18 @@ with open("include/mujoco/mjxmacro.h") as f:
             parse_mode = ("pointers", "model")
         if "#define MJDATA_POINTERS" in line:
             parse_mode = ("pointers", "data")
+
+import functions
+for function in functions.FUNCTIONS:
+    #print("Function:", function)
+    param_types = [param.decltype for param in functions.FUNCTIONS[function].parameters]
+    if("const mjModel *" in param_types and "mjData *" in param_types and len(param_types) == 2):
+        #print("Function:", function, functions.FUNCTIONS[function].parameters)
+        name = function[3:] if function != "mj_crb" else function[3:] + "Calculate"
+        auto_gen_lines["data_definitions"].append("  void "+name.ljust(22)+"() { "+function.ljust(28)+"(_model->ptr(), _state->ptr()); }")
+        auto_gen_lines["data_bindings"   ].append('      .function('+('"'+name+'"').ljust(23)+' , &Simulation::'+name.ljust(22)+')')
+        auto_gen_lines["data_typescript" ].append("  /** "+ functions.FUNCTIONS[function].doc +"*/")
+        auto_gen_lines["data_typescript" ].append('  '+name.ljust(22)+'(): '+functions.FUNCTIONS[function].return_type.name+';')
 
 # Insert our auto-generated bindings into our template files
 with open("src/main.template.cc") as f:

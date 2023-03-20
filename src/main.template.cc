@@ -60,7 +60,6 @@ public:
 
   State *state() { return _state; }
   Model *model() { return _model; }
-  void    step() { mj_step(_model->ptr(), _state->ptr()); }
 
   void applyForce(
     mjtNum fx, mjtNum fy, mjtNum fz, 
