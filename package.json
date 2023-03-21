@@ -1,8 +1,8 @@
 {
   "name": "mujoco_wasm",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Run MuJoCo simulations in browser",
-  "main": "public/mujoco_wasm.js",
+  "main": "dist/mujoco_wasm.js",
   "directories": {
     "lib": "lib"
   },

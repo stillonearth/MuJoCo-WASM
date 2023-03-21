@@ -2,16 +2,16 @@
 import  *  as  THREE     from 'three';
 import { GUI           } from '../node_modules/three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
-import { Reflector     } from './Reflector.js';
-import { Grabber       } from './Grabber.js';
-import   load_mujoco     from "./mujoco_wasm.js";
+import { Reflector     } from './utils/Reflector.js';
+import { Grabber       } from './utils/Grabber.js';
+import   load_mujoco     from '../dist/mujoco_wasm.js';
 
 // Load the MuJoCo Module
 const mujoco = await load_mujoco();
 // Set up Emscripten's Virtual File System
 mujoco.FS.mkdir('/working');
 mujoco.FS.mount(mujoco.MEMFS, { root: '.' }, '/working');
-mujoco.FS.writeFile("/working/humanoid.xml", await (await fetch("./public/scenes/humanoid.xml")).text());
+mujoco.FS.writeFile("/working/humanoid.xml", await (await fetch("./examples/scenes/humanoid.xml")).text());
 
 // Load in the state from XML
 let model       = new mujoco.Model("/working/humanoid.xml");
@@ -138,7 +138,7 @@ async function init() {
     "slider_crank.xml"
   ];
 
-  let requests  = allFiles.map((url) => fetch("./public/scenes/" + url));
+  let requests  = allFiles.map((url) => fetch("./examples/scenes/" + url));
   let responses = await Promise.all(requests);
   for (let i = 0; i < responses.length; i++) {
     let split = allFiles[i].split("/");
@@ -398,7 +398,7 @@ function render(timeMS) {
 
   // Update MuJoCo Simulation
   let timestep = model.getOptions().timestep;
-  if (timeMS - mujoco_time > 1000.0) { mujoco_time = timeMS; }
+  if (timeMS - mujoco_time > 35.0) { mujoco_time = timeMS; }
   while (mujoco_time < timeMS) {
     simulation.step();
 

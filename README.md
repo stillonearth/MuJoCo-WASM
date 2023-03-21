@@ -10,6 +10,7 @@ This repo is a fork of @stillonearth 's starter repository, adding tons of funct
 
 **2. Build the mujoco_wasm Binary**
 
+On Linux, use:
 ```bash
 mkdir build
 cd build
@@ -17,9 +18,11 @@ emcmake cmake ..
 make
 ```
 
+On Windows, run `build_windows.bat`.
+
 *3. (Optional) Update MuJoCo libs*
 
-Build MuJoCo libs with wasm target and place to lib. Currently v0.3.1 included.
+Build MuJoCo libs with wasm target and place to lib. Currently v2.3.1 included.
 
 ## JavaScript API
 
@@ -32,7 +35,7 @@ const mujoco = await load_mujoco();
 // Set up Emscripten's Virtual File System
 mujoco.FS.mkdir('/working');
 mujoco.FS.mount(mujoco.MEMFS, { root: '.' }, '/working');
-mujoco.FS.writeFile("/working/humanoid.xml", await (await fetch("./public/scenes/humanoid.xml")).text());
+mujoco.FS.writeFile("/working/humanoid.xml", await (await fetch("./examples/scenes/humanoid.xml")).text());
 
 // Load in the state from XML
 let model       = new mujoco.Model("/working/humanoid.xml");
@@ -44,4 +47,6 @@ Typescript definitions are available.
 
 ## Work In Progress Disclaimer
 
-So far, mostly generic state variables are exposed.  Only three functions are exposed (loadXML, step, and applyForce).
+So far, most mjModel and mjData state variables and functions (that do not require custom structs) are exposed.
+
+Help appreciated.
