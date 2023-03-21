@@ -508,6 +508,10 @@ public:
   void   resetDataKeyframe   (int key             ) { return mj_resetDataKeyframe        (_model->ptr(), _state->ptr(), key); }
   void   deleteData          (                    ) { return mj_deleteData               (_state->ptr()       ); }
   void   resetCallbacks      (                    ) { return mj_resetCallbacks           (                    ); }
+  void   printFormattedModel (std::string filename, std::string float_format) { return mj_printFormattedModel      (_model->ptr(), filename.c_str(), float_format.c_str()); }
+  void   printModel          (std::string filename) { return mj_printModel               (_model->ptr(), filename.c_str()); }
+  void   printFormattedData  (std::string filename, std::string float_format) { return mj_printFormattedData       (_model->ptr(), _state->ptr(), filename.c_str(), float_format.c_str()); }
+  void   printData           (std::string filename) { return mj_printData                (_model->ptr(), _state->ptr(), filename.c_str()); }
   void   fwdPosition         (                    ) { return mj_fwdPosition              (_model->ptr(), _state->ptr()); }
   void   fwdVelocity         (                    ) { return mj_fwdVelocity              (_model->ptr(), _state->ptr()); }
   void   fwdActuation        (                    ) { return mj_fwdActuation             (_model->ptr(), _state->ptr()); }
@@ -545,15 +549,28 @@ public:
   int    isPyramidal         (                    ) { return mj_isPyramidal              (_model->ptr()       ); }
   int    isSparse            (                    ) { return mj_isSparse                 (_model->ptr()       ); }
   int    isDual              (                    ) { return mj_isDual                   (_model->ptr()       ); }
+  int    name2id             (int type, std::string name) { return mj_name2id                  (_model->ptr(), type, name.c_str()); }
+  std::string id2name             (int type, int id    ) { return std::string(mj_id2name                  (_model->ptr(), type, id)); }
   mjtNum getTotalmass        (                    ) { return mj_getTotalmass             (_model->ptr()       ); }
+  std::string getPluginConfig     (int plugin_id, std::string attrib) { return std::string(mj_getPluginConfig          (_model->ptr(), plugin_id, attrib.c_str())); }
+  void   loadPluginLibrary   (std::string path    ) { return mj_loadPluginLibrary        (path.c_str()        ); }
   int    version             (                    ) { return mj_version                  (                    ); }
+  std::string versionString       (                    ) { return std::string(mj_versionString            (                    )); }
   void   _rectangle          (mjrRect viewport, float r, float g, float b, float a) { return mjr_rectangle               (viewport, r, g, b, a); }
   void   _finish             (                    ) { return mjr_finish                  (                    ); }
   int    _getError           (                    ) { return mjr_getError                (                    ); }
   mjuiThemeSpacing i_themeSpacing      (int ind             ) { return mjui_themeSpacing           (ind                 ); }
   mjuiThemeColor i_themeColor        (int ind             ) { return mjui_themeColor             (ind                 ); }
+  void   _error              (std::string msg     ) { return mju_error                   (msg.c_str()         ); }
+  void   _error_i            (std::string msg, int i) { return mju_error_i                 (msg.c_str(), i      ); }
+  void   _error_s            (std::string msg, std::string text) { return mju_error_s                 (msg.c_str(), text.c_str()); }
+  void   _warning            (std::string msg     ) { return mju_warning                 (msg.c_str()         ); }
+  void   _warning_i          (std::string msg, int i) { return mju_warning_i               (msg.c_str(), i      ); }
+  void   _warning_s          (std::string msg, std::string text) { return mju_warning_s               (msg.c_str(), text.c_str()); }
   void   _clearHandlers      (                    ) { return mju_clearHandlers           (                    ); }
   void   warning             (int warning, int info) { return mj_warning                  (_state->ptr(), warning, info); }
+  void   _writeLog           (std::string type, std::string msg) { return mju_writeLog                (type.c_str(), msg.c_str()); }
+  int    activate            (std::string filename) { return mj_activate                 (filename.c_str()    ); }
   void   deactivate          (                    ) { return mj_deactivate               (                    ); }
   mjtNum _springDamper       (mjtNum pos0, mjtNum vel0, mjtNum Kp, mjtNum Kv, mjtNum dt) { return mju_springDamper            (pos0, vel0, Kp, Kv, dt); }
   mjtNum _min                (mjtNum a, mjtNum b  ) { return mju_min                     (a, b                ); }
@@ -561,6 +578,10 @@ public:
   mjtNum _clip               (mjtNum x, mjtNum min, mjtNum max) { return mju_clip                    (x, min, max         ); }
   mjtNum _sign               (mjtNum x            ) { return mju_sign                    (x                   ); }
   int    _round              (mjtNum x            ) { return mju_round                   (x                   ); }
+  std::string _type2Str           (int type            ) { return std::string(mju_type2Str                (type                )); }
+  int    _str2Type           (std::string str     ) { return mju_str2Type                (str.c_str()         ); }
+  std::string _writeNumBytes      (size_t nbytes       ) { return std::string(mju_writeNumBytes           (nbytes              )); }
+  std::string _warningText        (int warning, size_t info) { return std::string(mju_warningText             (warning, info       )); }
   int    _isBad              (mjtNum x            ) { return mju_isBad                   (x                   ); }
   mjtNum _Halton             (int index, int base ) { return mju_Halton                  (index, base         ); }
   mjtNum _sigmoid            (mjtNum x            ) { return mju_sigmoid                 (x                   ); }
@@ -1032,6 +1053,10 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("resetDataKeyframe"     , &Simulation::resetDataKeyframe     )
       .function("deleteData"            , &Simulation::deleteData            )
       .function("resetCallbacks"        , &Simulation::resetCallbacks        )
+      .function("printFormattedModel"   , &Simulation::printFormattedModel   )
+      .function("printModel"            , &Simulation::printModel            )
+      .function("printFormattedData"    , &Simulation::printFormattedData    )
+      .function("printData"             , &Simulation::printData             )
       .function("fwdPosition"           , &Simulation::fwdPosition           )
       .function("fwdVelocity"           , &Simulation::fwdVelocity           )
       .function("fwdActuation"          , &Simulation::fwdActuation          )
@@ -1069,15 +1094,28 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("isPyramidal"           , &Simulation::isPyramidal           )
       .function("isSparse"              , &Simulation::isSparse              )
       .function("isDual"                , &Simulation::isDual                )
+      .function("name2id"               , &Simulation::name2id               )
+      .function("id2name"               , &Simulation::id2name               )
       .function("getTotalmass"          , &Simulation::getTotalmass          )
+      .function("getPluginConfig"       , &Simulation::getPluginConfig       )
+      .function("loadPluginLibrary"     , &Simulation::loadPluginLibrary     )
       .function("version"               , &Simulation::version               )
+      .function("versionString"         , &Simulation::versionString         )
       .function("_rectangle"            , &Simulation::_rectangle            )
       .function("_finish"               , &Simulation::_finish               )
       .function("_getError"             , &Simulation::_getError             )
       .function("i_themeSpacing"        , &Simulation::i_themeSpacing        )
       .function("i_themeColor"          , &Simulation::i_themeColor          )
+      .function("_error"                , &Simulation::_error                )
+      .function("_error_i"              , &Simulation::_error_i              )
+      .function("_error_s"              , &Simulation::_error_s              )
+      .function("_warning"              , &Simulation::_warning              )
+      .function("_warning_i"            , &Simulation::_warning_i            )
+      .function("_warning_s"            , &Simulation::_warning_s            )
       .function("_clearHandlers"        , &Simulation::_clearHandlers        )
       .function("warning"               , &Simulation::warning               )
+      .function("_writeLog"             , &Simulation::_writeLog             )
+      .function("activate"              , &Simulation::activate              )
       .function("deactivate"            , &Simulation::deactivate            )
       .function("_springDamper"         , &Simulation::_springDamper         )
       .function("_min"                  , &Simulation::_min                  )
@@ -1085,6 +1123,10 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("_clip"                 , &Simulation::_clip                 )
       .function("_sign"                 , &Simulation::_sign                 )
       .function("_round"                , &Simulation::_round                )
+      .function("_type2Str"             , &Simulation::_type2Str             )
+      .function("_str2Type"             , &Simulation::_str2Type             )
+      .function("_writeNumBytes"        , &Simulation::_writeNumBytes        )
+      .function("_warningText"          , &Simulation::_warningText          )
       .function("_isBad"                , &Simulation::_isBad                )
       .function("_Halton"               , &Simulation::_Halton               )
       .function("_sigmoid"              , &Simulation::_sigmoid              )

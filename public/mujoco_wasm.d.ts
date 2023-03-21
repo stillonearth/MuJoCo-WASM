@@ -1143,21 +1143,29 @@ export interface Simulation {
   /** Inverse dynamics: qacc must be set before calling.*/
   inverse               (): void;
   /** Forward dynamics with skip; skipstage is mjtStage.*/
-  forwardSkip           (): void;
+  forwardSkip           (skipstage : number, skipsensor : number): void;
   /** Inverse dynamics with skip; skipstage is mjtStage.*/
-  inverseSkip           (): void;
+  inverseSkip           (skipstage : number, skipsensor : number): void;
   /** Return size of buffer needed to hold model.*/
-  sizeModel             (): int;
+  sizeModel             (): number;
   /** Reset data to defaults.*/
   resetData             (): void;
   /** Reset data to defaults, fill everything else with debug_value.*/
-  resetDataDebug        (): void;
+  resetDataDebug        (debug_value : string): void;
   /** Reset data, set fields from specified keyframe.*/
-  resetDataKeyframe     (): void;
+  resetDataKeyframe     (key : number): void;
   /** Free memory allocation in mjData.*/
   deleteData            (): void;
   /** Reset all callbacks to NULL pointers (NULL is the default).*/
   resetCallbacks        (): void;
+  /** Print mjModel to text file, specifying format. float_format must be a valid printf-style format string for a single float value.*/
+  printFormattedModel   (filename : string, float_format : string): void;
+  /** Print model to text file.*/
+  printModel            (filename : string): void;
+  /** Print mjData to text file, specifying format. float_format must be a valid printf-style format string for a single float value*/
+  printFormattedData    (filename : string, float_format : string): void;
+  /** Print data to text file.*/
+  printData             (filename : string): void;
   /** Run position-dependent computations.*/
   fwdPosition           (): void;
   /** Run velocity-dependent computations.*/
@@ -1171,7 +1179,7 @@ export interface Simulation {
   /** Euler integrator, semi-implicit in velocity.*/
   Euler                 (): void;
   /** Runge-Kutta explicit order-N integrator.*/
-  RungeKutta            (): void;
+  RungeKutta            (N : number): void;
   /** Run position-dependent computations in inverse dynamics.*/
   invPosition           (): void;
   /** Run velocity-dependent computations in inverse dynamics.*/
@@ -1227,51 +1235,85 @@ export interface Simulation {
   /** Compute efc_vel, efc_aref.*/
   referenceConstraint   (): void;
   /** Determine type of friction cone.*/
-  isPyramidal           (): int;
+  isPyramidal           (): number;
   /** Determine type of constraint Jacobian.*/
-  isSparse              (): int;
+  isSparse              (): number;
   /** Determine type of solver (PGS is dual, CG and Newton are primal).*/
-  isDual                (): int;
+  isDual                (): number;
+  /** Get id of object with the specified mjtObj type and name, returns -1 if id not found.*/
+  name2id               (type : number, name : string): number;
+  /** Get name of object with the specified mjtObj type and id, returns NULL if name not found.*/
+  id2name               (type : number, id : number): string;
   /** Sum all body masses.*/
-  getTotalmass          (): mjtNum;
+  getTotalmass          (): number;
+  /** Return a config attribute value of a plugin instance; NULL: invalid plugin instance ID or attribute name*/
+  getPluginConfig       (plugin_id : number, attrib : string): string;
+  /** Load a dynamic library. The dynamic library is assumed to register one or more plugins.*/
+  loadPluginLibrary     (path : string): void;
   /** Return version number: 1.0.2 is encoded as 102.*/
-  version               (): int;
+  version               (): number;
+  /** Return the current version of MuJoCo as a null-terminated string.*/
+  versionString         (): string;
   /** Draw rectangle.*/
-  _rectangle            (): void;
+  _rectangle            (viewport : mjrRect, r : number, g : number, b : number, a : number): void;
   /** Call glFinish.*/
   _finish               (): void;
   /** Call glGetError and return result.*/
-  _getError             (): int;
+  _getError             (): number;
   /** Get builtin UI theme spacing (ind: 0-1).*/
-  i_themeSpacing        (): mjuiThemeSpacing;
+  i_themeSpacing        (ind : number): mjuiThemeSpacing;
   /** Get builtin UI theme color (ind: 0-3).*/
-  i_themeColor          (): mjuiThemeColor;
+  i_themeColor          (ind : number): mjuiThemeColor;
+  /** Main error function; does not return to caller.*/
+  _error                (msg : string): void;
+  /** Deprecated: use mju_error.*/
+  _error_i              (msg : string, i : number): void;
+  /** Deprecated: use mju_error.*/
+  _error_s              (msg : string, text : string): void;
+  /** Main warning function; returns to caller.*/
+  _warning              (msg : string): void;
+  /** Deprecated: use mju_warning.*/
+  _warning_i            (msg : string, i : number): void;
+  /** Deprecated: use mju_warning.*/
+  _warning_s            (msg : string, text : string): void;
   /** Clear user error and memory handlers.*/
   _clearHandlers        (): void;
   /** High-level warning function: count warnings in mjData, print only the first.*/
-  warning               (): void;
+  warning               (warning : number, info : number): void;
+  /** Write [datetime, type: message] to MUJOCO_LOG.TXT.*/
+  _writeLog             (type : string, msg : string): void;
+  /** Return 1 (for backward compatibility).*/
+  activate              (filename : string): number;
   /** Do nothing (for backward compatibility).*/
   deactivate            (): void;
   /** Integrate spring-damper analytically, return pos(dt).*/
-  _springDamper         (): mjtNum;
+  _springDamper         (pos0 : number, vel0 : number, Kp : number, Kv : number, dt : number): number;
   /** Return min(a,b) with single evaluation of a and b.*/
-  _min                  (): mjtNum;
+  _min                  (a : number, b : number): number;
   /** Return max(a,b) with single evaluation of a and b.*/
-  _max                  (): mjtNum;
+  _max                  (a : number, b : number): number;
   /** Clip x to the range [min, max].*/
-  _clip                 (): mjtNum;
+  _clip                 (x : number, min : number, max : number): number;
   /** Return sign of x: +1, -1 or 0.*/
-  _sign                 (): mjtNum;
+  _sign                 (x : number): number;
   /** Round x to nearest integer.*/
-  _round                (): int;
+  _round                (x : number): number;
+  /** Convert type id (mjtObj) to type name.*/
+  _type2Str             (type : number): string;
+  /** Convert type name to type id (mjtObj).*/
+  _str2Type             (str : string): number;
+  /** Return human readable number of bytes using standard letter suffix.*/
+  _writeNumBytes        (nbytes : number): string;
+  /** Construct a warning message given the warning type and info.*/
+  _warningText          (warning : number, info : number): string;
   /** Return 1 if nan or abs(x)>mjMAXVAL, 0 otherwise. Used by check functions.*/
-  _isBad                (): int;
+  _isBad                (x : number): number;
   /** Generate Halton sequence.*/
-  _Halton               (): mjtNum;
+  _Halton               (index : number, base : number): number;
   /** Sigmoid function over 0<=x<=1 constructed from half-quadratics.*/
-  _sigmoid              (): mjtNum;
+  _sigmoid              (x : number): number;
   /** Return the number of globally registered plugins.*/
-  _pluginCount          (): int;
+  _pluginCount          (): number;
 }
 
 export interface mujoco extends EmscriptenModule {

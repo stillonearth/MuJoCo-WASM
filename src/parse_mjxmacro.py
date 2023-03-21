@@ -93,26 +93,39 @@ for function in functions.FUNCTIONS:
     function_def = "  void "+name.ljust(22)+"() { "+function.ljust(28)+"("
     def_args   = []
     def_params = []
+    def_typescript = []
     return_decl = functions.FUNCTIONS[function].return_type.decl()
-    valid_function = not ("*" in return_decl) and not ("[" in return_decl)
+    valid_function = return_decl == "const char *" or (not ("*" in return_decl) and not ("[" in return_decl))
     for param in functions.FUNCTIONS[function].parameters:
+        param_type = param.type.decl()
         if(param.decltype == "const mjModel *"):
             def_params.append("_model->ptr()")
         elif(param.decltype == "mjData *"):
             def_params.append("_state->ptr()")
-        elif (not ("*" in param.type.decl()) and not ("[" in param.type.decl())):
-            print("VALUE TYPE", param)
+        elif(param.decltype == "const char *"):
+            def_args  .append("std::string "+param.name)
+            def_params.append(param.name+".c_str()")
+            def_typescript.append(param.name + " : string")
+        elif (not ("*" in param_type) and not ("[" in param_type) and not (param_type == "mjfPluginLibraryLoadCallback")):
             def_args  .append(str(param))
             def_params.append(param.name)
+            param_type = param_type.replace("mjtNum","number").replace("int","number").replace("float","number").replace("size_t", "number").replace("unsigned char", "string")
+            def_typescript.append(param.name + " : " + param_type)
         else:
             valid_function = False
     if valid_function:
-        auto_gen_lines["data_definitions"].append("  "+return_decl.ljust(6)+" "+name.ljust(20)+"("+(", ".join(def_args)).ljust(20)+") { return "+function.ljust(28)+"("+(", ".join(def_params)).ljust(20)+"); }")
+        is_string = False
+        to_return = function.ljust(28)+"("+(", ".join(def_params)).ljust(20)
+        if return_decl == "const char *":
+            return_decl = "std::string"
+            to_return = "std::string(" + to_return + ")"
+        auto_gen_lines["data_definitions"].append("  "+return_decl.ljust(6)+" "+name.ljust(20)+"("+(", ".join(def_args)).ljust(20)+") { return "+to_return+"); }")
         auto_gen_lines["data_bindings"   ].append('      .function('+('"'+name+'"').ljust(23)+' , &Simulation::'+name.ljust(22)+')')
         auto_gen_lines["data_typescript" ].append("  /** "+ functions.FUNCTIONS[function].doc +"*/")
         returnType = functions.FUNCTIONS[function].return_type
         returnType = returnType.inner_type.name if "*" in returnType.decl() else returnType.name
-        auto_gen_lines["data_typescript" ].append('  '+name.ljust(22)+'(): '+returnType+';')
+        returnType = returnType.replace("mjtNum","number").replace("int","number").replace("float","number").replace("char", "string")
+        auto_gen_lines["data_typescript" ].append('  '+name.ljust(22)+'('+", ".join(def_typescript)+'): '+returnType+';')
 
     #if("const mjModel *" in param_types and "mjData *" in param_types and len(param_types) == 2):
     #    #print("Function:", function, functions.FUNCTIONS[function].parameters)
