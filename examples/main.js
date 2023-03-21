@@ -24,6 +24,7 @@ let camera, scene, renderer;
 const params = { scene: "humanoid.xml" };
 /** @type {DragStateManager} */
 let dragStateManager;
+let bodies, lights;
 
 async function init() {
   container = document.createElement( 'div' );
@@ -65,15 +66,21 @@ async function init() {
 
   const gui = new GUI();
   //gui.add(params, "acceleration", -0.1, 0.1, 0.001).name('Artificial Acceleration');
-  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hand": "shadow_hand/scene_right.xml", "Balloons": "balloons.xml",  "Hammock": "hammock.xml", "Flag": "flag.xml", "Mug": "mug.xml",  /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
-    .name('Example Scene').onChange(value => { scene.remove(bodies[0]); bodies = {}; meshes = {}; lights = [];  loadSceneFromURL(value); } );
+  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml",  /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
+    .name('Example Scene').onChange(value => {
+      scene.remove(scene.getObjectByName("MuJoCo Root"));
+      loadSceneFromURL(mujoco, value, scene).then((returnArray) => {
+        [model, state, simulation, bodies, lights] = returnArray;
+      }); // Initialize the three.js Scene using this .xml Model
+    });
   gui.open();
 
   // Initialize the Drag State Manager
   dragStateManager = new DragStateManager(scene, renderer, camera, container.parentElement, controls);
 
-  await downloadExampleScenesFolder(mujoco);             // Download the rest of the examples to MuJoCo's virtual file system
-  await loadSceneFromURL(mujoco, "humanoid.xml", scene); // Initialize the three.js Scene using this .xml Model
+  await downloadExampleScenesFolder(mujoco);    // Download the the examples to MuJoCo's virtual file system
+  [model, state, simulation, bodies, lights] =  // Initialize the three.js Scene using this .xml Model
+    await loadSceneFromURL(mujoco, "humanoid.xml", scene);
 }
 
 function onWindowResize() {
@@ -97,20 +104,25 @@ function render(timeMS) {
   while (mujoco_time < timeMS) {
     simulation.step();
 
-    // Update the transform of the dragged body
+    // Reset Applied Forces
+    for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; } 
+
+    // Update the forces on the dragged body
     let dragged = dragStateManager.physicsObject;
     if (dragged && dragged.bodyID) {
+      for (let b = 0; b < model.nbody(); b++) {
+        if (bodies[b]) {
+          getPosition  (simulation.xpos (), b, bodies[b].position);
+          getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
+          bodies[b].updateWorldMatrix();
+        }
+      }
+
       let bodyID = dragged.bodyID;
-      getPosition(simulation.xpos(), bodyID, dragged.position);
-      getQuaternion(simulation.xquat(), bodyID, dragged.quaternion);
-      dragged.updateWorldMatrix();
       dragStateManager.update(); // Update the world-space force origin
       let force = toMujocoPos(dragStateManager.currentWorld.clone().sub(dragStateManager.worldHit).multiplyScalar(model.body_mass()[bodyID] * 250));
-      let point = toMujocoPos(dragStateManager.worldHit.clone());
+      let point = toMujocoPos(dragStateManager.worldHit    .clone());
       simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, bodyID); // Body ID
-    } else {
-      // Reset Applied Forces
-      for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; }
     }
 
     mujoco_time += timestep * 1000.0;

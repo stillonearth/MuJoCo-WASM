@@ -1,6 +1,6 @@
 import  *  as  THREE     from 'three';
 import { Reflector     } from './utils/Reflector.js';
-import load_mujoco, {mujoco} from '../dist/mujoco_wasm.js';
+import load_mujoco/*, {mujoco}*/ from '../dist/mujoco_wasm.js';
 
 
 /** Loads a scene for MuJoCo
@@ -223,7 +223,7 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
         bodies[0].add(bodies[b]);
       }
     }
-    return [model, state, simulation, bodies, lights, meshes]
+    return [model, state, simulation, bodies, lights]
 }
 
 /** Downloads the scenes/examples folder to MuJoCo's virtual filesystem
