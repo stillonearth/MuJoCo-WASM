@@ -85,16 +85,42 @@ with open("include/mujoco/mjxmacro.h") as f:
             parse_mode = ("pointers", "data")
 
 import functions
+from ast_nodes import ValueType
 for function in functions.FUNCTIONS:
     #print("Function:", function)
     param_types = [param.decltype for param in functions.FUNCTIONS[function].parameters]
-    if("const mjModel *" in param_types and "mjData *" in param_types and len(param_types) == 2):
-        #print("Function:", function, functions.FUNCTIONS[function].parameters)
-        name = function[3:] if function != "mj_crb" else function[3:] + "Calculate"
-        auto_gen_lines["data_definitions"].append("  void "+name.ljust(22)+"() { "+function.ljust(28)+"(_model->ptr(), _state->ptr()); }")
+    name = function[3:] if function != "mj_crb" else function[3:] + "Calculate"
+    function_def = "  void "+name.ljust(22)+"() { "+function.ljust(28)+"("
+    def_args   = []
+    def_params = []
+    return_decl = functions.FUNCTIONS[function].return_type.decl()
+    valid_function = not ("*" in return_decl) and not ("[" in return_decl)
+    for param in functions.FUNCTIONS[function].parameters:
+        if(param.decltype == "const mjModel *"):
+            def_params.append("_model->ptr()")
+        elif(param.decltype == "mjData *"):
+            def_params.append("_state->ptr()")
+        elif (not ("*" in param.type.decl()) and not ("[" in param.type.decl())):
+            print("VALUE TYPE", param)
+            def_args  .append(str(param))
+            def_params.append(param.name)
+        else:
+            valid_function = False
+    if valid_function:
+        auto_gen_lines["data_definitions"].append("  "+return_decl.ljust(6)+" "+name.ljust(20)+"("+(", ".join(def_args)).ljust(20)+") { return "+function.ljust(28)+"("+(", ".join(def_params)).ljust(20)+"); }")
         auto_gen_lines["data_bindings"   ].append('      .function('+('"'+name+'"').ljust(23)+' , &Simulation::'+name.ljust(22)+')')
         auto_gen_lines["data_typescript" ].append("  /** "+ functions.FUNCTIONS[function].doc +"*/")
-        auto_gen_lines["data_typescript" ].append('  '+name.ljust(22)+'(): '+functions.FUNCTIONS[function].return_type.name+';')
+        returnType = functions.FUNCTIONS[function].return_type
+        returnType = returnType.inner_type.name if "*" in returnType.decl() else returnType.name
+        auto_gen_lines["data_typescript" ].append('  '+name.ljust(22)+'(): '+returnType+';')
+
+    #if("const mjModel *" in param_types and "mjData *" in param_types and len(param_types) == 2):
+    #    #print("Function:", function, functions.FUNCTIONS[function].parameters)
+    #    name = function[3:] if function != "mj_crb" else function[3:] + "Calculate"
+    #    auto_gen_lines["data_definitions"].append("  void "+name.ljust(22)+"() { "+function.ljust(28)+"(_model->ptr(), _state->ptr()); }")
+    #    auto_gen_lines["data_bindings"   ].append('      .function('+('"'+name+'"').ljust(23)+' , &Simulation::'+name.ljust(22)+')')
+    #    auto_gen_lines["data_typescript" ].append("  /** "+ functions.FUNCTIONS[function].doc +"*/")
+    #    auto_gen_lines["data_typescript" ].append('  '+name.ljust(22)+'(): '+functions.FUNCTIONS[function].return_type.name+';')
 
 # Insert our auto-generated bindings into our template files
 with open("src/main.template.cc") as f:

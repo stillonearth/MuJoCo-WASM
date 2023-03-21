@@ -1130,6 +1130,8 @@ export interface Simulation {
   cfrc_int              (): Float64Array;
   /** com-based external force on body         (nbody x 6)*/
   cfrc_ext              (): Float64Array;
+  /** Free last XML model if loaded. Called internally at each load.*/
+  freeLastXML           (): void;
   /** Advance simulation, use control callback to obtain external force and control.*/
   step                  (): void;
   /** Advance simulation in two steps: before external force and control is set by user.*/
@@ -1140,8 +1142,22 @@ export interface Simulation {
   forward               (): void;
   /** Inverse dynamics: qacc must be set before calling.*/
   inverse               (): void;
+  /** Forward dynamics with skip; skipstage is mjtStage.*/
+  forwardSkip           (): void;
+  /** Inverse dynamics with skip; skipstage is mjtStage.*/
+  inverseSkip           (): void;
+  /** Return size of buffer needed to hold model.*/
+  sizeModel             (): int;
   /** Reset data to defaults.*/
   resetData             (): void;
+  /** Reset data to defaults, fill everything else with debug_value.*/
+  resetDataDebug        (): void;
+  /** Reset data, set fields from specified keyframe.*/
+  resetDataKeyframe     (): void;
+  /** Free memory allocation in mjData.*/
+  deleteData            (): void;
+  /** Reset all callbacks to NULL pointers (NULL is the default).*/
+  resetCallbacks        (): void;
   /** Run position-dependent computations.*/
   fwdPosition           (): void;
   /** Run velocity-dependent computations.*/
@@ -1154,6 +1170,8 @@ export interface Simulation {
   fwdConstraint         (): void;
   /** Euler integrator, semi-implicit in velocity.*/
   Euler                 (): void;
+  /** Runge-Kutta explicit order-N integrator.*/
+  RungeKutta            (): void;
   /** Run position-dependent computations in inverse dynamics.*/
   invPosition           (): void;
   /** Run velocity-dependent computations in inverse dynamics.*/
@@ -1208,6 +1226,52 @@ export interface Simulation {
   projectConstraint     (): void;
   /** Compute efc_vel, efc_aref.*/
   referenceConstraint   (): void;
+  /** Determine type of friction cone.*/
+  isPyramidal           (): int;
+  /** Determine type of constraint Jacobian.*/
+  isSparse              (): int;
+  /** Determine type of solver (PGS is dual, CG and Newton are primal).*/
+  isDual                (): int;
+  /** Sum all body masses.*/
+  getTotalmass          (): mjtNum;
+  /** Return version number: 1.0.2 is encoded as 102.*/
+  version               (): int;
+  /** Draw rectangle.*/
+  _rectangle            (): void;
+  /** Call glFinish.*/
+  _finish               (): void;
+  /** Call glGetError and return result.*/
+  _getError             (): int;
+  /** Get builtin UI theme spacing (ind: 0-1).*/
+  i_themeSpacing        (): mjuiThemeSpacing;
+  /** Get builtin UI theme color (ind: 0-3).*/
+  i_themeColor          (): mjuiThemeColor;
+  /** Clear user error and memory handlers.*/
+  _clearHandlers        (): void;
+  /** High-level warning function: count warnings in mjData, print only the first.*/
+  warning               (): void;
+  /** Do nothing (for backward compatibility).*/
+  deactivate            (): void;
+  /** Integrate spring-damper analytically, return pos(dt).*/
+  _springDamper         (): mjtNum;
+  /** Return min(a,b) with single evaluation of a and b.*/
+  _min                  (): mjtNum;
+  /** Return max(a,b) with single evaluation of a and b.*/
+  _max                  (): mjtNum;
+  /** Clip x to the range [min, max].*/
+  _clip                 (): mjtNum;
+  /** Return sign of x: +1, -1 or 0.*/
+  _sign                 (): mjtNum;
+  /** Round x to nearest integer.*/
+  _round                (): int;
+  /** Return 1 if nan or abs(x)>mjMAXVAL, 0 otherwise. Used by check functions.*/
+  _isBad                (): int;
+  /** Generate Halton sequence.*/
+  _Halton               (): mjtNum;
+  /** Sigmoid function over 0<=x<=1 constructed from half-quadratics.*/
+  _sigmoid              (): mjtNum;
+  /** Return the number of globally registered plugins.*/
+  _pluginCount          (): int;
 }
 
 export interface mujoco extends EmscriptenModule {

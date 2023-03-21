@@ -103,10 +103,9 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
 
   class_<Simulation>("Simulation")
       .constructor<Model *, State *>()
-      .function("step" , &Simulation::step)
       .function("applyForce", &Simulation::applyForce)
-      .function("state", &Simulation::state, allow_raw_pointers())
-      .function("model", &Simulation::model, allow_raw_pointers())
+      .function("state"     , &Simulation::state, allow_raw_pointers())
+      .function("model"     , &Simulation::model, allow_raw_pointers())
       // MJDATA_BINDINGS
       ;
 
@@ -133,4 +132,22 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .field("localpos"  , &mjvPerturb::localpos)   // selection point in object coordinates
       .field("scale"     , &mjvPerturb::scale)      // relative mouse motion-to-space scaling (set by initPerturb)
       ;
+
+  value_object<mjContact>("mjContact")
+      .field("dist"         , &mjContact::dist)             // distance between nearest points; neg: penetration
+      .field("pos"          , &mjContact::pos)              // position of contact point: midpoint between geoms
+      .field("frame"        , &mjContact::frame)            // normal is in [0-2]
+      .field("includemargin", &mjContact::includemargin)    // include if dist<includemargin=margin-gap
+      .field("friction"     , &mjContact::friction)         // tangent1, 2, spin, roll1, 2
+      .field("solref"       , &mjContact::solref)           // constraint solver reference
+      .field("solimp"       , &mjContact::solimp)           // constraint solver impedance
+      .field("mu"           , &mjContact::mu)               // friction of regularized cone, set by mj_makeConstraint
+      .field("H"            , &mjContact::H)                // cone Hessian, set by mj_updateConstraint
+      .field("dim"          , &mjContact::H)                // contact space dimensionality: 1, 3, 4 or 6
+      .field("geom1"        , &mjContact::H)                // id of geom 1
+      .field("geom2"        , &mjContact::H)                // id of geom 2
+      .field("exclude"      , &mjContact::exclude)          // 0: include, 1: in gap, 2: fused, 3: equality, 4: no dofs
+      .field("efc_address"  , &mjContact::efc_address)      // address in efc; -1: not included, -2-i: distance constraint i
+      ;
+  register_vector<mjContact>("vector<mjContact>");
 }

@@ -494,45 +494,77 @@ public:
   val  cacc                  () { return val(typed_memory_view(_model->ptr()->nbody           * 6        , _state->ptr()->cacc                   )); }
   val  cfrc_int              () { return val(typed_memory_view(_model->ptr()->nbody           * 6        , _state->ptr()->cfrc_int               )); }
   val  cfrc_ext              () { return val(typed_memory_view(_model->ptr()->nbody           * 6        , _state->ptr()->cfrc_ext               )); }
-  void step                  () { mj_step                     (_model->ptr(), _state->ptr()); }
-  void step1                 () { mj_step1                    (_model->ptr(), _state->ptr()); }
-  void step2                 () { mj_step2                    (_model->ptr(), _state->ptr()); }
-  void forward               () { mj_forward                  (_model->ptr(), _state->ptr()); }
-  void inverse               () { mj_inverse                  (_model->ptr(), _state->ptr()); }
-  void resetData             () { mj_resetData                (_model->ptr(), _state->ptr()); }
-  void fwdPosition           () { mj_fwdPosition              (_model->ptr(), _state->ptr()); }
-  void fwdVelocity           () { mj_fwdVelocity              (_model->ptr(), _state->ptr()); }
-  void fwdActuation          () { mj_fwdActuation             (_model->ptr(), _state->ptr()); }
-  void fwdAcceleration       () { mj_fwdAcceleration          (_model->ptr(), _state->ptr()); }
-  void fwdConstraint         () { mj_fwdConstraint            (_model->ptr(), _state->ptr()); }
-  void Euler                 () { mj_Euler                    (_model->ptr(), _state->ptr()); }
-  void invPosition           () { mj_invPosition              (_model->ptr(), _state->ptr()); }
-  void invVelocity           () { mj_invVelocity              (_model->ptr(), _state->ptr()); }
-  void invConstraint         () { mj_invConstraint            (_model->ptr(), _state->ptr()); }
-  void compareFwdInv         () { mj_compareFwdInv            (_model->ptr(), _state->ptr()); }
-  void sensorPos             () { mj_sensorPos                (_model->ptr(), _state->ptr()); }
-  void sensorVel             () { mj_sensorVel                (_model->ptr(), _state->ptr()); }
-  void sensorAcc             () { mj_sensorAcc                (_model->ptr(), _state->ptr()); }
-  void energyPos             () { mj_energyPos                (_model->ptr(), _state->ptr()); }
-  void energyVel             () { mj_energyVel                (_model->ptr(), _state->ptr()); }
-  void checkPos              () { mj_checkPos                 (_model->ptr(), _state->ptr()); }
-  void checkVel              () { mj_checkVel                 (_model->ptr(), _state->ptr()); }
-  void checkAcc              () { mj_checkAcc                 (_model->ptr(), _state->ptr()); }
-  void kinematics            () { mj_kinematics               (_model->ptr(), _state->ptr()); }
-  void comPos                () { mj_comPos                   (_model->ptr(), _state->ptr()); }
-  void camlight              () { mj_camlight                 (_model->ptr(), _state->ptr()); }
-  void tendon                () { mj_tendon                   (_model->ptr(), _state->ptr()); }
-  void transmission          () { mj_transmission             (_model->ptr(), _state->ptr()); }
-  void crbCalculate          () { mj_crb                      (_model->ptr(), _state->ptr()); }
-  void factorM               () { mj_factorM                  (_model->ptr(), _state->ptr()); }
-  void comVel                () { mj_comVel                   (_model->ptr(), _state->ptr()); }
-  void passive               () { mj_passive                  (_model->ptr(), _state->ptr()); }
-  void subtreeVel            () { mj_subtreeVel               (_model->ptr(), _state->ptr()); }
-  void rnePostConstraint     () { mj_rnePostConstraint        (_model->ptr(), _state->ptr()); }
-  void collision             () { mj_collision                (_model->ptr(), _state->ptr()); }
-  void makeConstraint        () { mj_makeConstraint           (_model->ptr(), _state->ptr()); }
-  void projectConstraint     () { mj_projectConstraint        (_model->ptr(), _state->ptr()); }
-  void referenceConstraint   () { mj_referenceConstraint      (_model->ptr(), _state->ptr()); }
+  void   freeLastXML         (                    ) { return mj_freeLastXML              (                    ); }
+  void   step                (                    ) { return mj_step                     (_model->ptr(), _state->ptr()); }
+  void   step1               (                    ) { return mj_step1                    (_model->ptr(), _state->ptr()); }
+  void   step2               (                    ) { return mj_step2                    (_model->ptr(), _state->ptr()); }
+  void   forward             (                    ) { return mj_forward                  (_model->ptr(), _state->ptr()); }
+  void   inverse             (                    ) { return mj_inverse                  (_model->ptr(), _state->ptr()); }
+  void   forwardSkip         (int skipstage, int skipsensor) { return mj_forwardSkip              (_model->ptr(), _state->ptr(), skipstage, skipsensor); }
+  void   inverseSkip         (int skipstage, int skipsensor) { return mj_inverseSkip              (_model->ptr(), _state->ptr(), skipstage, skipsensor); }
+  int    sizeModel           (                    ) { return mj_sizeModel                (_model->ptr()       ); }
+  void   resetData           (                    ) { return mj_resetData                (_model->ptr(), _state->ptr()); }
+  void   resetDataDebug      (unsigned char debug_value) { return mj_resetDataDebug           (_model->ptr(), _state->ptr(), debug_value); }
+  void   resetDataKeyframe   (int key             ) { return mj_resetDataKeyframe        (_model->ptr(), _state->ptr(), key); }
+  void   deleteData          (                    ) { return mj_deleteData               (_state->ptr()       ); }
+  void   resetCallbacks      (                    ) { return mj_resetCallbacks           (                    ); }
+  void   fwdPosition         (                    ) { return mj_fwdPosition              (_model->ptr(), _state->ptr()); }
+  void   fwdVelocity         (                    ) { return mj_fwdVelocity              (_model->ptr(), _state->ptr()); }
+  void   fwdActuation        (                    ) { return mj_fwdActuation             (_model->ptr(), _state->ptr()); }
+  void   fwdAcceleration     (                    ) { return mj_fwdAcceleration          (_model->ptr(), _state->ptr()); }
+  void   fwdConstraint       (                    ) { return mj_fwdConstraint            (_model->ptr(), _state->ptr()); }
+  void   Euler               (                    ) { return mj_Euler                    (_model->ptr(), _state->ptr()); }
+  void   RungeKutta          (int N               ) { return mj_RungeKutta               (_model->ptr(), _state->ptr(), N); }
+  void   invPosition         (                    ) { return mj_invPosition              (_model->ptr(), _state->ptr()); }
+  void   invVelocity         (                    ) { return mj_invVelocity              (_model->ptr(), _state->ptr()); }
+  void   invConstraint       (                    ) { return mj_invConstraint            (_model->ptr(), _state->ptr()); }
+  void   compareFwdInv       (                    ) { return mj_compareFwdInv            (_model->ptr(), _state->ptr()); }
+  void   sensorPos           (                    ) { return mj_sensorPos                (_model->ptr(), _state->ptr()); }
+  void   sensorVel           (                    ) { return mj_sensorVel                (_model->ptr(), _state->ptr()); }
+  void   sensorAcc           (                    ) { return mj_sensorAcc                (_model->ptr(), _state->ptr()); }
+  void   energyPos           (                    ) { return mj_energyPos                (_model->ptr(), _state->ptr()); }
+  void   energyVel           (                    ) { return mj_energyVel                (_model->ptr(), _state->ptr()); }
+  void   checkPos            (                    ) { return mj_checkPos                 (_model->ptr(), _state->ptr()); }
+  void   checkVel            (                    ) { return mj_checkVel                 (_model->ptr(), _state->ptr()); }
+  void   checkAcc            (                    ) { return mj_checkAcc                 (_model->ptr(), _state->ptr()); }
+  void   kinematics          (                    ) { return mj_kinematics               (_model->ptr(), _state->ptr()); }
+  void   comPos              (                    ) { return mj_comPos                   (_model->ptr(), _state->ptr()); }
+  void   camlight            (                    ) { return mj_camlight                 (_model->ptr(), _state->ptr()); }
+  void   tendon              (                    ) { return mj_tendon                   (_model->ptr(), _state->ptr()); }
+  void   transmission        (                    ) { return mj_transmission             (_model->ptr(), _state->ptr()); }
+  void   crbCalculate        (                    ) { return mj_crb                      (_model->ptr(), _state->ptr()); }
+  void   factorM             (                    ) { return mj_factorM                  (_model->ptr(), _state->ptr()); }
+  void   comVel              (                    ) { return mj_comVel                   (_model->ptr(), _state->ptr()); }
+  void   passive             (                    ) { return mj_passive                  (_model->ptr(), _state->ptr()); }
+  void   subtreeVel          (                    ) { return mj_subtreeVel               (_model->ptr(), _state->ptr()); }
+  void   rnePostConstraint   (                    ) { return mj_rnePostConstraint        (_model->ptr(), _state->ptr()); }
+  void   collision           (                    ) { return mj_collision                (_model->ptr(), _state->ptr()); }
+  void   makeConstraint      (                    ) { return mj_makeConstraint           (_model->ptr(), _state->ptr()); }
+  void   projectConstraint   (                    ) { return mj_projectConstraint        (_model->ptr(), _state->ptr()); }
+  void   referenceConstraint (                    ) { return mj_referenceConstraint      (_model->ptr(), _state->ptr()); }
+  int    isPyramidal         (                    ) { return mj_isPyramidal              (_model->ptr()       ); }
+  int    isSparse            (                    ) { return mj_isSparse                 (_model->ptr()       ); }
+  int    isDual              (                    ) { return mj_isDual                   (_model->ptr()       ); }
+  mjtNum getTotalmass        (                    ) { return mj_getTotalmass             (_model->ptr()       ); }
+  int    version             (                    ) { return mj_version                  (                    ); }
+  void   _rectangle          (mjrRect viewport, float r, float g, float b, float a) { return mjr_rectangle               (viewport, r, g, b, a); }
+  void   _finish             (                    ) { return mjr_finish                  (                    ); }
+  int    _getError           (                    ) { return mjr_getError                (                    ); }
+  mjuiThemeSpacing i_themeSpacing      (int ind             ) { return mjui_themeSpacing           (ind                 ); }
+  mjuiThemeColor i_themeColor        (int ind             ) { return mjui_themeColor             (ind                 ); }
+  void   _clearHandlers      (                    ) { return mju_clearHandlers           (                    ); }
+  void   warning             (int warning, int info) { return mj_warning                  (_state->ptr(), warning, info); }
+  void   deactivate          (                    ) { return mj_deactivate               (                    ); }
+  mjtNum _springDamper       (mjtNum pos0, mjtNum vel0, mjtNum Kp, mjtNum Kv, mjtNum dt) { return mju_springDamper            (pos0, vel0, Kp, Kv, dt); }
+  mjtNum _min                (mjtNum a, mjtNum b  ) { return mju_min                     (a, b                ); }
+  mjtNum _max                (mjtNum a, mjtNum b  ) { return mju_max                     (a, b                ); }
+  mjtNum _clip               (mjtNum x, mjtNum min, mjtNum max) { return mju_clip                    (x, min, max         ); }
+  mjtNum _sign               (mjtNum x            ) { return mju_sign                    (x                   ); }
+  int    _round              (mjtNum x            ) { return mju_round                   (x                   ); }
+  int    _isBad              (mjtNum x            ) { return mju_isBad                   (x                   ); }
+  mjtNum _Halton             (int index, int base ) { return mju_Halton                  (index, base         ); }
+  mjtNum _sigmoid            (mjtNum x            ) { return mju_sigmoid                 (x                   ); }
+  int    _pluginCount        (                    ) { return mjp_pluginCount             (                    ); }
 
 
 private:
@@ -908,10 +940,9 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
 
   class_<Simulation>("Simulation")
       .constructor<Model *, State *>()
-      .function("step" , &Simulation::step)
       .function("applyForce", &Simulation::applyForce)
-      .function("state", &Simulation::state, allow_raw_pointers())
-      .function("model", &Simulation::model, allow_raw_pointers())
+      .function("state"     , &Simulation::state, allow_raw_pointers())
+      .function("model"     , &Simulation::model, allow_raw_pointers())
       // MJDATA_BINDINGS
          .function("qpos"                  , &Simulation::qpos                  )
       .function("qvel"                  , &Simulation::qvel                  )
@@ -987,18 +1018,27 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("cacc"                  , &Simulation::cacc                  )
       .function("cfrc_int"              , &Simulation::cfrc_int              )
       .function("cfrc_ext"              , &Simulation::cfrc_ext              )
+      .function("freeLastXML"           , &Simulation::freeLastXML           )
       .function("step"                  , &Simulation::step                  )
       .function("step1"                 , &Simulation::step1                 )
       .function("step2"                 , &Simulation::step2                 )
       .function("forward"               , &Simulation::forward               )
       .function("inverse"               , &Simulation::inverse               )
+      .function("forwardSkip"           , &Simulation::forwardSkip           )
+      .function("inverseSkip"           , &Simulation::inverseSkip           )
+      .function("sizeModel"             , &Simulation::sizeModel             )
       .function("resetData"             , &Simulation::resetData             )
+      .function("resetDataDebug"        , &Simulation::resetDataDebug        )
+      .function("resetDataKeyframe"     , &Simulation::resetDataKeyframe     )
+      .function("deleteData"            , &Simulation::deleteData            )
+      .function("resetCallbacks"        , &Simulation::resetCallbacks        )
       .function("fwdPosition"           , &Simulation::fwdPosition           )
       .function("fwdVelocity"           , &Simulation::fwdVelocity           )
       .function("fwdActuation"          , &Simulation::fwdActuation          )
       .function("fwdAcceleration"       , &Simulation::fwdAcceleration       )
       .function("fwdConstraint"         , &Simulation::fwdConstraint         )
       .function("Euler"                 , &Simulation::Euler                 )
+      .function("RungeKutta"            , &Simulation::RungeKutta            )
       .function("invPosition"           , &Simulation::invPosition           )
       .function("invVelocity"           , &Simulation::invVelocity           )
       .function("invConstraint"         , &Simulation::invConstraint         )
@@ -1026,6 +1066,29 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("makeConstraint"        , &Simulation::makeConstraint        )
       .function("projectConstraint"     , &Simulation::projectConstraint     )
       .function("referenceConstraint"   , &Simulation::referenceConstraint   )
+      .function("isPyramidal"           , &Simulation::isPyramidal           )
+      .function("isSparse"              , &Simulation::isSparse              )
+      .function("isDual"                , &Simulation::isDual                )
+      .function("getTotalmass"          , &Simulation::getTotalmass          )
+      .function("version"               , &Simulation::version               )
+      .function("_rectangle"            , &Simulation::_rectangle            )
+      .function("_finish"               , &Simulation::_finish               )
+      .function("_getError"             , &Simulation::_getError             )
+      .function("i_themeSpacing"        , &Simulation::i_themeSpacing        )
+      .function("i_themeColor"          , &Simulation::i_themeColor          )
+      .function("_clearHandlers"        , &Simulation::_clearHandlers        )
+      .function("warning"               , &Simulation::warning               )
+      .function("deactivate"            , &Simulation::deactivate            )
+      .function("_springDamper"         , &Simulation::_springDamper         )
+      .function("_min"                  , &Simulation::_min                  )
+      .function("_max"                  , &Simulation::_max                  )
+      .function("_clip"                 , &Simulation::_clip                 )
+      .function("_sign"                 , &Simulation::_sign                 )
+      .function("_round"                , &Simulation::_round                )
+      .function("_isBad"                , &Simulation::_isBad                )
+      .function("_Halton"               , &Simulation::_Halton               )
+      .function("_sigmoid"              , &Simulation::_sigmoid              )
+      .function("_pluginCount"          , &Simulation::_pluginCount          )
       ;
 
   value_object<mjModel>("mjModel")
@@ -1051,4 +1114,22 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .field("localpos"  , &mjvPerturb::localpos)   // selection point in object coordinates
       .field("scale"     , &mjvPerturb::scale)      // relative mouse motion-to-space scaling (set by initPerturb)
       ;
+
+  value_object<mjContact>("mjContact")
+      .field("dist"         , &mjContact::dist)             // distance between nearest points; neg: penetration
+      .field("pos"          , &mjContact::pos)              // position of contact point: midpoint between geoms
+      .field("frame"        , &mjContact::frame)            // normal is in [0-2]
+      .field("includemargin", &mjContact::includemargin)    // include if dist<includemargin=margin-gap
+      .field("friction"     , &mjContact::friction)         // tangent1, 2, spin, roll1, 2
+      .field("solref"       , &mjContact::solref)           // constraint solver reference
+      .field("solimp"       , &mjContact::solimp)           // constraint solver impedance
+      .field("mu"           , &mjContact::mu)               // friction of regularized cone, set by mj_makeConstraint
+      .field("H"            , &mjContact::H)                // cone Hessian, set by mj_updateConstraint
+      .field("dim"          , &mjContact::H)                // contact space dimensionality: 1, 3, 4 or 6
+      .field("geom1"        , &mjContact::H)                // id of geom 1
+      .field("geom2"        , &mjContact::H)                // id of geom 2
+      .field("exclude"      , &mjContact::exclude)          // 0: include, 1: in gap, 2: fused, 3: equality, 4: no dofs
+      .field("efc_address"  , &mjContact::efc_address)      // address in efc; -1: not included, -2-i: distance constraint i
+      ;
+  register_vector<mjContact>("vector<mjContact>");
 }

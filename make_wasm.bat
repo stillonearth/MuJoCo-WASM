@@ -1,3 +1,4 @@
+call python src/parse_mjxmacro.py
 rmdir /s /q build
 call ../emsdk/emsdk activate latest
 mkdir build
