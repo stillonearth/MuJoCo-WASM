@@ -275,9 +275,447 @@ type ReturnToType<R extends Emscripten.JSType | null> = R extends null
 ? null
 : StringToType<Exclude<R, null>>;
 
+// ENUMS
+/**  disable default feature bitflags        */
+export enum mjtDisableBit {
+    /** entire constraint solver                 */
+    mjDSBL_CONSTRAINT        ,
+    /** equality constraints                     */
+    mjDSBL_EQUALITY          ,
+    /** joint and tendon frictionloss constraints */
+    mjDSBL_FRICTIONLOSS      ,
+    /** joint and tendon limit constraints       */
+    mjDSBL_LIMIT             ,
+    /** contact constraints                      */
+    mjDSBL_CONTACT           ,
+    /** passive forces                           */
+    mjDSBL_PASSIVE           ,
+    /** gravitational forces                     */
+    mjDSBL_GRAVITY           ,
+    /** clamp control to specified range         */
+    mjDSBL_CLAMPCTRL         ,
+    /** warmstart constraint solver              */
+    mjDSBL_WARMSTART         ,
+    /** remove collisions with parent body       */
+    mjDSBL_FILTERPARENT      ,
+    /** apply actuation forces                   */
+    mjDSBL_ACTUATION         ,
+    /** integrator safety: make ref[0]>=2*timestep */
+    mjDSBL_REFSAFE           ,
+    /** sensors                                  */
+    mjDSBL_SENSOR            ,
+    /** number of disable flags                  */
+    mjNDISABLE               ,
+}
+/**  enable optional feature bitflags        */
+export enum mjtEnableBit {
+    /** override contact parameters              */
+    mjENBL_OVERRIDE          ,
+    /** energy computation                       */
+    mjENBL_ENERGY            ,
+    /** record solver statistics                 */
+    mjENBL_FWDINV            ,
+    /** add noise to sensor data                 */
+    mjENBL_SENSORNOISE       ,
+    /** multi-point convex collision detection   */
+    mjENBL_MULTICCD          ,
+    /** number of enable flags                   */
+    mjNENABLE                ,
+}
+/**  type of degree of freedom               */
+export enum mjtJoint {
+    /** global position and orientation (quat)       (7) */
+    mjJNT_FREE               ,
+    /** orientation (quat) relative to parent        (4) */
+    mjJNT_BALL               ,
+    /** sliding distance along body-fixed axis       (1) */
+    mjJNT_SLIDE              ,
+    /** rotation angle (rad) around body-fixed axis  (1) */
+    mjJNT_HINGE              ,
+}
+/**  type of geometric shape                 */
+export enum mjtGeom {
+    /** plane                                    */
+    mjGEOM_PLANE             ,
+    /** height field                             */
+    mjGEOM_HFIELD            ,
+    /** sphere                                   */
+    mjGEOM_SPHERE            ,
+    /** capsule                                  */
+    mjGEOM_CAPSULE           ,
+    /** ellipsoid                                */
+    mjGEOM_ELLIPSOID         ,
+    /** cylinder                                 */
+    mjGEOM_CYLINDER          ,
+    /** box                                      */
+    mjGEOM_BOX               ,
+    /** mesh                                     */
+    mjGEOM_MESH              ,
+    /** number of regular geom types             */
+    mjNGEOMTYPES             ,
+    /** arrow                                    */
+    mjGEOM_ARROW             ,
+    /** arrow without wedges                     */
+    mjGEOM_ARROW1            ,
+    /** arrow in both directions                 */
+    mjGEOM_ARROW2            ,
+    /** line                                     */
+    mjGEOM_LINE              ,
+    /** skin                                     */
+    mjGEOM_SKIN              ,
+    /** text label                               */
+    mjGEOM_LABEL             ,
+    /** missing geom type                        */
+    mjGEOM_NONE              ,
+}
+/**  tracking mode for camera and light      */
+export enum mjtCamLight {
+    /** pos and rot fixed in body                */
+    mjCAMLIGHT_FIXED         ,
+    /** pos tracks body, rot fixed in global     */
+    mjCAMLIGHT_TRACK         ,
+    /** pos tracks subtree com, rot fixed in body */
+    mjCAMLIGHT_TRACKCOM      ,
+    /** pos fixed in body, rot tracks target body */
+    mjCAMLIGHT_TARGETBODY    ,
+    /** pos fixed in body, rot tracks target subtree com */
+    mjCAMLIGHT_TARGETBODYCOM ,
+}
+/**  type of texture                         */
+export enum mjtTexture {
+    /** 2d texture, suitable for planes and hfields */
+    mjTEXTURE_2D             ,
+    /** cube texture, suitable for all other geom types */
+    mjTEXTURE_CUBE           ,
+    /** cube texture used as skybox              */
+    mjTEXTURE_SKYBOX         ,
+}
+/**  integrator mode                         */
+export enum mjtIntegrator {
+    /** semi-implicit Euler                      */
+    mjINT_EULER              ,
+    /** 4th-order Runge Kutta                    */
+    mjINT_RK4                ,
+    /** implicit in velocity                     */
+    mjINT_IMPLICIT           ,
+}
+/**  collision mode for selecting geom pairs */
+export enum mjtCollision {
+    /** test precomputed and dynamic pairs       */
+    mjCOL_ALL                ,
+    /** test predefined pairs only               */
+    mjCOL_PAIR               ,
+    /** test dynamic pairs only                  */
+    mjCOL_DYNAMIC            ,
+}
+/**  type of friction cone                   */
+export enum mjtCone {
+    /** pyramidal                                */
+    mjCONE_PYRAMIDAL         ,
+    /** elliptic                                 */
+    mjCONE_ELLIPTIC          ,
+}
+/**  type of constraint Jacobian             */
+export enum mjtJacobian {
+    /** dense                                    */
+    mjJAC_DENSE              ,
+    /** sparse                                   */
+    mjJAC_SPARSE             ,
+    /** dense if nv<60, sparse otherwise         */
+    mjJAC_AUTO               ,
+}
+/**  constraint solver algorithm             */
+export enum mjtSolver {
+    /** PGS    (dual)                            */
+    mjSOL_PGS                ,
+    /** CG     (primal)                          */
+    mjSOL_CG                 ,
+    /** Newton (primal)                          */
+    mjSOL_NEWTON             ,
+}
+/**  type of equality constraint             */
+export enum mjtEq {
+    /** connect two bodies at a point (ball joint) */
+    mjEQ_CONNECT             ,
+    /** fix relative position and orientation of two bodies */
+    mjEQ_WELD                ,
+    /** couple the values of two scalar joints with cubic */
+    mjEQ_JOINT               ,
+    /** couple the lengths of two tendons with cubic */
+    mjEQ_TENDON              ,
+    /** unsupported, will cause an error if used */
+    mjEQ_DISTANCE            ,
+}
+/**  type of tendon wrap object              */
+export enum mjtWrap {
+    /** null object                              */
+    mjWRAP_NONE              ,
+    /** constant moment arm                      */
+    mjWRAP_JOINT             ,
+    /** pulley used to split tendon              */
+    mjWRAP_PULLEY            ,
+    /** pass through site                        */
+    mjWRAP_SITE              ,
+    /** wrap around sphere                       */
+    mjWRAP_SPHERE            ,
+    /** wrap around (infinite) cylinder          */
+    mjWRAP_CYLINDER          ,
+}
+/**  type of actuator transmission           */
+export enum mjtTrn {
+    /** force on joint                           */
+    mjTRN_JOINT              ,
+    /** force on joint, expressed in parent frame */
+    mjTRN_JOINTINPARENT      ,
+    /** force via slider-crank linkage           */
+    mjTRN_SLIDERCRANK        ,
+    /** force on tendon                          */
+    mjTRN_TENDON             ,
+    /** force on site                            */
+    mjTRN_SITE               ,
+    /** adhesion force on a body's geoms         */
+    mjTRN_BODY               ,
+    /** undefined transmission type              */
+    mjTRN_UNDEFINED          ,
+}
+/**  type of actuator dynamics               */
+export enum mjtDyn {
+    /** no internal dynamics; ctrl specifies force */
+    mjDYN_NONE               ,
+    /** integrator: da/dt = u                    */
+    mjDYN_INTEGRATOR         ,
+    /** linear filter: da/dt = (u-a) / tau       */
+    mjDYN_FILTER             ,
+    /** piece-wise linear filter with two time constants */
+    mjDYN_MUSCLE             ,
+    /** user-defined dynamics type               */
+    mjDYN_USER               ,
+}
+/**  type of actuator gain                   */
+export enum mjtGain {
+    /** fixed gain                               */
+    mjGAIN_FIXED             ,
+    /** const + kp*length + kv*velocity          */
+    mjGAIN_AFFINE            ,
+    /** muscle FLV curve computed by mju_muscleGain() */
+    mjGAIN_MUSCLE            ,
+    /** user-defined gain type                   */
+    mjGAIN_USER              ,
+}
+/**  type of actuator bias                   */
+export enum mjtBias {
+    /** no bias                                  */
+    mjBIAS_NONE              ,
+    /** const + kp*length + kv*velocity          */
+    mjBIAS_AFFINE            ,
+    /** muscle passive force computed by mju_muscleBias() */
+    mjBIAS_MUSCLE            ,
+    /** user-defined bias type                   */
+    mjBIAS_USER              ,
+}
+/**  type of MujoCo object                   */
+export enum mjtObj {
+    /** unknown object type                      */
+    mjOBJ_UNKNOWN            ,
+    /** body                                     */
+    mjOBJ_BODY               ,
+    /** body, used to access regular frame instead of i-frame */
+    mjOBJ_XBODY              ,
+    /** joint                                    */
+    mjOBJ_JOINT              ,
+    /** dof                                      */
+    mjOBJ_DOF                ,
+    /** geom                                     */
+    mjOBJ_GEOM               ,
+    /** site                                     */
+    mjOBJ_SITE               ,
+    /** camera                                   */
+    mjOBJ_CAMERA             ,
+    /** light                                    */
+    mjOBJ_LIGHT              ,
+    /** mesh                                     */
+    mjOBJ_MESH               ,
+    /** skin                                     */
+    mjOBJ_SKIN               ,
+    /** heightfield                              */
+    mjOBJ_HFIELD             ,
+    /** texture                                  */
+    mjOBJ_TEXTURE            ,
+    /** material for rendering                   */
+    mjOBJ_MATERIAL           ,
+    /** geom pair to include                     */
+    mjOBJ_PAIR               ,
+    /** body pair to exclude                     */
+    mjOBJ_EXCLUDE            ,
+    /** equality constraint                      */
+    mjOBJ_EQUALITY           ,
+    /** tendon                                   */
+    mjOBJ_TENDON             ,
+    /** actuator                                 */
+    mjOBJ_ACTUATOR           ,
+    /** sensor                                   */
+    mjOBJ_SENSOR             ,
+    /** numeric                                  */
+    mjOBJ_NUMERIC            ,
+    /** text                                     */
+    mjOBJ_TEXT               ,
+    /** tuple                                    */
+    mjOBJ_TUPLE              ,
+    /** keyframe                                 */
+    mjOBJ_KEY                ,
+    /** plugin instance                          */
+    mjOBJ_PLUGIN             ,
+}
+/**  type of constraint                      */
+export enum mjtConstraint {
+    /** equality constraint                      */
+    mjCNSTR_EQUALITY         ,
+    /** dof friction                             */
+    mjCNSTR_FRICTION_DOF     ,
+    /** tendon friction                          */
+    mjCNSTR_FRICTION_TENDON  ,
+    /** joint limit                              */
+    mjCNSTR_LIMIT_JOINT      ,
+    /** tendon limit                             */
+    mjCNSTR_LIMIT_TENDON     ,
+    /** frictionless contact                     */
+    mjCNSTR_CONTACT_FRICTIONLESS,
+    /** frictional contact, pyramidal friction cone */
+    mjCNSTR_CONTACT_PYRAMIDAL,
+    /** frictional contact, elliptic friction cone */
+    mjCNSTR_CONTACT_ELLIPTIC ,
+}
+/**  constraint state                        */
+export enum mjtConstraintState {
+    /** constraint satisfied, zero cost (limit, contact) */
+    mjCNSTRSTATE_SATISFIED   ,
+    /** quadratic cost (equality, friction, limit, contact) */
+    mjCNSTRSTATE_QUADRATIC   ,
+    /** linear cost, negative side (friction)    */
+    mjCNSTRSTATE_LINEARNEG   ,
+    /** linear cost, positive side (friction)    */
+    mjCNSTRSTATE_LINEARPOS   ,
+    /** squared distance to cone cost (elliptic contact) */
+    mjCNSTRSTATE_CONE        ,
+}
+/**  type of sensor                          */
+export enum mjtSensor {
+    /** scalar contact normal forces summed over sensor zone */
+    mjSENS_TOUCH             ,
+    /** 3D linear acceleration, in local frame   */
+    mjSENS_ACCELEROMETER     ,
+    /** 3D linear velocity, in local frame       */
+    mjSENS_VELOCIMETER       ,
+    /** 3D angular velocity, in local frame      */
+    mjSENS_GYRO              ,
+    /** 3D force between site's body and its parent body */
+    mjSENS_FORCE             ,
+    /** 3D torque between site's body and its parent body */
+    mjSENS_TORQUE            ,
+    /** 3D magnetometer                          */
+    mjSENS_MAGNETOMETER      ,
+    /** scalar distance to nearest geom or site along z-axis */
+    mjSENS_RANGEFINDER       ,
+    /** scalar joint position (hinge and slide only) */
+    mjSENS_JOINTPOS          ,
+    /** scalar joint velocity (hinge and slide only) */
+    mjSENS_JOINTVEL          ,
+    /** scalar tendon position                   */
+    mjSENS_TENDONPOS         ,
+    /** scalar tendon velocity                   */
+    mjSENS_TENDONVEL         ,
+    /** scalar actuator position                 */
+    mjSENS_ACTUATORPOS       ,
+    /** scalar actuator velocity                 */
+    mjSENS_ACTUATORVEL       ,
+    /** scalar actuator force                    */
+    mjSENS_ACTUATORFRC       ,
+    /** 4D ball joint quaternion                 */
+    mjSENS_BALLQUAT          ,
+    /** 3D ball joint angular velocity           */
+    mjSENS_BALLANGVEL        ,
+    /** joint limit distance-margin              */
+    mjSENS_JOINTLIMITPOS     ,
+    /** joint limit velocity                     */
+    mjSENS_JOINTLIMITVEL     ,
+    /** joint limit force                        */
+    mjSENS_JOINTLIMITFRC     ,
+    /** tendon limit distance-margin             */
+    mjSENS_TENDONLIMITPOS    ,
+    /** tendon limit velocity                    */
+    mjSENS_TENDONLIMITVEL    ,
+    /** tendon limit force                       */
+    mjSENS_TENDONLIMITFRC    ,
+    /** 3D position                              */
+    mjSENS_FRAMEPOS          ,
+    /** 4D unit quaternion orientation           */
+    mjSENS_FRAMEQUAT         ,
+    /** 3D unit vector: x-axis of object's frame */
+    mjSENS_FRAMEXAXIS        ,
+    /** 3D unit vector: y-axis of object's frame */
+    mjSENS_FRAMEYAXIS        ,
+    /** 3D unit vector: z-axis of object's frame */
+    mjSENS_FRAMEZAXIS        ,
+    /** 3D linear velocity                       */
+    mjSENS_FRAMELINVEL       ,
+    /** 3D angular velocity                      */
+    mjSENS_FRAMEANGVEL       ,
+    /** 3D linear acceleration                   */
+    mjSENS_FRAMELINACC       ,
+    /** 3D angular acceleration                  */
+    mjSENS_FRAMEANGACC       ,
+    /** 3D center of mass of subtree             */
+    mjSENS_SUBTREECOM        ,
+    /** 3D linear velocity of subtree            */
+    mjSENS_SUBTREELINVEL     ,
+    /** 3D angular momentum of subtree           */
+    mjSENS_SUBTREEANGMOM     ,
+    /** simulation time                          */
+    mjSENS_CLOCK             ,
+    /** plugin-controlled                        */
+    mjSENS_PLUGIN            ,
+    /** sensor data provided by mjcb_sensor callback */
+    mjSENS_USER              ,
+}
+/**  computation stage                       */
+export enum mjtStage {
+    /** no computations                          */
+    mjSTAGE_NONE             ,
+    /** position-dependent computations          */
+    mjSTAGE_POS              ,
+    /** velocity-dependent computations          */
+    mjSTAGE_VEL              ,
+    /** acceleration/force-dependent computations */
+    mjSTAGE_ACC              ,
+}
+/**  data type for sensors                   */
+export enum mjtDataType {
+    /** real values, no constraints              */
+    mjDATATYPE_REAL          ,
+    /** positive values; 0 or negative: inactive */
+    mjDATATYPE_POSITIVE      ,
+    /** 3D unit vector                           */
+    mjDATATYPE_AXIS          ,
+    /** unit quaternion                          */
+    mjDATATYPE_QUATERNION    ,
+}
+/**  mode for actuator length range computation */
+export enum mjtLRMode {
+    /** do not process any actuators             */
+    mjLRMODE_NONE            ,
+    /** process muscle actuators                 */
+    mjLRMODE_MUSCLE          ,
+    /** process muscle and user actuators        */
+    mjLRMODE_MUSCLEUSER      ,
+    /** process all actuators                    */
+    mjLRMODE_ALL             ,
+}
 
 export interface Model {
+  new (filename : string) : Model;
   load_from_xml(str: string): Model;
+  /** Retrive various parameters of the current simulation */
+  getOptions(): any;
   // MODEL_INTERFACE
   /** number of generalized coordinates = dim(qpos)*/
   nq                    ():       number;
@@ -974,12 +1412,14 @@ export interface Model {
 }
 
 export interface State {
+  new (model : Model) : State;
 }
 
 export interface Simulation {
+  new (model : Model, state : State) : Simulation;
   state() : State;
-  model() : Model;
-  step(): void;
+  model(): Model;
+  /** Apply cartesian force and torque (outside xfrc_applied mechanism) */
   applyForce (fx:number, fy:number, fz:number, tx:number, ty:number, tz:number, px:number, py:number, pz:number, body_id:number) : void;
   // DATA_INTERFACE
   /** position                                 (nq x 1)*/

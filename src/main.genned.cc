@@ -23,17 +23,17 @@ int finish(const char *msg = NULL, mjModel *m = NULL) {
 class Model {
 public:
   Model() { m = NULL; }
-
-  static Model load_from_xml(const std::string filename) {
-    Model model;
+  Model(const std::string filename) {
     char error[1000] = "Could not load xml model";
-    model.m = mj_loadXML(filename.c_str(), 0, error, 1000);
-    if (!model.m) { finish(error, model.m); }
-    return model;
+    m = mj_loadXML(filename.c_str(), 0, error, 1000); 
+    if (!m) { finish(error, m); }
   }
 
-  mjModel *ptr     () { return m; }
-  mjModel getVal   () { return *m; }
+  static Model load_from_xml(const std::string filename) { return Model(filename); }
+
+  mjModel *ptr       () { return m; }
+  mjModel getVal     () { return *m; }
+  mjOption getOptions() { return (*m).opt; }
 
   // MJMODEL_DEFINITIONS
   int  nq            () { return m->nq            ; }
@@ -600,11 +600,245 @@ int main(int argc, char **argv) {
 }
 
 EMSCRIPTEN_BINDINGS(mujoco_wasm) {
+
+  // MODEL_ENUMS
+  enum_<mjtDisableBit>("mjtDisableBit")
+      .value("mjDSBL_CONSTRAINT"      , mjtDisableBit            ::mjDSBL_CONSTRAINT        )
+      .value("mjDSBL_EQUALITY"        , mjtDisableBit            ::mjDSBL_EQUALITY          )
+      .value("mjDSBL_FRICTIONLOSS"    , mjtDisableBit            ::mjDSBL_FRICTIONLOSS      )
+      .value("mjDSBL_LIMIT"           , mjtDisableBit            ::mjDSBL_LIMIT             )
+      .value("mjDSBL_CONTACT"         , mjtDisableBit            ::mjDSBL_CONTACT           )
+      .value("mjDSBL_PASSIVE"         , mjtDisableBit            ::mjDSBL_PASSIVE           )
+      .value("mjDSBL_GRAVITY"         , mjtDisableBit            ::mjDSBL_GRAVITY           )
+      .value("mjDSBL_CLAMPCTRL"       , mjtDisableBit            ::mjDSBL_CLAMPCTRL         )
+      .value("mjDSBL_WARMSTART"       , mjtDisableBit            ::mjDSBL_WARMSTART         )
+      .value("mjDSBL_FILTERPARENT"    , mjtDisableBit            ::mjDSBL_FILTERPARENT      )
+      .value("mjDSBL_ACTUATION"       , mjtDisableBit            ::mjDSBL_ACTUATION         )
+      .value("mjDSBL_REFSAFE"         , mjtDisableBit            ::mjDSBL_REFSAFE           )
+      .value("mjDSBL_SENSOR"          , mjtDisableBit            ::mjDSBL_SENSOR            )
+      .value("mjNDISABLE"             , mjtDisableBit            ::mjNDISABLE               )
+  ;
+  enum_<mjtEnableBit>("mjtEnableBit")
+      .value("mjENBL_OVERRIDE"        , mjtEnableBit             ::mjENBL_OVERRIDE          )
+      .value("mjENBL_ENERGY"          , mjtEnableBit             ::mjENBL_ENERGY            )
+      .value("mjENBL_FWDINV"          , mjtEnableBit             ::mjENBL_FWDINV            )
+      .value("mjENBL_SENSORNOISE"     , mjtEnableBit             ::mjENBL_SENSORNOISE       )
+      .value("mjENBL_MULTICCD"        , mjtEnableBit             ::mjENBL_MULTICCD          )
+      .value("mjNENABLE"              , mjtEnableBit             ::mjNENABLE                )
+  ;
+  enum_<mjtJoint>("mjtJoint")
+      .value("mjJNT_FREE"             , mjtJoint                 ::mjJNT_FREE               )
+      .value("mjJNT_BALL"             , mjtJoint                 ::mjJNT_BALL               )
+      .value("mjJNT_SLIDE"            , mjtJoint                 ::mjJNT_SLIDE              )
+      .value("mjJNT_HINGE"            , mjtJoint                 ::mjJNT_HINGE              )
+  ;
+  enum_<mjtGeom>("mjtGeom")
+      .value("mjGEOM_PLANE"           , mjtGeom                  ::mjGEOM_PLANE             )
+      .value("mjGEOM_HFIELD"          , mjtGeom                  ::mjGEOM_HFIELD            )
+      .value("mjGEOM_SPHERE"          , mjtGeom                  ::mjGEOM_SPHERE            )
+      .value("mjGEOM_CAPSULE"         , mjtGeom                  ::mjGEOM_CAPSULE           )
+      .value("mjGEOM_ELLIPSOID"       , mjtGeom                  ::mjGEOM_ELLIPSOID         )
+      .value("mjGEOM_CYLINDER"        , mjtGeom                  ::mjGEOM_CYLINDER          )
+      .value("mjGEOM_BOX"             , mjtGeom                  ::mjGEOM_BOX               )
+      .value("mjGEOM_MESH"            , mjtGeom                  ::mjGEOM_MESH              )
+      .value("mjNGEOMTYPES"           , mjtGeom                  ::mjNGEOMTYPES             )
+      .value("mjGEOM_ARROW"           , mjtGeom                  ::mjGEOM_ARROW             )
+      .value("mjGEOM_ARROW1"          , mjtGeom                  ::mjGEOM_ARROW1            )
+      .value("mjGEOM_ARROW2"          , mjtGeom                  ::mjGEOM_ARROW2            )
+      .value("mjGEOM_LINE"            , mjtGeom                  ::mjGEOM_LINE              )
+      .value("mjGEOM_SKIN"            , mjtGeom                  ::mjGEOM_SKIN              )
+      .value("mjGEOM_LABEL"           , mjtGeom                  ::mjGEOM_LABEL             )
+      .value("mjGEOM_NONE"            , mjtGeom                  ::mjGEOM_NONE              )
+  ;
+  enum_<mjtCamLight>("mjtCamLight")
+      .value("mjCAMLIGHT_FIXED"       , mjtCamLight              ::mjCAMLIGHT_FIXED         )
+      .value("mjCAMLIGHT_TRACK"       , mjtCamLight              ::mjCAMLIGHT_TRACK         )
+      .value("mjCAMLIGHT_TRACKCOM"    , mjtCamLight              ::mjCAMLIGHT_TRACKCOM      )
+      .value("mjCAMLIGHT_TARGETBODY"  , mjtCamLight              ::mjCAMLIGHT_TARGETBODY    )
+      .value("mjCAMLIGHT_TARGETBODYCOM", mjtCamLight              ::mjCAMLIGHT_TARGETBODYCOM )
+  ;
+  enum_<mjtTexture>("mjtTexture")
+      .value("mjTEXTURE_2D"           , mjtTexture               ::mjTEXTURE_2D             )
+      .value("mjTEXTURE_CUBE"         , mjtTexture               ::mjTEXTURE_CUBE           )
+      .value("mjTEXTURE_SKYBOX"       , mjtTexture               ::mjTEXTURE_SKYBOX         )
+  ;
+  enum_<mjtIntegrator>("mjtIntegrator")
+      .value("mjINT_EULER"            , mjtIntegrator            ::mjINT_EULER              )
+      .value("mjINT_RK4"              , mjtIntegrator            ::mjINT_RK4                )
+      .value("mjINT_IMPLICIT"         , mjtIntegrator            ::mjINT_IMPLICIT           )
+  ;
+  enum_<mjtCollision>("mjtCollision")
+      .value("mjCOL_ALL"              , mjtCollision             ::mjCOL_ALL                )
+      .value("mjCOL_PAIR"             , mjtCollision             ::mjCOL_PAIR               )
+      .value("mjCOL_DYNAMIC"          , mjtCollision             ::mjCOL_DYNAMIC            )
+  ;
+  enum_<mjtCone>("mjtCone")
+      .value("mjCONE_PYRAMIDAL"       , mjtCone                  ::mjCONE_PYRAMIDAL         )
+      .value("mjCONE_ELLIPTIC"        , mjtCone                  ::mjCONE_ELLIPTIC          )
+  ;
+  enum_<mjtJacobian>("mjtJacobian")
+      .value("mjJAC_DENSE"            , mjtJacobian              ::mjJAC_DENSE              )
+      .value("mjJAC_SPARSE"           , mjtJacobian              ::mjJAC_SPARSE             )
+      .value("mjJAC_AUTO"             , mjtJacobian              ::mjJAC_AUTO               )
+  ;
+  enum_<mjtSolver>("mjtSolver")
+      .value("mjSOL_PGS"              , mjtSolver                ::mjSOL_PGS                )
+      .value("mjSOL_CG"               , mjtSolver                ::mjSOL_CG                 )
+      .value("mjSOL_NEWTON"           , mjtSolver                ::mjSOL_NEWTON             )
+  ;
+  enum_<mjtEq>("mjtEq")
+      .value("mjEQ_CONNECT"           , mjtEq                    ::mjEQ_CONNECT             )
+      .value("mjEQ_WELD"              , mjtEq                    ::mjEQ_WELD                )
+      .value("mjEQ_JOINT"             , mjtEq                    ::mjEQ_JOINT               )
+      .value("mjEQ_TENDON"            , mjtEq                    ::mjEQ_TENDON              )
+      .value("mjEQ_DISTANCE"          , mjtEq                    ::mjEQ_DISTANCE            )
+  ;
+  enum_<mjtWrap>("mjtWrap")
+      .value("mjWRAP_NONE"            , mjtWrap                  ::mjWRAP_NONE              )
+      .value("mjWRAP_JOINT"           , mjtWrap                  ::mjWRAP_JOINT             )
+      .value("mjWRAP_PULLEY"          , mjtWrap                  ::mjWRAP_PULLEY            )
+      .value("mjWRAP_SITE"            , mjtWrap                  ::mjWRAP_SITE              )
+      .value("mjWRAP_SPHERE"          , mjtWrap                  ::mjWRAP_SPHERE            )
+      .value("mjWRAP_CYLINDER"        , mjtWrap                  ::mjWRAP_CYLINDER          )
+  ;
+  enum_<mjtTrn>("mjtTrn")
+      .value("mjTRN_JOINT"            , mjtTrn                   ::mjTRN_JOINT              )
+      .value("mjTRN_JOINTINPARENT"    , mjtTrn                   ::mjTRN_JOINTINPARENT      )
+      .value("mjTRN_SLIDERCRANK"      , mjtTrn                   ::mjTRN_SLIDERCRANK        )
+      .value("mjTRN_TENDON"           , mjtTrn                   ::mjTRN_TENDON             )
+      .value("mjTRN_SITE"             , mjtTrn                   ::mjTRN_SITE               )
+      .value("mjTRN_BODY"             , mjtTrn                   ::mjTRN_BODY               )
+      .value("mjTRN_UNDEFINED"        , mjtTrn                   ::mjTRN_UNDEFINED          )
+  ;
+  enum_<mjtDyn>("mjtDyn")
+      .value("mjDYN_NONE"             , mjtDyn                   ::mjDYN_NONE               )
+      .value("mjDYN_INTEGRATOR"       , mjtDyn                   ::mjDYN_INTEGRATOR         )
+      .value("mjDYN_FILTER"           , mjtDyn                   ::mjDYN_FILTER             )
+      .value("mjDYN_MUSCLE"           , mjtDyn                   ::mjDYN_MUSCLE             )
+      .value("mjDYN_USER"             , mjtDyn                   ::mjDYN_USER               )
+  ;
+  enum_<mjtGain>("mjtGain")
+      .value("mjGAIN_FIXED"           , mjtGain                  ::mjGAIN_FIXED             )
+      .value("mjGAIN_AFFINE"          , mjtGain                  ::mjGAIN_AFFINE            )
+      .value("mjGAIN_MUSCLE"          , mjtGain                  ::mjGAIN_MUSCLE            )
+      .value("mjGAIN_USER"            , mjtGain                  ::mjGAIN_USER              )
+  ;
+  enum_<mjtBias>("mjtBias")
+      .value("mjBIAS_NONE"            , mjtBias                  ::mjBIAS_NONE              )
+      .value("mjBIAS_AFFINE"          , mjtBias                  ::mjBIAS_AFFINE            )
+      .value("mjBIAS_MUSCLE"          , mjtBias                  ::mjBIAS_MUSCLE            )
+      .value("mjBIAS_USER"            , mjtBias                  ::mjBIAS_USER              )
+  ;
+  enum_<mjtObj>("mjtObj")
+      .value("mjOBJ_UNKNOWN"          , mjtObj                   ::mjOBJ_UNKNOWN            )
+      .value("mjOBJ_BODY"             , mjtObj                   ::mjOBJ_BODY               )
+      .value("mjOBJ_XBODY"            , mjtObj                   ::mjOBJ_XBODY              )
+      .value("mjOBJ_JOINT"            , mjtObj                   ::mjOBJ_JOINT              )
+      .value("mjOBJ_DOF"              , mjtObj                   ::mjOBJ_DOF                )
+      .value("mjOBJ_GEOM"             , mjtObj                   ::mjOBJ_GEOM               )
+      .value("mjOBJ_SITE"             , mjtObj                   ::mjOBJ_SITE               )
+      .value("mjOBJ_CAMERA"           , mjtObj                   ::mjOBJ_CAMERA             )
+      .value("mjOBJ_LIGHT"            , mjtObj                   ::mjOBJ_LIGHT              )
+      .value("mjOBJ_MESH"             , mjtObj                   ::mjOBJ_MESH               )
+      .value("mjOBJ_SKIN"             , mjtObj                   ::mjOBJ_SKIN               )
+      .value("mjOBJ_HFIELD"           , mjtObj                   ::mjOBJ_HFIELD             )
+      .value("mjOBJ_TEXTURE"          , mjtObj                   ::mjOBJ_TEXTURE            )
+      .value("mjOBJ_MATERIAL"         , mjtObj                   ::mjOBJ_MATERIAL           )
+      .value("mjOBJ_PAIR"             , mjtObj                   ::mjOBJ_PAIR               )
+      .value("mjOBJ_EXCLUDE"          , mjtObj                   ::mjOBJ_EXCLUDE            )
+      .value("mjOBJ_EQUALITY"         , mjtObj                   ::mjOBJ_EQUALITY           )
+      .value("mjOBJ_TENDON"           , mjtObj                   ::mjOBJ_TENDON             )
+      .value("mjOBJ_ACTUATOR"         , mjtObj                   ::mjOBJ_ACTUATOR           )
+      .value("mjOBJ_SENSOR"           , mjtObj                   ::mjOBJ_SENSOR             )
+      .value("mjOBJ_NUMERIC"          , mjtObj                   ::mjOBJ_NUMERIC            )
+      .value("mjOBJ_TEXT"             , mjtObj                   ::mjOBJ_TEXT               )
+      .value("mjOBJ_TUPLE"            , mjtObj                   ::mjOBJ_TUPLE              )
+      .value("mjOBJ_KEY"              , mjtObj                   ::mjOBJ_KEY                )
+      .value("mjOBJ_PLUGIN"           , mjtObj                   ::mjOBJ_PLUGIN             )
+  ;
+  enum_<mjtConstraint>("mjtConstraint")
+      .value("mjCNSTR_EQUALITY"       , mjtConstraint            ::mjCNSTR_EQUALITY         )
+      .value("mjCNSTR_FRICTION_DOF"   , mjtConstraint            ::mjCNSTR_FRICTION_DOF     )
+      .value("mjCNSTR_FRICTION_TENDON", mjtConstraint            ::mjCNSTR_FRICTION_TENDON  )
+      .value("mjCNSTR_LIMIT_JOINT"    , mjtConstraint            ::mjCNSTR_LIMIT_JOINT      )
+      .value("mjCNSTR_LIMIT_TENDON"   , mjtConstraint            ::mjCNSTR_LIMIT_TENDON     )
+      .value("mjCNSTR_CONTACT_FRICTIONLESS", mjtConstraint            ::mjCNSTR_CONTACT_FRICTIONLESS)
+      .value("mjCNSTR_CONTACT_PYRAMIDAL", mjtConstraint            ::mjCNSTR_CONTACT_PYRAMIDAL)
+      .value("mjCNSTR_CONTACT_ELLIPTIC", mjtConstraint            ::mjCNSTR_CONTACT_ELLIPTIC )
+  ;
+  enum_<mjtConstraintState>("mjtConstraintState")
+      .value("mjCNSTRSTATE_SATISFIED" , mjtConstraintState       ::mjCNSTRSTATE_SATISFIED   )
+      .value("mjCNSTRSTATE_QUADRATIC" , mjtConstraintState       ::mjCNSTRSTATE_QUADRATIC   )
+      .value("mjCNSTRSTATE_LINEARNEG" , mjtConstraintState       ::mjCNSTRSTATE_LINEARNEG   )
+      .value("mjCNSTRSTATE_LINEARPOS" , mjtConstraintState       ::mjCNSTRSTATE_LINEARPOS   )
+      .value("mjCNSTRSTATE_CONE"      , mjtConstraintState       ::mjCNSTRSTATE_CONE        )
+  ;
+  enum_<mjtSensor>("mjtSensor")
+      .value("mjSENS_TOUCH"           , mjtSensor                ::mjSENS_TOUCH             )
+      .value("mjSENS_ACCELEROMETER"   , mjtSensor                ::mjSENS_ACCELEROMETER     )
+      .value("mjSENS_VELOCIMETER"     , mjtSensor                ::mjSENS_VELOCIMETER       )
+      .value("mjSENS_GYRO"            , mjtSensor                ::mjSENS_GYRO              )
+      .value("mjSENS_FORCE"           , mjtSensor                ::mjSENS_FORCE             )
+      .value("mjSENS_TORQUE"          , mjtSensor                ::mjSENS_TORQUE            )
+      .value("mjSENS_MAGNETOMETER"    , mjtSensor                ::mjSENS_MAGNETOMETER      )
+      .value("mjSENS_RANGEFINDER"     , mjtSensor                ::mjSENS_RANGEFINDER       )
+      .value("mjSENS_JOINTPOS"        , mjtSensor                ::mjSENS_JOINTPOS          )
+      .value("mjSENS_JOINTVEL"        , mjtSensor                ::mjSENS_JOINTVEL          )
+      .value("mjSENS_TENDONPOS"       , mjtSensor                ::mjSENS_TENDONPOS         )
+      .value("mjSENS_TENDONVEL"       , mjtSensor                ::mjSENS_TENDONVEL         )
+      .value("mjSENS_ACTUATORPOS"     , mjtSensor                ::mjSENS_ACTUATORPOS       )
+      .value("mjSENS_ACTUATORVEL"     , mjtSensor                ::mjSENS_ACTUATORVEL       )
+      .value("mjSENS_ACTUATORFRC"     , mjtSensor                ::mjSENS_ACTUATORFRC       )
+      .value("mjSENS_BALLQUAT"        , mjtSensor                ::mjSENS_BALLQUAT          )
+      .value("mjSENS_BALLANGVEL"      , mjtSensor                ::mjSENS_BALLANGVEL        )
+      .value("mjSENS_JOINTLIMITPOS"   , mjtSensor                ::mjSENS_JOINTLIMITPOS     )
+      .value("mjSENS_JOINTLIMITVEL"   , mjtSensor                ::mjSENS_JOINTLIMITVEL     )
+      .value("mjSENS_JOINTLIMITFRC"   , mjtSensor                ::mjSENS_JOINTLIMITFRC     )
+      .value("mjSENS_TENDONLIMITPOS"  , mjtSensor                ::mjSENS_TENDONLIMITPOS    )
+      .value("mjSENS_TENDONLIMITVEL"  , mjtSensor                ::mjSENS_TENDONLIMITVEL    )
+      .value("mjSENS_TENDONLIMITFRC"  , mjtSensor                ::mjSENS_TENDONLIMITFRC    )
+      .value("mjSENS_FRAMEPOS"        , mjtSensor                ::mjSENS_FRAMEPOS          )
+      .value("mjSENS_FRAMEQUAT"       , mjtSensor                ::mjSENS_FRAMEQUAT         )
+      .value("mjSENS_FRAMEXAXIS"      , mjtSensor                ::mjSENS_FRAMEXAXIS        )
+      .value("mjSENS_FRAMEYAXIS"      , mjtSensor                ::mjSENS_FRAMEYAXIS        )
+      .value("mjSENS_FRAMEZAXIS"      , mjtSensor                ::mjSENS_FRAMEZAXIS        )
+      .value("mjSENS_FRAMELINVEL"     , mjtSensor                ::mjSENS_FRAMELINVEL       )
+      .value("mjSENS_FRAMEANGVEL"     , mjtSensor                ::mjSENS_FRAMEANGVEL       )
+      .value("mjSENS_FRAMELINACC"     , mjtSensor                ::mjSENS_FRAMELINACC       )
+      .value("mjSENS_FRAMEANGACC"     , mjtSensor                ::mjSENS_FRAMEANGACC       )
+      .value("mjSENS_SUBTREECOM"      , mjtSensor                ::mjSENS_SUBTREECOM        )
+      .value("mjSENS_SUBTREELINVEL"   , mjtSensor                ::mjSENS_SUBTREELINVEL     )
+      .value("mjSENS_SUBTREEANGMOM"   , mjtSensor                ::mjSENS_SUBTREEANGMOM     )
+      .value("mjSENS_CLOCK"           , mjtSensor                ::mjSENS_CLOCK             )
+      .value("mjSENS_PLUGIN"          , mjtSensor                ::mjSENS_PLUGIN            )
+      .value("mjSENS_USER"            , mjtSensor                ::mjSENS_USER              )
+  ;
+  enum_<mjtStage>("mjtStage")
+      .value("mjSTAGE_NONE"           , mjtStage                 ::mjSTAGE_NONE             )
+      .value("mjSTAGE_POS"            , mjtStage                 ::mjSTAGE_POS              )
+      .value("mjSTAGE_VEL"            , mjtStage                 ::mjSTAGE_VEL              )
+      .value("mjSTAGE_ACC"            , mjtStage                 ::mjSTAGE_ACC              )
+  ;
+  enum_<mjtDataType>("mjtDataType")
+      .value("mjDATATYPE_REAL"        , mjtDataType              ::mjDATATYPE_REAL          )
+      .value("mjDATATYPE_POSITIVE"    , mjtDataType              ::mjDATATYPE_POSITIVE      )
+      .value("mjDATATYPE_AXIS"        , mjtDataType              ::mjDATATYPE_AXIS          )
+      .value("mjDATATYPE_QUATERNION"  , mjtDataType              ::mjDATATYPE_QUATERNION    )
+  ;
+  enum_<mjtLRMode>("mjtLRMode")
+      .value("mjLRMODE_NONE"          , mjtLRMode                ::mjLRMODE_NONE            )
+      .value("mjLRMODE_MUSCLE"        , mjtLRMode                ::mjLRMODE_MUSCLE          )
+      .value("mjLRMODE_MUSCLEUSER"    , mjtLRMode                ::mjLRMODE_MUSCLEUSER      )
+      .value("mjLRMODE_ALL"           , mjtLRMode                ::mjLRMODE_ALL             )
+  ;
+
+
   class_<Model>("Model")
-      .constructor<>()
+      .constructor<>(&Model::load_from_xml)
       .class_function("load_from_xml", &Model::load_from_xml)
       .function("ptr", &Model::ptr, allow_raw_pointers())
       .function("getVal"          , &Model::getVal      )
+      .function("getOptions"      , &Model::getOptions  )
       // MJMODEL_BINDINGS
       .function("nq"                    , &Model::nq                    )
       .function("nv"                    , &Model::nv                    )
@@ -965,7 +1199,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("state"     , &Simulation::state, allow_raw_pointers())
       .function("model"     , &Simulation::model, allow_raw_pointers())
       // MJDATA_BINDINGS
-         .function("qpos"                  , &Simulation::qpos                  )
+      .function("qpos"                  , &Simulation::qpos                  )
       .function("qvel"                  , &Simulation::qvel                  )
       .function("act"                   , &Simulation::act                   )
       .function("qacc_warmstart"        , &Simulation::qacc_warmstart        )
@@ -1171,7 +1405,45 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .field("geom1"        , &mjContact::H)                // id of geom 1
       .field("geom2"        , &mjContact::H)                // id of geom 2
       .field("exclude"      , &mjContact::exclude)          // 0: include, 1: in gap, 2: fused, 3: equality, 4: no dofs
-      .field("efc_address"  , &mjContact::efc_address)      // address in efc; -1: not included, -2-i: distance constraint i
-      ;
+      .field("efc_address"  , &mjContact::efc_address);     // address in efc; -1: not included, -2-i: distance constraint i
+
+  value_object<mjLROpt>("mjLROpt")
+      .field("mode"       , &mjLROpt::mode)
+      .field("useexisting", &mjLROpt::useexisting)
+      .field("uselimit"   , &mjLROpt::uselimit)
+      .field("accel"      , &mjLROpt::accel)      // target acceleration used to compute force
+      .field("maxforce"   , &mjLROpt::maxforce)   // maximum force; 0: no limit
+      .field("timeconst"  , &mjLROpt::timeconst)  // time constant for velocity reduction; min 0.01
+      .field("timestep"   , &mjLROpt::timestep)   // simulation timestep; 0: use mjOption.timestep
+      .field("inttotal"   , &mjLROpt::inttotal)   // total simulation time interval
+      .field("inteval"    , &mjLROpt::inteval)    // evaluation time interval (at the end)
+      .field("tolrange"   , &mjLROpt::tolrange);  // convergence tolerance (relative to range)
+
+  value_object<mjOption>("mjOption")
+      .field("timestep"            , &mjOption::timestep)          // timestep
+      .field("apirate"             , &mjOption::apirate)           // update rate for remote API (Hz)
+      .field("impratio"            , &mjOption::impratio)          // ratio of friction-to-normal contact impedance
+      .field("tolerance"           , &mjOption::tolerance)         // main solver tolerance
+      .field("noslip_tolerance"    , &mjOption::noslip_tolerance)  // noslip solver tolerance
+      .field("mpr_tolerance"       , &mjOption::mpr_tolerance)     // MPR solver tolerance
+      //.field("gravity"           , &mjOption::gravity)           // gravitational acceleration
+      //.field("wind"              , &mjOption::wind)              // wind (for lift, drag and viscosity)
+      //.field("magnetic"          , &mjOption::magnetic)          // global magnetic flux
+      .field("density"             , &mjOption::density)           // density of medium
+      .field("viscosity"           , &mjOption::viscosity)         // viscosity of medium
+      .field("o_margin"            , &mjOption::o_margin)          // margin
+      //.field("o_solref"          , &mjOption::o_solref)          // solref
+      //.field("o_solimp"          , &mjOption::o_solimp)          // solimp
+      .field("integrator"          , &mjOption::integrator)        // integration mode (mjtIntegrator)
+      .field("collision"           , &mjOption::collision)         // collision mode (mjtCollision)
+      .field("cone"                , &mjOption::cone)              // type of friction cone (mjtCone)
+      .field("jacobian"            , &mjOption::jacobian)          // type of Jacobian (mjtJacobian)
+      .field("solver"              , &mjOption::solver)            // solver algorithm (mjtSolver)
+      .field("iterations"          , &mjOption::iterations)        // maximum number of main solver iterations
+      .field("noslip_iterations"   , &mjOption::noslip_iterations) // maximum number of noslip solver iterations
+      .field("mpr_iterations"      , &mjOption::mpr_iterations)    // maximum number of MPR solver iterations
+      .field("disableflags"        , &mjOption::disableflags)      // bit flags for disabling standard features
+      .field("enableflags"         , &mjOption::enableflags);      // bit flags for enabling optional features
+
   register_vector<mjContact>("vector<mjContact>");
 }

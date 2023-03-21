@@ -23,17 +23,17 @@ int finish(const char *msg = NULL, mjModel *m = NULL) {
 class Model {
 public:
   Model() { m = NULL; }
-
-  static Model load_from_xml(const std::string filename) {
-    Model model;
+  Model(const std::string filename) {
     char error[1000] = "Could not load xml model";
-    model.m = mj_loadXML(filename.c_str(), 0, error, 1000);
-    if (!model.m) { finish(error, model.m); }
-    return model;
+    m = mj_loadXML(filename.c_str(), 0, error, 1000); 
+    if (!m) { finish(error, m); }
   }
 
-  mjModel *ptr     () { return m; }
-  mjModel getVal   () { return *m; }
+  static Model load_from_xml(const std::string filename) { return Model(filename); }
+
+  mjModel *ptr       () { return m; }
+  mjModel getVal     () { return *m; }
+  mjOption getOptions() { return (*m).opt; }
 
   // MJMODEL_DEFINITIONS
 
@@ -88,11 +88,16 @@ int main(int argc, char **argv) {
 }
 
 EMSCRIPTEN_BINDINGS(mujoco_wasm) {
+
+  // MODEL_ENUMS
+
+
   class_<Model>("Model")
-      .constructor<>()
+      .constructor<>(&Model::load_from_xml)
       .class_function("load_from_xml", &Model::load_from_xml)
       .function("ptr", &Model::ptr, allow_raw_pointers())
       .function("getVal"          , &Model::getVal      )
+      .function("getOptions"      , &Model::getOptions  )
       // MJMODEL_BINDINGS
 ;
 
@@ -147,7 +152,45 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .field("geom1"        , &mjContact::H)                // id of geom 1
       .field("geom2"        , &mjContact::H)                // id of geom 2
       .field("exclude"      , &mjContact::exclude)          // 0: include, 1: in gap, 2: fused, 3: equality, 4: no dofs
-      .field("efc_address"  , &mjContact::efc_address)      // address in efc; -1: not included, -2-i: distance constraint i
-      ;
+      .field("efc_address"  , &mjContact::efc_address);     // address in efc; -1: not included, -2-i: distance constraint i
+
+  value_object<mjLROpt>("mjLROpt")
+      .field("mode"       , &mjLROpt::mode)
+      .field("useexisting", &mjLROpt::useexisting)
+      .field("uselimit"   , &mjLROpt::uselimit)
+      .field("accel"      , &mjLROpt::accel)      // target acceleration used to compute force
+      .field("maxforce"   , &mjLROpt::maxforce)   // maximum force; 0: no limit
+      .field("timeconst"  , &mjLROpt::timeconst)  // time constant for velocity reduction; min 0.01
+      .field("timestep"   , &mjLROpt::timestep)   // simulation timestep; 0: use mjOption.timestep
+      .field("inttotal"   , &mjLROpt::inttotal)   // total simulation time interval
+      .field("inteval"    , &mjLROpt::inteval)    // evaluation time interval (at the end)
+      .field("tolrange"   , &mjLROpt::tolrange);  // convergence tolerance (relative to range)
+
+  value_object<mjOption>("mjOption")
+      .field("timestep"            , &mjOption::timestep)          // timestep
+      .field("apirate"             , &mjOption::apirate)           // update rate for remote API (Hz)
+      .field("impratio"            , &mjOption::impratio)          // ratio of friction-to-normal contact impedance
+      .field("tolerance"           , &mjOption::tolerance)         // main solver tolerance
+      .field("noslip_tolerance"    , &mjOption::noslip_tolerance)  // noslip solver tolerance
+      .field("mpr_tolerance"       , &mjOption::mpr_tolerance)     // MPR solver tolerance
+      //.field("gravity"           , &mjOption::gravity)           // gravitational acceleration
+      //.field("wind"              , &mjOption::wind)              // wind (for lift, drag and viscosity)
+      //.field("magnetic"          , &mjOption::magnetic)          // global magnetic flux
+      .field("density"             , &mjOption::density)           // density of medium
+      .field("viscosity"           , &mjOption::viscosity)         // viscosity of medium
+      .field("o_margin"            , &mjOption::o_margin)          // margin
+      //.field("o_solref"          , &mjOption::o_solref)          // solref
+      //.field("o_solimp"          , &mjOption::o_solimp)          // solimp
+      .field("integrator"          , &mjOption::integrator)        // integration mode (mjtIntegrator)
+      .field("collision"           , &mjOption::collision)         // collision mode (mjtCollision)
+      .field("cone"                , &mjOption::cone)              // type of friction cone (mjtCone)
+      .field("jacobian"            , &mjOption::jacobian)          // type of Jacobian (mjtJacobian)
+      .field("solver"              , &mjOption::solver)            // solver algorithm (mjtSolver)
+      .field("iterations"          , &mjOption::iterations)        // maximum number of main solver iterations
+      .field("noslip_iterations"   , &mjOption::noslip_iterations) // maximum number of noslip solver iterations
+      .field("mpr_iterations"      , &mjOption::mpr_iterations)    // maximum number of MPR solver iterations
+      .field("disableflags"        , &mjOption::disableflags)      // bit flags for disabling standard features
+      .field("enableflags"         , &mjOption::enableflags);      // bit flags for enabling optional features
+
   register_vector<mjContact>("vector<mjContact>");
 }

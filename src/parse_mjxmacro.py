@@ -2,9 +2,12 @@ auto_gen_lines = {
     "model_definitions": [],
     "model_bindings"   : [],
     "model_typescript" : [],
-     "data_definitions": [],
-     "data_bindings"   : [],
-     "data_typescript" : []
+    "model_enums"      : [],
+    "data_definitions" : [],
+    "data_bindings"    : [],
+    "data_typescript"  : [],
+    "enums_typescript" : [],
+
 }
 parse_mode = (None, None)
 types_to_array_types = {"int":"Int32Array", "mjtNum":"Float64Array", "float": "Float32Array", "mjtByte": "Uint8Array", "char": "Uint8Array", "uintptr_t":"BigUint64Array"}
@@ -127,13 +130,33 @@ for function in functions.FUNCTIONS:
         returnType = returnType.replace("mjtNum","number").replace("int","number").replace("float","number").replace("char", "string")
         auto_gen_lines["data_typescript" ].append('  '+name.ljust(22)+'('+", ".join(def_typescript)+'): '+returnType+';')
 
-    #if("const mjModel *" in param_types and "mjData *" in param_types and len(param_types) == 2):
-    #    #print("Function:", function, functions.FUNCTIONS[function].parameters)
-    #    name = function[3:] if function != "mj_crb" else function[3:] + "Calculate"
-    #    auto_gen_lines["data_definitions"].append("  void "+name.ljust(22)+"() { "+function.ljust(28)+"(_model->ptr(), _state->ptr()); }")
-    #    auto_gen_lines["data_bindings"   ].append('      .function('+('"'+name+'"').ljust(23)+' , &Simulation::'+name.ljust(22)+')')
-    #    auto_gen_lines["data_typescript" ].append("  /** "+ functions.FUNCTIONS[function].doc +"*/")
-    #    auto_gen_lines["data_typescript" ].append('  '+name.ljust(22)+'(): '+functions.FUNCTIONS[function].return_type.name+';')
+
+# Parse mjmodel.h for enums
+cur_enum_name = None
+for line in model_lines:
+    line = line.strip()
+
+    if cur_enum_name is not None and line.startswith("}"):
+        cur_enum_name = None
+        auto_gen_lines["model_enums"].append('  ;')
+        auto_gen_lines["enums_typescript"].append( "}")
+
+    if cur_enum_name is not None and len(line) > 0:
+        parts = line.split("//")
+        parts = [part.strip() for part in parts]
+        if len(parts[0]) > 0 and len(parts[0].split(" ")) > 0:
+            meat = parts[0].split(" ")[0].split(",")[0]; potatos = parts[1]
+            auto_gen_lines["model_enums"].append('      .value('+('"'+meat+'"').ljust(25)+', '+cur_enum_name.ljust(25)+'::'+meat.ljust(25)+')')
+            auto_gen_lines["enums_typescript"].append("    /** "+potatos.ljust(40)+" */")
+            auto_gen_lines["enums_typescript"].append("    "+meat.ljust(25)+",")
+
+
+    if line.startswith("typedef enum"):
+        cur_enum_name = line.split(" ")[2][:-1]
+        auto_gen_lines["model_enums"].append('  enum_<'+cur_enum_name+'>("'+cur_enum_name+'")')
+        if len(line.split("//")) > 1:
+            auto_gen_lines["enums_typescript"].append("/** "+line.split("//")[1].ljust(40)+" */")
+        auto_gen_lines["enums_typescript"].append("export enum "+cur_enum_name +" {")
 
 # Insert our auto-generated bindings into our template files
 with open("src/main.template.cc") as f:
@@ -142,7 +165,9 @@ with open("src/main.template.cc") as f:
     content = content.replace("// MJMODEL_BINDINGS"   , "// MJMODEL_BINDINGS\n"   +"\n".join(auto_gen_lines["model_bindings"]))
 
     content = content.replace("// MJDATA_DEFINITIONS", "// MJDATA_DEFINITIONS\n"+"\n".join(auto_gen_lines["data_definitions"]))
-    content = content.replace("// MJDATA_BINDINGS"   , "// MJDATA_BINDINGS\n   "+"\n".join(auto_gen_lines["data_bindings"]))
+    content = content.replace("// MJDATA_BINDINGS"   , "// MJDATA_BINDINGS\n"+"\n".join(auto_gen_lines["data_bindings"]))
+
+    content = content.replace("// MODEL_ENUMS", "// MODEL_ENUMS\n"+"\n".join(auto_gen_lines["model_enums"]))
 
     with open("src/main.genned.cc", mode="w") as f:
         f.write(content)
@@ -151,5 +176,6 @@ with open("src/mujoco_wasm.template.d.ts") as f:
     content = f.read()
     content = content.replace("// MODEL_INTERFACE", "// MODEL_INTERFACE\n"+"\n".join(auto_gen_lines["model_typescript"]))
     content = content.replace("// DATA_INTERFACE" , "// DATA_INTERFACE\n" +"\n".join(auto_gen_lines[ "data_typescript"]))
+    content = content.replace("// ENUMS" , "// ENUMS\n" +"\n".join(auto_gen_lines[ "enums_typescript"]))
     with open("public/mujoco_wasm.d.ts", mode="w") as f:
         f.write(content)

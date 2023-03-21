@@ -24,10 +24,10 @@ Build MuJoCo libs with wasm target and place to lib. Currently v0.3.1 included.
 ## JavaScript API
 
 ```javascript
-import load_mujoco from "./mujoco_wasm.js"
+import load_mujoco from "./mujoco_wasm.js";
 
 // Load the MuJoCo Module
-mujoco = await load_mujoco();
+const mujoco = await load_mujoco();
 
 // Set up Emscripten's Virtual File System
 mujoco.FS.mkdir('/working');
@@ -35,9 +35,9 @@ mujoco.FS.mount(mujoco.MEMFS, { root: '.' }, '/working');
 mujoco.FS.writeFile("/working/humanoid.xml", await (await fetch("./public/scenes/humanoid.xml")).text());
 
 // Load in the state from XML
-model       = mujoco.Model.load_from_xml("/working/humanoid.xml");
-state       = new mujoco.State     (model);
-simulation  = new mujoco.Simulation(model, state);
+let model       = new mujoco.Model("/working/humanoid.xml");
+let state       = new mujoco.State(model);
+let simulation  = new mujoco.Simulation(model, state);
 ```
 
 Typescript definitions are available.

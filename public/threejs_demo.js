@@ -1,13 +1,12 @@
 
-import * as THREE from 'three';
+import  *  as  THREE     from 'three';
 import { GUI           } from '../node_modules/three/examples/jsm/libs/lil-gui.module.min.js';
 import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls.js';
-import { Reflector } from './Reflector.js';
-//import { Debug } from './Debug.js';
-import { Grabber } from './Grabber.js';
-import load_mujoco from "./mujoco_wasm.js"
+import { Reflector     } from './Reflector.js';
+import { Grabber       } from './Grabber.js';
+import   load_mujoco     from "./mujoco_wasm.js";
 
-// Load the MuJoCo WASM
+// Load the MuJoCo Module
 const mujoco = await load_mujoco();
 // Set up Emscripten's Virtual File System
 mujoco.FS.mkdir('/working');
@@ -15,19 +14,16 @@ mujoco.FS.mount(mujoco.MEMFS, { root: '.' }, '/working');
 mujoco.FS.writeFile("/working/humanoid.xml", await (await fetch("./public/scenes/humanoid.xml")).text());
 
 // Load in the state from XML
-let model       = mujoco.Model.load_from_xml("/working/humanoid.xml");
-let state       = new mujoco.State     (model);
+let model       = new mujoco.Model("/working/humanoid.xml");
+let state       = new mujoco.State(model);
 let simulation  = new mujoco.Simulation(model, state);
 
-let container, controls; // ModelLoader
+let container, controls;
 let camera, scene, renderer, material;
-/** @type {THREE.Mesh} */
-let mainModel, connections;
 /** @type {THREE.Vector3} */
 let tmpVec = new THREE.Vector3();
-/** @type {THREE.Quaternion} */
-let tmpQuat = new THREE.Quaternion();
 const params = { acceleration: 0.0, scene: "humanoid.xml" };
+/** @type {Grabber} */
 let grabber;
 
 /** @type {Object.<number, THREE.Group>} */
@@ -377,6 +373,7 @@ function animate(time) {
   render(time);
 }
 
+/** Access the vector at index, swizzle for three.js, and apply to the target THREE.Vector3  */
 function getPosition(buffer, index, target) {
   return target.set(
      buffer[(index * 3) + 0],
@@ -384,6 +381,7 @@ function getPosition(buffer, index, target) {
     -buffer[(index * 3) + 1]);
 }
 
+/** Access the quaternion at index, swizzle for three.js, and apply to the target THREE.Quaternion  */
 function getQuaternion(buffer, index, target) {
   return target.set(
     -buffer[(index * 4) + 1],
@@ -399,6 +397,7 @@ function render(timeMS) {
   controls.update();
 
   // Update MuJoCo Simulation
+  let timestep = model.getOptions().timestep;
   if (timeMS - mujoco_time > 1000.0) { mujoco_time = timeMS; }
   while (mujoco_time < timeMS) {
     simulation.step();
@@ -406,12 +405,13 @@ function render(timeMS) {
     // Set the transforms of the bodies
     for (let b = 0; b < model.nbody(); b++) {
       if (bodies[b]) {
-        getPosition(simulation.xpos(), b, bodies[b].position);
+        getPosition  (simulation.xpos (), b, bodies[b].position);
         getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
         bodies[b].updateWorldMatrix();
       }
     }
 
+    // Update the world-space force origin
     grabber.update();
 
     // Reset Applied Forces
@@ -423,7 +423,7 @@ function render(timeMS) {
       simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, bodyID); // Body ID
     }
 
-    mujoco_time += params.scene.includes("cassie") ? 0.5 : 5.0; // Assume each MuJoCo timestep is 5ms for now
+    mujoco_time += timestep * 1000.0;
   }
 
   // Set the transforms of lights

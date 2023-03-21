@@ -275,19 +275,25 @@ type ReturnToType<R extends Emscripten.JSType | null> = R extends null
 ? null
 : StringToType<Exclude<R, null>>;
 
+// ENUMS
 
 export interface Model {
+  new (filename : string) : Model;
   load_from_xml(str: string): Model;
+  /** Retrive various parameters of the current simulation */
+  getOptions(): any;
   // MODEL_INTERFACE
 }
 
 export interface State {
+  new (model : Model) : State;
 }
 
 export interface Simulation {
+  new (model : Model, state : State) : Simulation;
   state() : State;
   model() : Model;
-  step(): void;
+  /** Apply cartesian force and torque (outside xfrc_applied mechanism) */
   applyForce (fx:number, fy:number, fz:number, tx:number, ty:number, tz:number, px:number, py:number, pz:number, body_id:number) : void;
   // DATA_INTERFACE
 }
