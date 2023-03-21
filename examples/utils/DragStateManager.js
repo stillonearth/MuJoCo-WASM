@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { Vector3 } from 'three';
 
-export class Grabber {
+export class DragStateManager {
     constructor(scene, renderer, camera, container, controls) {
         this.scene = scene;
         this.renderer = renderer;
