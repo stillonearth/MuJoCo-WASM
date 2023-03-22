@@ -80,8 +80,10 @@ async function init() {
   gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml", /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
     .name('Example Scene').onChange(_ => { reload(); });
 
+  let simulationFolder = gui.addFolder('Simulation');
+
   // Add pause simulation checkbox (can also be triggered with spacebar).
-  gui.add(params, 'paused').name('Pause Simulation');
+  simulationFolder.add(params, 'paused').name('Pause Simulation');
   document.addEventListener('keydown', (event) => {
     if (event.code === 'Space') {
       params.paused = !params.paused;
@@ -104,7 +106,7 @@ async function init() {
   });
 
   // Add reload simulation button (can also be triggered with ctrl+L).
-  gui.add({ reload: () => { reload(); } }, 'reload').name('Reload Scene');
+  simulationFolder.add({ reload: () => { reload(); } }, 'reload').name('Reload Scene');
   document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.code === 'KeyL') {
       reload();
@@ -117,20 +119,20 @@ async function init() {
     simulation.forward();
     // TODO: reset actuator slider positions.
   };
-  gui.add({ reset: () => { resetSimulation(); } }, 'reset').name('Reset Simulation');
+  simulationFolder.add({ reset: () => { resetSimulation(); } }, 'reset').name('Reset Simulation');
   document.addEventListener('keydown', (event) => {
     if (event.code === 'Backspace') { resetSimulation(); }
   });
 
   // Add load keyframe slider.
-  gui.add(params, 'keyframeNumber', 0, model.nkey()-1, 1).name('Load Keyframe').onChange((value) => {
+  simulationFolder.add(params, 'keyframeNumber', 0, model.nkey()-1, 1).name('Load Keyframe').onChange((value) => {
     if (value < model.nkey()) {
       simulation.qpos().set(model.key_qpos().slice(
         value * model.nq(), (value + 1) * model.nq())); }});
 
   // Add sliders for ctrlnoiserate and ctrlnoisestd; min = 0, max = 2, step = 0.01
-  gui.add(params, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate' );
-  gui.add(params, 'ctrlnoisestd' , 0.0, 2.0, 0.01).name('Noise scale');
+  simulationFolder.add(params, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate' );
+  simulationFolder.add(params, 'ctrlnoisestd' , 0.0, 2.0, 0.01).name('Noise scale');
 
   // For each actuator, add a slider to control the actuator's position.
   // Add a separator between the sliders and the checkboxes.
