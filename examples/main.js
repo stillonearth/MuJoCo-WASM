@@ -78,7 +78,7 @@ async function init() {
 
   const gui = new GUI();
   gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml", /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
-    .name('Example Scene').onChange(value => { reload(); });
+    .name('Example Scene').onChange(_ => { reload(); });
 
   // Add pause simulation checkbox (can also be triggered with spacebar).
   gui.add(params, 'paused').name('Pause Simulation');
@@ -112,17 +112,45 @@ async function init() {
   });
 
   // Add reset simulation button (can also be triggered with backspace).
-  gui.add({ reset: () => { simulation.reset(); } }, 'reset').name('Reset Simulation');
+  const resetSimulation = () => {
+    simulation.resetData();
+    simulation.forward();
+    // TODO: reset actuator slider positions.
+  };
+  gui.add({ reset: () => { resetSimulation(); } }, 'reset').name('Reset Simulation');
   document.addEventListener('keydown', (event) => {
-    if (event.code === 'Backspace') {
-      simulation.resetData();
-      simulation.forward();
-    }
+    if (event.code === 'Backspace') { resetSimulation(); }
   });
+
+  // Add load keyframe button.
+  const loadKeyframe = () => {
+    if (model.nkey() > 0) {
+      simulation.qpos().set(model.key_qpos().slice(0, model.nq()));
+    }
+  };
+  gui.add({ load: () => { loadKeyframe(); } }, 'load').name('Load Keyframe');
 
   // Add sliders for ctrlnoiserate and ctrlnoisestd; min = 0, max = 2, step = 0.01
   gui.add(params, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate' );
   gui.add(params, 'ctrlnoisestd' , 0.0, 2.0, 0.01).name('Noise scale');
+
+  // For each actuator, add a slider to control the actuator's position.
+  // Add a separator between the sliders and the checkboxes.
+  gui.add({ separator: () => {} }, 'separator').name('Actuators');
+  let act_range = model.actuator_ctrlrange();
+  for (let i = 0; i < model.nu(); i++) {
+    if (!model.actuator_ctrllimited()[i]) { continue; }
+    let min = act_range[2*i];
+    let max = act_range[2*i+1];
+    let name = "Actuator" + i;
+    console.log(name, min, max);
+    params[name] = 0.0;
+    // Add a listener to update the actuator's position when the slider is moved.
+    gui.add(params, name, min, max, 0.01).name(name).onChange((value) => {
+      simulation.ctrl()[i] = value;
+    });
+  }
+
   gui.open();
 
   await downloadExampleScenesFolder(mujoco);    // Download the the examples to MuJoCo's virtual file system
