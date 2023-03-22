@@ -136,20 +136,17 @@ async function init() {
 
   // For each actuator, add a slider to control the actuator's position.
   // Add a separator between the sliders and the checkboxes.
-  gui.add({ separator: () => {} }, 'separator').name('Actuators');
+  let actuatorFolder = gui.addFolder( 'Actuator Control' );
   let act_range = model.actuator_ctrlrange();
   for (let i = 0; i < model.nu(); i++) {
     if (!model.actuator_ctrllimited()[i]) { continue; }
-    let min = act_range[2*i];
-    let max = act_range[2*i+1];
-    let name = "Actuator" + i;
-    console.log(name, min, max);
+    let name = "Actuator " + i;
     params[name] = 0.0;
     // Add a listener to update the actuator's position when the slider is moved.
-    gui.add(params, name, min, max, 0.01).name(name).onChange((value) => {
-      simulation.ctrl()[i] = value;
-    });
+    actuatorFolder.add(params, name, act_range[2 * i], act_range[2 * i + 1], 0.01).name(name).listen()
+      .onChange((value) => { simulation.ctrl()[i] = value; });
   }
+  actuatorFolder.close();
 
   gui.open();
 
@@ -190,6 +187,7 @@ function render(timeMS) {
         let currentCtrl = simulation.ctrl();
         for (let i = 0; i < currentCtrl.length; i++) {
           currentCtrl[i] = rate * currentCtrl[i] + scale * standardNormal();
+          params["Actuator " + i] = currentCtrl[i];
         }
       }
 
@@ -219,7 +217,6 @@ function render(timeMS) {
     }
 
   } else if (params["paused"]) {
-    // TODO: Apply pose perturbations (mocap and dynamic bodies).
     dragStateManager.update(); // Update the world-space force origin
     let dragged = dragStateManager.physicsObject;
     if (dragged && dragged.bodyID) {
@@ -229,13 +226,6 @@ function render(timeMS) {
 
       let offset = toMujocoPos(dragStateManager.currentWorld.clone()
         .sub(dragStateManager.worldHit).multiplyScalar(0.1));
-      // Can't get this to behave properly...
-      //simulation.applyPose(b,
-      //  tmpVec.x + offset.x,
-      //  tmpVec.y + offset.y,
-      //  tmpVec.z + offset.z,
-      //  tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w, 1);
-      //  //0,0,0,1, 1);
       // Set the root body's position directly...
       let addr = model.jnt_qposadr()[model.body_jntadr()[model.body_rootid()[b]]];
       simulation.qpos()[addr+0] += offset.x;
