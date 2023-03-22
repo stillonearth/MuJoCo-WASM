@@ -1,17 +1,34 @@
 import  *  as  THREE     from 'three';
 import { Reflector     } from './utils/Reflector.js';
+import { GUI           } from '../../node_modules/three/examples/jsm/libs/lil-gui.module.min.js';
 import load_mujoco/*, {mujoco}*/ from '../dist/mujoco_wasm.js';
 
 
 /** Loads a scene for MuJoCo
  * @param {mujoco} mujoco
- * @param {string} filename 
- * @param {THREE.Scene} scene */
-export async function loadSceneFromURL(mujoco, filename, scene ) {
+ * @param {string} filename
+ * @param {THREE.Scene} scene
+ * @param {GUI} gui */
+export async function loadSceneFromURL(mujoco, filename, scene, gui, params ) {
     // Load in the state from XML
     let model       = mujoco.Model.load_from_xml("/working/"+filename);
     let state       = new mujoco.State     (model);
     let simulation  = new mujoco.Simulation(model, state);
+
+    // For each actuator, add a slider to control the actuator's position.
+    // Add a separator between the sliders and the checkboxes.
+    if (gui.folders.length > 1) { gui.folders[1].destroy(); }
+    let actuatorFolder = gui.addFolder( 'Actuator Control' );
+    let act_range = model.actuator_ctrlrange();
+    for (let i = 0; i < model.nu(); i++) {
+      if (!model.actuator_ctrllimited()[i]) { continue; }
+      let name = "Actuator " + i;
+      params[name] = 0.0;
+      // Add two-way listeners sycnhronize the slider with the control in the system
+      actuatorFolder.add(params, name, act_range[2 * i], act_range[2 * i + 1], 0.01).name(name).listen()
+        .onChange((value) => { simulation.ctrl()[i] = value; });
+    }
+    actuatorFolder.close();
   
     // Decode the null-terminated string names
     let textDecoder = new TextDecoder("utf-8");
@@ -36,7 +53,7 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
     for (let g = 0; g < model.ngeom(); g++) {
       // Only visualize geom groups up to 2 (same default behavior as simulate).
       if (!(model.geom_group()[g] < 3)) { continue; }
-  
+
       let b = model.geom_bodyid()[g];
       let type = model.geom_type  ()[g];
       let size = [
@@ -45,10 +62,10 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
         model.geom_size()[(g*3) + 2]];
       // Figure out how to use model.name_bodyadr()[b]
       console.log("Found geometry", g, " for body", b, ", Type:", type, ", named:", names[b+1], "with mesh at:", model.geom_dataid()[g]);
-  
+
       if (!(b in bodies)) { bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; bodies[b].bodyID = b; bodies[b].has_custom_mesh = false; }
       if (bodies[b].has_custom_mesh && type != 7) { continue; }
-  
+
       let geometry = new THREE.SphereGeometry(size[0] * 0.5);
       if (type == 0)        { // Plane is 0
         //geometry = new THREE.PlaneGeometry(size[0], size[1]); // Can't rotate this...
@@ -67,10 +84,10 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
         geometry = new THREE.BoxGeometry(size[0] * 2.0, size[2] * 2.0, size[1] * 2.0);
       } else if (type == 7) { // Generic Mesh is 7
         let meshID = model.geom_dataid()[g];
-  
+
         if (!(meshID in meshes)) {
           geometry = new THREE.BufferGeometry(); // TODO: Populate the Buffer Geometry with Generic Mesh Data
-  
+
           let vertex_buffer = model.mesh_vert().subarray(
              model.mesh_vertadr()[meshID] * 3,
             (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
@@ -80,7 +97,7 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
             vertex_buffer[v + 1] =  vertex_buffer[v + 2];
             vertex_buffer[v + 2] = -temp;
           }
-  
+
           let normal_buffer = model.mesh_normal().subarray(
              model.mesh_vertadr()[meshID] * 3,
             (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
@@ -90,7 +107,7 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
             normal_buffer[v + 1] =  normal_buffer[v + 2];
             normal_buffer[v + 2] = -temp;
           }
-  
+
           let uv_buffer = model.mesh_texcoord().subarray(
              model.mesh_texcoordadr()[meshID] * 2,
             (model.mesh_texcoordadr()[meshID]  + model.mesh_vertnum()[meshID]) * 2);
@@ -105,10 +122,10 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
         } else {
           geometry = meshes[meshID];
         }
-  
+
         bodies[b].has_custom_mesh = true;
       }
-  
+
       // Set the Material Properties of incoming bodies
       let texture = undefined;
       let color = [
@@ -123,7 +140,7 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
           model.mat_rgba()[(matId * 4) + 1],
           model.mat_rgba()[(matId * 4) + 2],
           model.mat_rgba()[(matId * 4) + 3]];
-  
+
         // Construct Texture from
         texture = undefined;
         let texId = model.mat_texid()[matId];
@@ -149,11 +166,11 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
             texture.wrapS = THREE.RepeatWrapping;
             texture.wrapT = THREE.RepeatWrapping;
           }
-  
+
           texture.needsUpdate = true;
         }
       }
-      
+
       if (material.color.r != color[0] ||
           material.color.g != color[1] ||
           material.color.b != color[2] ||
@@ -170,7 +187,7 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
           map              : texture
         });
       }
-  
+
       let mesh = new THREE.Mesh();
       if (type == 0) {
         mesh = new Reflector( new THREE.PlaneGeometry( 100, 100 ), { clipBias: 0.003,texture: texture } );
@@ -178,7 +195,7 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
       } else {
         mesh = new THREE.Mesh(geometry, material);
       }
-  
+
       mesh.castShadow = g == 0 ? false : true;
       mesh.receiveShadow = type != 7;
       mesh.bodyID = b;
@@ -187,7 +204,7 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
       if (type != 0) { getQuaternion(model.geom_quat(), g, mesh.quaternion); }
       if (type == 4) { mesh.scale.set(size[0], size[2], size[1]) } // Stretch the Ellipsoid
     }
-  
+
     for (let l = 0; l < model.nlight(); l++) {
       let light = new THREE.SpotLight();
       if (model.light_directional()[l]) {
@@ -198,7 +215,7 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
       light.decay = model.light_attenuation()[l] * 100;
       light.penumbra = 0.5;
       light.castShadow = true; // default false
-  
+
       light.shadow.mapSize.width = 1024; // default
       light.shadow.mapSize.height = 1024; // default
       light.shadow.camera.near = 1; // default
@@ -211,7 +228,7 @@ export async function loadSceneFromURL(mujoco, filename, scene ) {
       }
       lights.push(light);
     }
-  
+
     for (let b = 0; b < model.nbody(); b++) {
       //let parent_body = model.body_parentid()[b];
       if (b == 0 || !bodies[0]) {
@@ -283,9 +300,9 @@ export async function downloadExampleScenesFolder(mujoco) {
         "mug.png",
         "mug.xml",
         "simple.xml",
-        "slider_crank.xml"
+        "slider_crank.xml",
     ];
-    
+
     let requests = allFiles.map((url) => fetch("./examples/scenes/" + url));
     let responses = await Promise.all(requests);
     for (let i = 0; i < responses.length; i++) {
@@ -296,7 +313,7 @@ export async function downloadExampleScenesFolder(mujoco) {
             if (!mujoco.FS.analyzePath(working).exists) { mujoco.FS.mkdir(working); }
             working += "/";
         }
-    
+
         if (allFiles[i].endsWith(".png") || allFiles[i].endsWith(".stl") || allFiles[i].endsWith(".skn")) {
             mujoco.FS.writeFile("/working/" + allFiles[i], new Uint8Array(await responses[i].arrayBuffer()));
         } else {
@@ -305,27 +322,42 @@ export async function downloadExampleScenesFolder(mujoco) {
     }
 }
 
-/** Access the vector at index, swizzle for three.js, and apply to the target THREE.Vector3  
+/** Access the vector at index, swizzle for three.js, and apply to the target THREE.Vector3
  * @param {Float32Array|Float64Array} buffer
  * @param {number} index
  * @param {THREE.Vector3} target */
-export function getPosition(buffer, index, target) {
+export function getPosition(buffer, index, target, swizzle = true) {
+  if (swizzle) {
     return target.set(
-         buffer[(index * 3) + 0],
-         buffer[(index * 3) + 2],
-        -buffer[(index * 3) + 1]);
+       buffer[(index * 3) + 0],
+       buffer[(index * 3) + 2],
+      -buffer[(index * 3) + 1]);
+  } else {
+    return target.set(
+       buffer[(index * 3) + 0],
+       buffer[(index * 3) + 1],
+       buffer[(index * 3) + 2]);
+  }
 }
 
-/** Access the quaternion at index, swizzle for three.js, and apply to the target THREE.Quaternion  
+/** Access the quaternion at index, swizzle for three.js, and apply to the target THREE.Quaternion
  * @param {Float32Array|Float64Array} buffer
  * @param {number} index
  * @param {THREE.Quaternion} target */
-export function getQuaternion(buffer, index, target) {
+export function getQuaternion(buffer, index, target, swizzle = true) {
+  if (swizzle) {
     return target.set(
-        -buffer[(index * 4) + 1],
-        -buffer[(index * 4) + 3],
-         buffer[(index * 4) + 2],
-        -buffer[(index * 4) + 0]);
+      -buffer[(index * 4) + 1],
+      -buffer[(index * 4) + 3],
+       buffer[(index * 4) + 2],
+      -buffer[(index * 4) + 0]);
+  } else {
+    return target.set(
+       buffer[(index * 4) + 0],
+       buffer[(index * 4) + 1],
+       buffer[(index * 4) + 2],
+       buffer[(index * 4) + 3]);
+  }
 }
 
 /** Converts this Vector3's Handedness to MuJoCo's Coordinate Handedness

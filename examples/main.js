@@ -21,10 +21,12 @@ let simulation  = new mujoco.Simulation(model, state);
 
 let container, controls;
 let camera, scene, renderer;
-const params = { scene: "humanoid.xml" };
+const params = { scene: "humanoid.xml", paused: false, ctrlnoiserate: 0.0, ctrlnoisestd: 0.0, keyframeNumber:0 };
 /** @type {DragStateManager} */
 let dragStateManager;
 let bodies, lights;
+let tmpVec  = new THREE.Vector3();
+let tmpQuat = new THREE.Quaternion();
 
 async function init() {
   container = document.createElement( 'div' );
@@ -64,23 +66,78 @@ async function init() {
 
   window.addEventListener('resize', onWindowResize);
 
-  const gui = new GUI();
-  //gui.add(params, "acceleration", -0.1, 0.1, 0.001).name('Artificial Acceleration');
-  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml",  /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
-    .name('Example Scene').onChange(value => {
-      scene.remove(scene.getObjectByName("MuJoCo Root"));
-      loadSceneFromURL(mujoco, value, scene).then((returnArray) => {
-        [model, state, simulation, bodies, lights] = returnArray;
-      }); // Initialize the three.js Scene using this .xml Model
-    });
-  gui.open();
-
-  // Initialize the Drag State Manager
+  // Initialize the Drag State Manager.
   dragStateManager = new DragStateManager(scene, renderer, camera, container.parentElement, controls);
+
+  const reload = () => {
+    scene.remove(scene.getObjectByName("MuJoCo Root"));
+    loadSceneFromURL(mujoco, params.scene, scene, gui, params).then((returnArray) => {
+      [model, state, simulation, bodies, lights] = returnArray;
+    }); // Initialize the three.js Scene using this .xml Model
+  };
+
+  const gui = new GUI();
+  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml", /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
+    .name('Example Scene').onChange(_ => { reload(); });
+
+  let simulationFolder = gui.addFolder('Simulation');
+
+  // Add pause simulation checkbox (can also be triggered with spacebar).
+  simulationFolder.add(params, 'paused').name('Pause Simulation');
+  document.addEventListener('keydown', (event) => {
+    if (event.code === 'Space') {
+      params.paused = !params.paused;
+      const button = document.querySelector('.lil-gui input[type="checkbox"]');
+      button.checked = params.paused;
+      // If the button is pressed, write "paused" text in the top left corner of the window.
+      if (params.paused) {
+        const text = document.createElement('div');
+        text.style.position = 'absolute';
+        text.style.top = '10px';
+        text.style.left = '10px';
+        text.style.color = 'white';
+        text.style.font = 'normal 18px sans-serif';
+        text.innerHTML = 'Paused';
+        document.body.appendChild(text);
+      } else {
+        document.body.removeChild(document.body.lastChild);
+      }
+    }
+  });
+
+  // Add reload simulation button (can also be triggered with ctrl+L).
+  simulationFolder.add({ reload: () => { reload(); } }, 'reload').name('Reload Scene');
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.code === 'KeyL') {
+      reload();
+    }
+  });
+
+  // Add reset simulation button (can also be triggered with backspace).
+  const resetSimulation = () => {
+    simulation.resetData();
+    simulation.forward();
+    // TODO: reset actuator slider positions.
+  };
+  simulationFolder.add({ reset: () => { resetSimulation(); } }, 'reset').name('Reset Simulation');
+  document.addEventListener('keydown', (event) => {
+    if (event.code === 'Backspace') { resetSimulation(); }
+  });
+
+  // Add keyframe slider.
+  simulationFolder.add(params, 'keyframeNumber', 0, model.nkey()-1, 1).name('Load Keyframe').onChange((value) => {
+    if (value < model.nkey()) {
+      simulation.qpos().set(model.key_qpos().slice(
+        value * model.nq(), (value + 1) * model.nq())); }});
+
+  // Add sliders for ctrlnoiserate and ctrlnoisestd; min = 0, max = 2, step = 0.01
+  simulationFolder.add(params, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate' );
+  simulationFolder.add(params, 'ctrlnoisestd' , 0.0, 2.0, 0.01).name('Noise scale');
+  gui.open();
 
   await downloadExampleScenesFolder(mujoco);    // Download the the examples to MuJoCo's virtual file system
   [model, state, simulation, bodies, lights] =  // Initialize the three.js Scene using this .xml Model
-    await loadSceneFromURL(mujoco, "humanoid.xml", scene);
+    await loadSceneFromURL(mujoco, "humanoid.xml", scene, gui, params);
 }
 
 function onWindowResize() {
@@ -94,40 +151,77 @@ function animate(time) {
   render(time);
 }
 
+// Standard normal random number generator using Box-Muller transform.
+function standardNormal() {
+  return Math.sqrt(-2.0 * Math.log( Math.random())) *
+         Math.cos ( 2.0 * Math.PI * Math.random()); }
+
 let mujoco_time = 0.0;
 function render(timeMS) {
   controls.update();
 
-  // Update MuJoCo Simulation
-  let timestep = model.getOptions().timestep;
-  if (timeMS - mujoco_time > 35.0) { mujoco_time = timeMS; }
-  while (mujoco_time < timeMS) {
-    simulation.step();
+  if (!params["paused"]) {
+    let timestep = model.getOptions().timestep;
+    if (timeMS - mujoco_time > 35.0) { mujoco_time = timeMS; }
+    while (mujoco_time < timeMS) {
 
-    // Reset Applied Forces
-    for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; } 
-
-    // Update the forces on the dragged body
-    let dragged = dragStateManager.physicsObject;
-    if (dragged && dragged.bodyID) {
-      for (let b = 0; b < model.nbody(); b++) {
-        if (bodies[b]) {
-          getPosition  (simulation.xpos (), b, bodies[b].position);
-          getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
-          bodies[b].updateWorldMatrix();
+      // Jitter the control state with gaussian random noise
+      if (params["ctrlnoisestd"] > 0.0) {
+        let rate  = Math.exp(-timestep / Math.max(1e-10, params["ctrlnoiserate"]));
+        let scale = params["ctrlnoisestd"] * Math.sqrt(1 - rate * rate);
+        let currentCtrl = simulation.ctrl();
+        for (let i = 0; i < currentCtrl.length; i++) {
+          currentCtrl[i] = rate * currentCtrl[i] + scale * standardNormal();
+          params["Actuator " + i] = currentCtrl[i];
         }
       }
 
-      let bodyID = dragged.bodyID;
-      dragStateManager.update(); // Update the world-space force origin
-      let force = toMujocoPos(dragStateManager.currentWorld.clone().sub(dragStateManager.worldHit).multiplyScalar(model.body_mass()[bodyID] * 250));
-      let point = toMujocoPos(dragStateManager.worldHit    .clone());
-      simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, bodyID); // Body ID
+      // Clear old perturbations, apply new ones.
+      for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; }
+      let dragged = dragStateManager.physicsObject;
+      if (dragged && dragged.bodyID) {
+        for (let b = 0; b < model.nbody(); b++) {
+          if (bodies[b]) {
+            getPosition  (simulation.xpos (), b, bodies[b].position);
+            getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
+            bodies[b].updateWorldMatrix();
+          }
+        }
+        let bodyID = dragged.bodyID;
+        dragStateManager.update(); // Update the world-space force origin
+        let force = toMujocoPos(dragStateManager.currentWorld.clone().sub(dragStateManager.worldHit).multiplyScalar(model.body_mass()[bodyID] * 250));
+        let point = toMujocoPos(dragStateManager.worldHit.clone());
+        simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, bodyID);
+
+        // TODO: Apply pose perturbations (mocap bodies only).
+      }
+
+      simulation.step();
+
+      mujoco_time += timestep * 1000.0;
     }
 
-    mujoco_time += timestep * 1000.0;
+  } else if (params["paused"]) {
+    dragStateManager.update(); // Update the world-space force origin
+    let dragged = dragStateManager.physicsObject;
+    if (dragged && dragged.bodyID) {
+      let b = dragged.bodyID;
+      getPosition  (simulation.xpos (), b, tmpVec , false); // Get raw coordinate from MuJoCo
+      getQuaternion(simulation.xquat(), b, tmpQuat, false); // Get raw coordinate from MuJoCo
+
+      let offset = toMujocoPos(dragStateManager.currentWorld.clone()
+        .sub(dragStateManager.worldHit).multiplyScalar(0.1));
+      // Set the root body's position directly...
+      let addr = model.jnt_qposadr()[model.body_jntadr()[model.body_rootid()[b]]];
+      simulation.qpos()[addr+0] += offset.x;
+      simulation.qpos()[addr+1] += offset.y;
+      simulation.qpos()[addr+2] += offset.z;
+    }
+
+    simulation.forward();
   }
 
+  // Update body transforms.
   for (let b = 0; b < model.nbody(); b++) {
     if (bodies[b]) {
       getPosition  (simulation.xpos (), b, bodies[b].position);
@@ -136,8 +230,7 @@ function render(timeMS) {
     }
   }
 
-  // Set the transforms of lights
-  let tmpVec = new THREE.Vector3();
+  // Update light transforms.
   for (let l = 0; l < model.nlight(); l++) {
     if (lights[l]) {
       getPosition(simulation.light_xpos(), l, lights[l].position);
@@ -146,6 +239,7 @@ function render(timeMS) {
     }
   }
 
+  // Render!
   renderer.render( scene, camera );
 }
 

@@ -73,6 +73,64 @@ public:
                _state->ptr()->qfrc_applied);
   }
 
+  // copied from the source of mjv_applyPerturbPose
+  // sets perturb pos,quat in d->mocap when selected body is mocap, and in d->qpos otherwise
+  //  d->qpos written only if flg_paused and subtree root for selected body has free joint
+  void applyPose(int bodyID,
+                 mjtNum refPosX,  mjtNum refPosY,  mjtNum refPosZ,
+                 mjtNum refQuat1, mjtNum refQuat2, mjtNum refQuat3, mjtNum refQuat4,
+                 int flg_paused) {
+    int rootid = 0, sel = bodyID;//pert->select;
+    mjtNum pos1[3], quat1[4], pos2[3], quat2[4], refpos[3], refquat[4];
+    mjtNum *Rpos, *Rquat, *Cpos, *Cquat;
+    mjtNum inrefpos [3] = { refPosX , refPosY , refPosZ };
+    mjtNum inrefquat[4] = { refQuat1, refQuat2, refQuat3, refQuat4 };
+    mjModel *m = _model->ptr();
+    mjData  *d = _state->ptr();
+
+    // exit if nothing to do
+    //if (sel<=0 || sel>=m->nbody || !(pert->active | pert->active2)) { return; }
+
+    // get rootid above selected body
+    rootid = m->body_rootid[sel];
+
+    // transform refpos,refquat from I-frame to X-frame of body[sel]
+    mju_negPose(pos1, quat1, m->body_ipos+3*sel, m->body_iquat+4*sel);
+    mju_mulPose(refpos, refquat, inrefpos, inrefquat, pos1, quat1);
+
+    // mocap body
+    if (m->body_mocapid[sel]>=0) {
+      // copy ref pose into mocap pose
+      mju_copy3(d->mocap_pos + 3*m->body_mocapid[sel], refpos);
+      mju_copy4(d->mocap_quat + 4*m->body_mocapid[sel], refquat);
+    }
+
+    // floating body, paused
+    else if (flg_paused && m->body_jntnum[sel]==1 &&
+            m->jnt_type[m->body_jntadr[sel]]==mjJNT_FREE) {
+      // copy ref pose into qpos
+      mju_copy3(d->qpos + m->jnt_qposadr[m->body_jntadr[sel]], refpos);
+      mju_copy4(d->qpos + m->jnt_qposadr[m->body_jntadr[sel]] + 3, refquat);
+    }
+
+    // child of floating body, paused
+    else if (flg_paused && m->body_jntnum[rootid]==1 &&
+            m->jnt_type[m->body_jntadr[rootid]]==mjJNT_FREE) {
+      // get pointers to root
+      Rpos = d->qpos + m->jnt_qposadr[m->body_jntadr[rootid]];
+      Rquat = Rpos + 3;
+
+      // get pointers to child
+      Cpos = d->xpos + 3*sel;
+      Cquat = d->xquat + 4*sel;
+
+      // set root <- ref*neg(child)*root
+      mju_negPose(pos1, quat1, Cpos, Cquat);                      // neg(child)
+      mju_mulPose(pos2, quat2, pos1, quat1, Rpos, Rquat);         // neg(child)*root
+      mju_mulPose(Rpos, Rquat, refpos, refquat, pos2, quat2);     // ref*neg(child)*root
+    }
+  }
+
   // MJDATA_DEFINITIONS
 
 
@@ -108,9 +166,10 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
 
   class_<Simulation>("Simulation")
       .constructor<Model *, State *>()
-      .function("applyForce", &Simulation::applyForce)
       .function("state"     , &Simulation::state, allow_raw_pointers())
       .function("model"     , &Simulation::model, allow_raw_pointers())
+      .function("applyForce", &Simulation::applyForce)
+      .function("applyPose" , &Simulation::applyPose)
       // MJDATA_BINDINGS
       ;
 

@@ -98,7 +98,6 @@ export class DragStateManager {
         this.mouseDown = false;
     }
     onPointer(evt) {
-        //evt.preventDefault();
         if (evt.type == "pointerdown") {
             this.start(evt.clientX, evt.clientY);
             this.mouseDown = true;

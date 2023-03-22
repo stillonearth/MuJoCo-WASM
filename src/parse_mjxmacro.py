@@ -177,5 +177,5 @@ with open("src/mujoco_wasm.template.d.ts") as f:
     content = content.replace("// MODEL_INTERFACE", "// MODEL_INTERFACE\n"+"\n".join(auto_gen_lines["model_typescript"]))
     content = content.replace("// DATA_INTERFACE" , "// DATA_INTERFACE\n" +"\n".join(auto_gen_lines[ "data_typescript"]))
     content = content.replace("// ENUMS" , "// ENUMS\n" +"\n".join(auto_gen_lines[ "enums_typescript"]))
-    with open("public/mujoco_wasm.d.ts", mode="w") as f:
+    with open("dist/mujoco_wasm.d.ts", mode="w") as f:
         f.write(content)
