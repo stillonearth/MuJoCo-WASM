@@ -67,20 +67,55 @@ async function init() {
   // Initialize the Drag State Manager.
   dragStateManager = new DragStateManager(scene, renderer, camera, container.parentElement, controls);
 
+  const reload = () => {
+    scene.remove(scene.getObjectByName("MuJoCo Root"));
+    loadSceneFromURL(mujoco, params.scene, scene).then((returnArray) => {
+      [model, state, simulation, bodies, lights] = returnArray;
+    }); // Initialize the three.js Scene using this .xml Model
+  };
+
   const gui = new GUI();
   gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml", /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
-    .name('Example Scene').onChange(value => {
-      scene.remove(scene.getObjectByName("MuJoCo Root"));
-      loadSceneFromURL(mujoco, value, scene).then((returnArray) => {
-        [model, state, simulation, bodies, lights] = returnArray;
-      }); // Initialize the three.js Scene using this .xml Model
-    });
+    .name('Example Scene').onChange(value => { reload(); });
 
   // Add pause simulation checkbox (can also be triggered with spacebar).
   gui.add(params, 'paused').name('Pause Simulation');
-    //.onChange((pauseChecked) => { controls.enabled = !pauseChecked; });
   document.addEventListener('keydown', (event) => {
-    if (event.code === 'Space') { pauseButton.setValue(!pauseButton.getValue()); }
+    if (event.code === 'Space') {
+      params.paused = !params.paused;
+      const button = document.querySelector('.lil-gui input[type="checkbox"]');
+      button.checked = params.paused;
+      // If the button is pressed, write "paused" text in the top left corner of the window.
+      if (params.paused) {
+        const text = document.createElement('div');
+        text.style.position = 'absolute';
+        text.style.top = '10px';
+        text.style.left = '10px';
+        text.style.color = 'white';
+        text.style.font = 'normal 18px sans-serif';
+        text.innerHTML = 'Paused';
+        document.body.appendChild(text);
+      } else {
+        document.body.removeChild(document.body.lastChild);
+      }
+    }
+  });
+
+  // Add reload simulation button (can also be triggered with ctrl+L).
+  gui.add({ reload: () => { reload(); } }, 'reload').name('Reload Scene');
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.code === 'KeyL') {
+      reload();
+    }
+  });
+
+  // Add reset simulation button (can also be triggered with backspace).
+  gui.add({ reset: () => { simulation.reset(); } }, 'reset').name('Reset Simulation');
+  document.addEventListener('keydown', (event) => {
+    if (event.code === 'Backspace') {
+      simulation.resetData();
+      simulation.forward();
+    }
   });
 
   // Add sliders for ctrlnoiserate and ctrlnoisestd; min = 0, max = 2, step = 0.01
