@@ -19,17 +19,9 @@ let model       = new mujoco.Model("/working/humanoid.xml");
 let state       = new mujoco.State(model);
 let simulation  = new mujoco.Simulation(model, state);
 
-// Whether the simulation is running or paused.
-let paused = false;
-
-// Ctrlnoise.
-let ctrlnoisestd = 0.0;
-let ctrlnoiserate = 0.0;
-let ctrlnoise = new Float64Array(model.nu());
-
 let container, controls;
 let camera, scene, renderer;
-const params = { scene: "humanoid.xml" };
+const params = { scene: "humanoid.xml", paused: false, ctrlnoiserate: 0.0, ctrlnoisestd: 0.0 };
 /** @type {DragStateManager} */
 let dragStateManager;
 let bodies, lights;
@@ -84,32 +76,16 @@ async function init() {
       }); // Initialize the three.js Scene using this .xml Model
     });
 
-  // Add pause simulation button (can be triggered with spacebar).
-  const pauseButton = gui.add({ pause: false }, 'pause').name('Pause Simulation');
-  pauseButton.onChange((value) => {
-    if (value) {
-      paused = true;
-      controls.enabled = false;
-    } else {
-      paused = false;
-      controls.enabled = true;
-    }
-  });
+  // Add pause simulation checkbox (can also be triggered with spacebar).
+  gui.add(params, 'paused').name('Pause Simulation');
+    //.onChange((pauseChecked) => { controls.enabled = !pauseChecked; });
   document.addEventListener('keydown', (event) => {
-    if (event.code === 'Space') {
-      pauseButton.setValue(!pauseButton.getValue());
-    }
+    if (event.code === 'Space') { pauseButton.setValue(!pauseButton.getValue()); }
   });
 
-  // Add a slider button for ctrlnoiserate and ctrlnoisestd.
-  // min = 0, max = 2, step = 0.01
-  gui.add({ ctrlnoiserate: 0.0 }, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate').onChange((value) => {
-    ctrlnoiserate = value;
-  });
-  gui.add({ ctrlnoisestd: 0.0 }, 'ctrlnoisestd', 0.0, 2.0, 0.01).name('Noise scale').onChange((value) => {
-    ctrlnoisestd = value;
-  });
-
+  // Add sliders for ctrlnoiserate and ctrlnoisestd; min = 0, max = 2, step = 0.01
+  gui.add(params, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate' );
+  gui.add(params, 'ctrlnoisestd' , 0.0, 2.0, 0.01).name('Noise scale');
   gui.open();
 
   await downloadExampleScenesFolder(mujoco);    // Download the the examples to MuJoCo's virtual file system
@@ -130,28 +106,25 @@ function animate(time) {
 
 // Standard normal random number generator using Box-Muller transform.
 function standardNormal() {
-  let u = 1 - Math.random();
-  let v = Math.random();
-  let z = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
-  return z;
-}
+  return Math.sqrt(-2.0 * Math.log( Math.random())) *
+         Math.cos ( 2.0 * Math.PI * Math.random()); }
 
 let mujoco_time = 0.0;
 function render(timeMS) {
   controls.update();
 
-  if (!paused) {
+  if (!params["paused"]) {
     let timestep = model.getOptions().timestep;
     if (timeMS - mujoco_time > 35.0) { mujoco_time = timeMS; }
     while (mujoco_time < timeMS) {
-      // Inject noise.
-      if (ctrlnoisestd > 0.0) {
-        let rate = Math.exp(-timestep / Math.max(1e-10, ctrlnoiserate));
-        let scale = ctrlnoisestd * Math.sqrt(1 - rate * rate);
-        console.log("rate: " + rate + ", scale: " + scale);
-        for (let i = 0; i < model.nu(); i++) {
-          ctrlnoise[i] = rate * ctrlnoise[i] + scale * standardNormal();
-          simulation.ctrl()[i] = ctrlnoise[i];
+
+      // Jitter the control state with gaussian random noise
+      if (params["ctrlnoisestd"] > 0.0) {
+        let rate  = Math.exp(-timestep / Math.max(1e-10, params["ctrlnoiserate"]));
+        let scale = params["ctrlnoisestd"] * Math.sqrt(1 - rate * rate);
+        let currentCtrl = simulation.ctrl();
+        for (let i = 0; i < currentCtrl.length; i++) {
+          currentCtrl[i] = rate * currentCtrl[i] + scale * standardNormal();
         }
       }
 
@@ -179,9 +152,10 @@ function render(timeMS) {
 
       mujoco_time += timestep * 1000.0;
     }
-  }  // End if (!paused)
-  else {
+
+  } else if (params["paused"]) {
     // TODO: Apply pose perturbations (mocap and dynamic bodies).
+    dragStateManager.update(); // Update the world-space force origin
     let dragged = dragStateManager.physicsObject;
     if (dragged && dragged.bodyID) {
 
