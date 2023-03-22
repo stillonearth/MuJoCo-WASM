@@ -1593,6 +1593,8 @@ export interface Simulation {
   forwardSkip           (skipstage : number, skipsensor : number): void;
   /** Inverse dynamics with skip; skipstage is mjtStage.*/
   inverseSkip           (skipstage : number, skipsensor : number): void;
+  /** Set solver parameters to default values.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  defaultSolRefImp      (solref : Float64Array, solimp : Float64Array): void;
   /** Return size of buffer needed to hold model.*/
   sizeModel             (): number;
   /** Reset data to defaults.*/
@@ -1613,6 +1615,8 @@ export interface Simulation {
   printFormattedData    (filename : string, float_format : string): void;
   /** Print data to text file.*/
   printData             (filename : string): void;
+  /** Print matrix to screen.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _printMat             (mat : Float64Array, nr : number, nc : number): void;
   /** Run position-dependent computations.*/
   fwdPosition           (): void;
   /** Run velocity-dependent computations.*/
@@ -1665,12 +1669,18 @@ export interface Simulation {
   crbCalculate          (): void;
   /** Compute sparse L'*D*L factorizaton of inertia matrix.*/
   factorM               (): void;
+  /** Solve linear system M * x = y using factorization:  x = inv(L'*D*L)*y[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  solveM                (x : Float64Array, y : Float64Array, n : number): void;
+  /** Half of linear solve:  x = sqrt(inv(D))*inv(L')*y[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  solveM2               (x : Float64Array, y : Float64Array, n : number): void;
   /** Compute cvel, cdof_dot.*/
   comVel                (): void;
   /** Compute qfrc_passive from spring-dampers, viscosity and density.*/
   passive               (): void;
   /** subtree linear velocity and angular momentum*/
   subtreeVel            (): void;
+  /** RNE: compute M(qpos)*qacc + C(qpos,qvel); flg_acc=0 removes inertial term.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  rne                   (flg_acc : number, result : Float64Array): void;
   /** RNE with complete data: compute cacc, cfrc_ext, cfrc_int.*/
   rnePostConstraint     (): void;
   /** Run collision detection.*/
@@ -1687,10 +1697,24 @@ export interface Simulation {
   isSparse              (): number;
   /** Determine type of solver (PGS is dual, CG and Newton are primal).*/
   isDual                (): number;
+  /** Multiply dense or sparse constraint Jacobian by vector.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  mulJacVec             (res : Float64Array, vec : Float64Array): void;
+  /** Multiply dense or sparse constraint Jacobian transpose by vector.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  mulJacTVec            (res : Float64Array, vec : Float64Array): void;
+  /** Compute subtree center-of-mass end-effector Jacobian.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  jacSubtreeCom         (jacp : Float64Array, body : number): void;
   /** Get id of object with the specified mjtObj type and name, returns -1 if id not found.*/
   name2id               (type : number, name : string): number;
   /** Get name of object with the specified mjtObj type and id, returns NULL if name not found.*/
   id2name               (type : number, id : number): string;
+  /** Convert sparse inertia matrix M into full (i.e. dense) matrix.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  fullM                 (dst : Float64Array, M : Float64Array): void;
+  /** Compute velocity by finite-differencing two positions.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  differentiatePos      (qvel : Float64Array, dt : number, qpos1 : Float64Array, qpos2 : Float64Array): void;
+  /** Integrate position with given velocity.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  integratePos          (qpos : Float64Array, qvel : Float64Array, dt : number): void;
+  /** Normalize all quaternions in qpos-type vector.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  normalizeQuat         (qpos : Float64Array): void;
   /** Sum all body masses.*/
   getTotalmass          (): number;
   /** Return a config attribute value of a plugin instance; NULL: invalid plugin instance ID or attribute name*/
@@ -1733,6 +1757,66 @@ export interface Simulation {
   activate              (filename : string): number;
   /** Do nothing (for backward compatibility).*/
   deactivate            (): void;
+  /** Set res = 0.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _zero                 (res : Float64Array, n : number): void;
+  /** Set res = val.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _fill                 (res : Float64Array, val : number, n : number): void;
+  /** Set res = vec.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _copy                 (res : Float64Array, data : Float64Array, n : number): void;
+  /** Return sum(vec).[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _sum                  (vec : Float64Array, n : number): number;
+  /** Return L1 norm: sum(abs(vec)).[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _L1                   (vec : Float64Array, n : number): number;
+  /** Set res = vec*scl.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _scl                  (res : Float64Array, vec : Float64Array, scl : number, n : number): void;
+  /** Set res = vec1 + vec2.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _add                  (res : Float64Array, vec1 : Float64Array, vec2 : Float64Array, n : number): void;
+  /** Set res = vec1 - vec2.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _sub                  (res : Float64Array, vec1 : Float64Array, vec2 : Float64Array, n : number): void;
+  /** Set res = res + vec.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _addTo                (res : Float64Array, vec : Float64Array, n : number): void;
+  /** Set res = res - vec.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _subFrom              (res : Float64Array, vec : Float64Array, n : number): void;
+  /** Set res = res + vec*scl.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _addToScl             (res : Float64Array, vec : Float64Array, scl : number, n : number): void;
+  /** Set res = vec1 + vec2*scl.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _addScl               (res : Float64Array, vec1 : Float64Array, vec2 : Float64Array, scl : number, n : number): void;
+  /** Normalize vector, return length before normalization.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _normalize            (res : Float64Array, n : number): number;
+  /** Return vector length (without normalizing vector).[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _norm                 (res : Float64Array, n : number): number;
+  /** Return dot-product of vec1 and vec2.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _dot                  (vec1 : Float64Array, vec2 : Float64Array, n : number): number;
+  /** Multiply matrix and vector: res = mat * vec.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _mulMatVec            (res : Float64Array, mat : Float64Array, vec : Float64Array, nr : number, nc : number): void;
+  /** Multiply transposed matrix and vector: res = mat' * vec.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _mulMatTVec           (res : Float64Array, mat : Float64Array, vec : Float64Array, nr : number, nc : number): void;
+  /** Multiply square matrix with vectors on both sides: returns vec1' * mat * vec2.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _mulVecMatVec         (vec1 : Float64Array, mat : Float64Array, vec2 : Float64Array, n : number): number;
+  /** Transpose matrix: res = mat'.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _transpose            (res : Float64Array, mat : Float64Array, nr : number, nc : number): void;
+  /** Symmetrize square matrix res = (mat + mat')/2.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _symmetrize           (res : Float64Array, mat : Float64Array, n : number): void;
+  /** Set mat to the identity matrix.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _eye                  (mat : Float64Array, n : number): void;
+  /** Multiply matrices: res = mat1 * mat2.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _mulMatMat            (res : Float64Array, mat1 : Float64Array, mat2 : Float64Array, r1 : number, c1 : number, c2 : number): void;
+  /** Multiply matrices, second argument transposed: res = mat1 * mat2'.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _mulMatMatT           (res : Float64Array, mat1 : Float64Array, mat2 : Float64Array, r1 : number, c1 : number, r2 : number): void;
+  /** Multiply matrices, first argument transposed: res = mat1' * mat2.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _mulMatTMat           (res : Float64Array, mat1 : Float64Array, mat2 : Float64Array, r1 : number, c1 : number, c2 : number): void;
+  /** Set res = mat' * diag * mat if diag is not NULL, and res = mat' * mat otherwise.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _sqrMatTD             (res : Float64Array, mat : Float64Array, diag : Float64Array, nr : number, nc : number): void;
+  /** Cholesky decomposition: mat = L*L'; return rank, decomposition performed in-place into mat.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _cholFactor           (mat : Float64Array, n : number, mindiag : number): number;
+  /** Solve mat * res = vec, where mat is Cholesky-factorized[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _cholSolve            (res : Float64Array, mat : Float64Array, vec : Float64Array, n : number): void;
+  /** Cholesky rank-one update: L*L' +/- x*x'; return rank.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _cholUpdate           (mat : Float64Array, x : Float64Array, n : number, flg_plus : number): number;
+  /** Convert contact force to pyramid representation.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _encodePyramid        (pyramid : Float64Array, force : Float64Array, mu : Float64Array, dim : number): void;
+  /** Convert pyramid representation to contact force.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _decodePyramid        (force : Float64Array, pyramid : Float64Array, mu : Float64Array, dim : number): void;
   /** Integrate spring-damper analytically, return pos(dt).*/
   _springDamper         (pos0 : number, vel0 : number, Kp : number, Kv : number, dt : number): number;
   /** Return min(a,b) with single evaluation of a and b.*/
@@ -1755,10 +1839,18 @@ export interface Simulation {
   _warningText          (warning : number, info : number): string;
   /** Return 1 if nan or abs(x)>mjMAXVAL, 0 otherwise. Used by check functions.*/
   _isBad                (x : number): number;
+  /** Return 1 if all elements are 0.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _isZero               (vec : Float64Array, n : number): number;
+  /** Standard normal random number generator (optional second number).[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _standardNormal       (num2 : Float64Array): number;
+  /** Insertion sort, resulting list is in increasing order.[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _insertionSort        (list : Float64Array, n : number): void;
   /** Generate Halton sequence.*/
   _Halton               (index : number, base : number): number;
   /** Sigmoid function over 0<=x<=1 constructed from half-quadratics.*/
   _sigmoid              (x : number): number;
+  /** Finite differenced transition matrices (control theory notation)   d(x_next) = A*dx + B*du   d(sensor) = C*dx + D*du   required output matrix dimensions:      A: (2*nv+na x 2*nv+na)      B: (2*nv+na x nu)      D: (nsensordata x 2*nv+na)      C: (nsensordata x nu)[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]*/
+  _transitionFD         (eps : number, centered : mjtByte, A : Float64Array, B : Float64Array, C : Float64Array, D : Float64Array): void;
   /** Return the number of globally registered plugins.*/
   _pluginCount          (): number;
 }

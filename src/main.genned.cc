@@ -560,6 +560,7 @@ public:
   void   inverse             (                    ) { return mj_inverse                  (_model->ptr(), _state->ptr()); }
   void   forwardSkip         (int skipstage, int skipsensor) { return mj_forwardSkip              (_model->ptr(), _state->ptr(), skipstage, skipsensor); }
   void   inverseSkip         (int skipstage, int skipsensor) { return mj_inverseSkip              (_model->ptr(), _state->ptr(), skipstage, skipsensor); }
+  void   defaultSolRefImp    (mjtNum * solref, mjtNum * solimp) { return mj_defaultSolRefImp         (solref, solimp      ); }
   int    sizeModel           (                    ) { return mj_sizeModel                (_model->ptr()       ); }
   void   resetData           (                    ) { return mj_resetData                (_model->ptr(), _state->ptr()); }
   void   resetDataDebug      (unsigned char debug_value) { return mj_resetDataDebug           (_model->ptr(), _state->ptr(), debug_value); }
@@ -570,6 +571,7 @@ public:
   void   printModel          (std::string filename) { return mj_printModel               (_model->ptr(), filename.c_str()); }
   void   printFormattedData  (std::string filename, std::string float_format) { return mj_printFormattedData       (_model->ptr(), _state->ptr(), filename.c_str(), float_format.c_str()); }
   void   printData           (std::string filename) { return mj_printData                (_model->ptr(), _state->ptr(), filename.c_str()); }
+  void   _printMat           (const mjtNum * mat, int nr, int nc) { return mju_printMat                (mat, nr, nc         ); }
   void   fwdPosition         (                    ) { return mj_fwdPosition              (_model->ptr(), _state->ptr()); }
   void   fwdVelocity         (                    ) { return mj_fwdVelocity              (_model->ptr(), _state->ptr()); }
   void   fwdActuation        (                    ) { return mj_fwdActuation             (_model->ptr(), _state->ptr()); }
@@ -596,9 +598,12 @@ public:
   void   transmission        (                    ) { return mj_transmission             (_model->ptr(), _state->ptr()); }
   void   crbCalculate        (                    ) { return mj_crb                      (_model->ptr(), _state->ptr()); }
   void   factorM             (                    ) { return mj_factorM                  (_model->ptr(), _state->ptr()); }
+  void   solveM              (mjtNum * x, const mjtNum * y, int n) { return mj_solveM                   (_model->ptr(), _state->ptr(), x, y, n); }
+  void   solveM2             (mjtNum * x, const mjtNum * y, int n) { return mj_solveM2                  (_model->ptr(), _state->ptr(), x, y, n); }
   void   comVel              (                    ) { return mj_comVel                   (_model->ptr(), _state->ptr()); }
   void   passive             (                    ) { return mj_passive                  (_model->ptr(), _state->ptr()); }
   void   subtreeVel          (                    ) { return mj_subtreeVel               (_model->ptr(), _state->ptr()); }
+  void   rne                 (int flg_acc, mjtNum * result) { return mj_rne                      (_model->ptr(), _state->ptr(), flg_acc, result); }
   void   rnePostConstraint   (                    ) { return mj_rnePostConstraint        (_model->ptr(), _state->ptr()); }
   void   collision           (                    ) { return mj_collision                (_model->ptr(), _state->ptr()); }
   void   makeConstraint      (                    ) { return mj_makeConstraint           (_model->ptr(), _state->ptr()); }
@@ -607,8 +612,15 @@ public:
   int    isPyramidal         (                    ) { return mj_isPyramidal              (_model->ptr()       ); }
   int    isSparse            (                    ) { return mj_isSparse                 (_model->ptr()       ); }
   int    isDual              (                    ) { return mj_isDual                   (_model->ptr()       ); }
+  void   mulJacVec           (mjtNum * res, const mjtNum * vec) { return mj_mulJacVec                (_model->ptr(), _state->ptr(), res, vec); }
+  void   mulJacTVec          (mjtNum * res, const mjtNum * vec) { return mj_mulJacTVec               (_model->ptr(), _state->ptr(), res, vec); }
+  void   jacSubtreeCom       (mjtNum * jacp, int body) { return mj_jacSubtreeCom            (_model->ptr(), _state->ptr(), jacp, body); }
   int    name2id             (int type, std::string name) { return mj_name2id                  (_model->ptr(), type, name.c_str()); }
   std::string id2name             (int type, int id    ) { return std::string(mj_id2name                  (_model->ptr(), type, id)); }
+  void   fullM               (mjtNum * dst, const mjtNum * M) { return mj_fullM                    (_model->ptr(), dst, M); }
+  void   differentiatePos    (mjtNum * qvel, mjtNum dt, const mjtNum * qpos1, const mjtNum * qpos2) { return mj_differentiatePos         (_model->ptr(), qvel, dt, qpos1, qpos2); }
+  void   integratePos        (mjtNum * qpos, const mjtNum * qvel, mjtNum dt) { return mj_integratePos             (_model->ptr(), qpos, qvel, dt); }
+  void   normalizeQuat       (mjtNum * qpos       ) { return mj_normalizeQuat            (_model->ptr(), qpos ); }
   mjtNum getTotalmass        (                    ) { return mj_getTotalmass             (_model->ptr()       ); }
   std::string getPluginConfig     (int plugin_id, std::string attrib) { return std::string(mj_getPluginConfig          (_model->ptr(), plugin_id, attrib.c_str())); }
   void   loadPluginLibrary   (std::string path    ) { return mj_loadPluginLibrary        (path.c_str()        ); }
@@ -630,6 +642,36 @@ public:
   void   _writeLog           (std::string type, std::string msg) { return mju_writeLog                (type.c_str(), msg.c_str()); }
   int    activate            (std::string filename) { return mj_activate                 (filename.c_str()    ); }
   void   deactivate          (                    ) { return mj_deactivate               (                    ); }
+  void   _zero               (mjtNum * res, int n ) { return mju_zero                    (res, n              ); }
+  void   _fill               (mjtNum * res, mjtNum val, int n) { return mju_fill                    (res, val, n         ); }
+  void   _copy               (mjtNum * res, const mjtNum * data, int n) { return mju_copy                    (res, data, n        ); }
+  mjtNum _sum                (const mjtNum * vec, int n) { return mju_sum                     (vec, n              ); }
+  mjtNum _L1                 (const mjtNum * vec, int n) { return mju_L1                      (vec, n              ); }
+  void   _scl                (mjtNum * res, const mjtNum * vec, mjtNum scl, int n) { return mju_scl                     (res, vec, scl, n    ); }
+  void   _add                (mjtNum * res, const mjtNum * vec1, const mjtNum * vec2, int n) { return mju_add                     (res, vec1, vec2, n  ); }
+  void   _sub                (mjtNum * res, const mjtNum * vec1, const mjtNum * vec2, int n) { return mju_sub                     (res, vec1, vec2, n  ); }
+  void   _addTo              (mjtNum * res, const mjtNum * vec, int n) { return mju_addTo                   (res, vec, n         ); }
+  void   _subFrom            (mjtNum * res, const mjtNum * vec, int n) { return mju_subFrom                 (res, vec, n         ); }
+  void   _addToScl           (mjtNum * res, const mjtNum * vec, mjtNum scl, int n) { return mju_addToScl                (res, vec, scl, n    ); }
+  void   _addScl             (mjtNum * res, const mjtNum * vec1, const mjtNum * vec2, mjtNum scl, int n) { return mju_addScl                  (res, vec1, vec2, scl, n); }
+  mjtNum _normalize          (mjtNum * res, int n ) { return mju_normalize               (res, n              ); }
+  mjtNum _norm               (const mjtNum * res, int n) { return mju_norm                    (res, n              ); }
+  mjtNum _dot                (const mjtNum * vec1, const mjtNum * vec2, int n) { return mju_dot                     (vec1, vec2, n       ); }
+  void   _mulMatVec          (mjtNum * res, const mjtNum * mat, const mjtNum * vec, int nr, int nc) { return mju_mulMatVec               (res, mat, vec, nr, nc); }
+  void   _mulMatTVec         (mjtNum * res, const mjtNum * mat, const mjtNum * vec, int nr, int nc) { return mju_mulMatTVec              (res, mat, vec, nr, nc); }
+  mjtNum _mulVecMatVec       (const mjtNum * vec1, const mjtNum * mat, const mjtNum * vec2, int n) { return mju_mulVecMatVec            (vec1, mat, vec2, n  ); }
+  void   _transpose          (mjtNum * res, const mjtNum * mat, int nr, int nc) { return mju_transpose               (res, mat, nr, nc    ); }
+  void   _symmetrize         (mjtNum * res, const mjtNum * mat, int n) { return mju_symmetrize              (res, mat, n         ); }
+  void   _eye                (mjtNum * mat, int n ) { return mju_eye                     (mat, n              ); }
+  void   _mulMatMat          (mjtNum * res, const mjtNum * mat1, const mjtNum * mat2, int r1, int c1, int c2) { return mju_mulMatMat               (res, mat1, mat2, r1, c1, c2); }
+  void   _mulMatMatT         (mjtNum * res, const mjtNum * mat1, const mjtNum * mat2, int r1, int c1, int r2) { return mju_mulMatMatT              (res, mat1, mat2, r1, c1, r2); }
+  void   _mulMatTMat         (mjtNum * res, const mjtNum * mat1, const mjtNum * mat2, int r1, int c1, int c2) { return mju_mulMatTMat              (res, mat1, mat2, r1, c1, c2); }
+  void   _sqrMatTD           (mjtNum * res, const mjtNum * mat, const mjtNum * diag, int nr, int nc) { return mju_sqrMatTD                (res, mat, diag, nr, nc); }
+  int    _cholFactor         (mjtNum * mat, int n, mjtNum mindiag) { return mju_cholFactor              (mat, n, mindiag     ); }
+  void   _cholSolve          (mjtNum * res, const mjtNum * mat, const mjtNum * vec, int n) { return mju_cholSolve               (res, mat, vec, n    ); }
+  int    _cholUpdate         (mjtNum * mat, mjtNum * x, int n, int flg_plus) { return mju_cholUpdate              (mat, x, n, flg_plus ); }
+  void   _encodePyramid      (mjtNum * pyramid, const mjtNum * force, const mjtNum * mu, int dim) { return mju_encodePyramid           (pyramid, force, mu, dim); }
+  void   _decodePyramid      (mjtNum * force, const mjtNum * pyramid, const mjtNum * mu, int dim) { return mju_decodePyramid           (force, pyramid, mu, dim); }
   mjtNum _springDamper       (mjtNum pos0, mjtNum vel0, mjtNum Kp, mjtNum Kv, mjtNum dt) { return mju_springDamper            (pos0, vel0, Kp, Kv, dt); }
   mjtNum _min                (mjtNum a, mjtNum b  ) { return mju_min                     (a, b                ); }
   mjtNum _max                (mjtNum a, mjtNum b  ) { return mju_max                     (a, b                ); }
@@ -641,8 +683,12 @@ public:
   std::string _writeNumBytes      (size_t nbytes       ) { return std::string(mju_writeNumBytes           (nbytes              )); }
   std::string _warningText        (int warning, size_t info) { return std::string(mju_warningText             (warning, info       )); }
   int    _isBad              (mjtNum x            ) { return mju_isBad                   (x                   ); }
+  int    _isZero             (mjtNum * vec, int n ) { return mju_isZero                  (vec, n              ); }
+  mjtNum _standardNormal     (mjtNum * num2       ) { return mju_standardNormal          (num2                ); }
+  void   _insertionSort      (mjtNum * list, int n) { return mju_insertionSort           (list, n             ); }
   mjtNum _Halton             (int index, int base ) { return mju_Halton                  (index, base         ); }
   mjtNum _sigmoid            (mjtNum x            ) { return mju_sigmoid                 (x                   ); }
+  void   _transitionFD       (mjtNum eps, mjtByte centered, mjtNum * A, mjtNum * B, mjtNum * C, mjtNum * D) { return mjd_transitionFD            (_model->ptr(), _state->ptr(), eps, centered, A, B, C, D); }
   int    _pluginCount        (                    ) { return mjp_pluginCount             (                    ); }
 
 
@@ -1340,6 +1386,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("inverse"               , &Simulation::inverse               )
       .function("forwardSkip"           , &Simulation::forwardSkip           )
       .function("inverseSkip"           , &Simulation::inverseSkip           )
+      .function("defaultSolRefImp"      , &Simulation::defaultSolRefImp      , allow_raw_pointers())
       .function("sizeModel"             , &Simulation::sizeModel             )
       .function("resetData"             , &Simulation::resetData             )
       .function("resetDataDebug"        , &Simulation::resetDataDebug        )
@@ -1350,6 +1397,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("printModel"            , &Simulation::printModel            )
       .function("printFormattedData"    , &Simulation::printFormattedData    )
       .function("printData"             , &Simulation::printData             )
+      .function("_printMat"             , &Simulation::_printMat             , allow_raw_pointers())
       .function("fwdPosition"           , &Simulation::fwdPosition           )
       .function("fwdVelocity"           , &Simulation::fwdVelocity           )
       .function("fwdActuation"          , &Simulation::fwdActuation          )
@@ -1376,9 +1424,12 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("transmission"          , &Simulation::transmission          )
       .function("crbCalculate"          , &Simulation::crbCalculate          )
       .function("factorM"               , &Simulation::factorM               )
+      .function("solveM"                , &Simulation::solveM                , allow_raw_pointers())
+      .function("solveM2"               , &Simulation::solveM2               , allow_raw_pointers())
       .function("comVel"                , &Simulation::comVel                )
       .function("passive"               , &Simulation::passive               )
       .function("subtreeVel"            , &Simulation::subtreeVel            )
+      .function("rne"                   , &Simulation::rne                   , allow_raw_pointers())
       .function("rnePostConstraint"     , &Simulation::rnePostConstraint     )
       .function("collision"             , &Simulation::collision             )
       .function("makeConstraint"        , &Simulation::makeConstraint        )
@@ -1387,8 +1438,15 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("isPyramidal"           , &Simulation::isPyramidal           )
       .function("isSparse"              , &Simulation::isSparse              )
       .function("isDual"                , &Simulation::isDual                )
+      .function("mulJacVec"             , &Simulation::mulJacVec             , allow_raw_pointers())
+      .function("mulJacTVec"            , &Simulation::mulJacTVec            , allow_raw_pointers())
+      .function("jacSubtreeCom"         , &Simulation::jacSubtreeCom         , allow_raw_pointers())
       .function("name2id"               , &Simulation::name2id               )
       .function("id2name"               , &Simulation::id2name               )
+      .function("fullM"                 , &Simulation::fullM                 , allow_raw_pointers())
+      .function("differentiatePos"      , &Simulation::differentiatePos      , allow_raw_pointers())
+      .function("integratePos"          , &Simulation::integratePos          , allow_raw_pointers())
+      .function("normalizeQuat"         , &Simulation::normalizeQuat         , allow_raw_pointers())
       .function("getTotalmass"          , &Simulation::getTotalmass          )
       .function("getPluginConfig"       , &Simulation::getPluginConfig       )
       .function("loadPluginLibrary"     , &Simulation::loadPluginLibrary     )
@@ -1410,6 +1468,36 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("_writeLog"             , &Simulation::_writeLog             )
       .function("activate"              , &Simulation::activate              )
       .function("deactivate"            , &Simulation::deactivate            )
+      .function("_zero"                 , &Simulation::_zero                 , allow_raw_pointers())
+      .function("_fill"                 , &Simulation::_fill                 , allow_raw_pointers())
+      .function("_copy"                 , &Simulation::_copy                 , allow_raw_pointers())
+      .function("_sum"                  , &Simulation::_sum                  , allow_raw_pointers())
+      .function("_L1"                   , &Simulation::_L1                   , allow_raw_pointers())
+      .function("_scl"                  , &Simulation::_scl                  , allow_raw_pointers())
+      .function("_add"                  , &Simulation::_add                  , allow_raw_pointers())
+      .function("_sub"                  , &Simulation::_sub                  , allow_raw_pointers())
+      .function("_addTo"                , &Simulation::_addTo                , allow_raw_pointers())
+      .function("_subFrom"              , &Simulation::_subFrom              , allow_raw_pointers())
+      .function("_addToScl"             , &Simulation::_addToScl             , allow_raw_pointers())
+      .function("_addScl"               , &Simulation::_addScl               , allow_raw_pointers())
+      .function("_normalize"            , &Simulation::_normalize            , allow_raw_pointers())
+      .function("_norm"                 , &Simulation::_norm                 , allow_raw_pointers())
+      .function("_dot"                  , &Simulation::_dot                  , allow_raw_pointers())
+      .function("_mulMatVec"            , &Simulation::_mulMatVec            , allow_raw_pointers())
+      .function("_mulMatTVec"           , &Simulation::_mulMatTVec           , allow_raw_pointers())
+      .function("_mulVecMatVec"         , &Simulation::_mulVecMatVec         , allow_raw_pointers())
+      .function("_transpose"            , &Simulation::_transpose            , allow_raw_pointers())
+      .function("_symmetrize"           , &Simulation::_symmetrize           , allow_raw_pointers())
+      .function("_eye"                  , &Simulation::_eye                  , allow_raw_pointers())
+      .function("_mulMatMat"            , &Simulation::_mulMatMat            , allow_raw_pointers())
+      .function("_mulMatMatT"           , &Simulation::_mulMatMatT           , allow_raw_pointers())
+      .function("_mulMatTMat"           , &Simulation::_mulMatTMat           , allow_raw_pointers())
+      .function("_sqrMatTD"             , &Simulation::_sqrMatTD             , allow_raw_pointers())
+      .function("_cholFactor"           , &Simulation::_cholFactor           , allow_raw_pointers())
+      .function("_cholSolve"            , &Simulation::_cholSolve            , allow_raw_pointers())
+      .function("_cholUpdate"           , &Simulation::_cholUpdate           , allow_raw_pointers())
+      .function("_encodePyramid"        , &Simulation::_encodePyramid        , allow_raw_pointers())
+      .function("_decodePyramid"        , &Simulation::_decodePyramid        , allow_raw_pointers())
       .function("_springDamper"         , &Simulation::_springDamper         )
       .function("_min"                  , &Simulation::_min                  )
       .function("_max"                  , &Simulation::_max                  )
@@ -1421,8 +1509,12 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .function("_writeNumBytes"        , &Simulation::_writeNumBytes        )
       .function("_warningText"          , &Simulation::_warningText          )
       .function("_isBad"                , &Simulation::_isBad                )
+      .function("_isZero"               , &Simulation::_isZero               , allow_raw_pointers())
+      .function("_standardNormal"       , &Simulation::_standardNormal       , allow_raw_pointers())
+      .function("_insertionSort"        , &Simulation::_insertionSort        , allow_raw_pointers())
       .function("_Halton"               , &Simulation::_Halton               )
       .function("_sigmoid"              , &Simulation::_sigmoid              )
+      .function("_transitionFD"         , &Simulation::_transitionFD         , allow_raw_pointers())
       .function("_pluginCount"          , &Simulation::_pluginCount          )
       ;
 
