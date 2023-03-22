@@ -1,6 +1,6 @@
 import  *  as  THREE     from 'three';
 import { Reflector     } from './utils/Reflector.js';
-import { GUI           } from '../../node_modules/three/examples/jsm/libs/lil-gui.module.min.js';
+import { GUI           } from '../node_modules/three/examples/jsm/libs/lil-gui.module.min.js';
 import load_mujoco/*, {mujoco}*/ from '../dist/mujoco_wasm.js';
 
 
