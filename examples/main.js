@@ -19,6 +19,9 @@ let model       = new mujoco.Model("/working/humanoid.xml");
 let state       = new mujoco.State(model);
 let simulation  = new mujoco.Simulation(model, state);
 
+// Whether the simulation is running or paused.
+let paused = false;
+
 let container, controls;
 let camera, scene, renderer;
 const params = { scene: "humanoid.xml" };
@@ -64,19 +67,36 @@ async function init() {
 
   window.addEventListener('resize', onWindowResize);
 
+  // Initialize the Drag State Manager.
+  dragStateManager = new DragStateManager(scene, renderer, camera, container.parentElement, controls);
+
   const gui = new GUI();
-  //gui.add(params, "acceleration", -0.1, 0.1, 0.001).name('Artificial Acceleration');
-  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml",  /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
+  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml", /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
     .name('Example Scene').onChange(value => {
       scene.remove(scene.getObjectByName("MuJoCo Root"));
       loadSceneFromURL(mujoco, value, scene).then((returnArray) => {
         [model, state, simulation, bodies, lights] = returnArray;
       }); // Initialize the three.js Scene using this .xml Model
     });
-  gui.open();
 
-  // Initialize the Drag State Manager
-  dragStateManager = new DragStateManager(scene, renderer, camera, container.parentElement, controls);
+  // Add pause simulation button (can be triggered with spacebar).
+  const pauseButton = gui.add({ pause: false }, 'pause').name('Pause Simulation');
+  pauseButton.onChange((value) => {
+    if (value) {
+      paused = true;
+      controls.enabled = false;
+    } else {
+      paused = false;
+      controls.enabled = true;
+    }
+  });
+  document.addEventListener('keydown', (event) => {
+    if (event.code === 'Space') {
+      pauseButton.setValue(!pauseButton.getValue());
+    }
+  });
+
+  gui.open();
 
   await downloadExampleScenesFolder(mujoco);    // Download the the examples to MuJoCo's virtual file system
   [model, state, simulation, bodies, lights] =  // Initialize the three.js Scene using this .xml Model
@@ -96,6 +116,8 @@ function animate(time) {
 
 let mujoco_time = 0.0;
 function render(timeMS) {
+  if (paused) { return; }
+
   controls.update();
 
   // Update MuJoCo Simulation
@@ -105,7 +127,7 @@ function render(timeMS) {
     simulation.step();
 
     // Reset Applied Forces
-    for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; } 
+    for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; }
 
     // Update the forces on the dragged body
     let dragged = dragStateManager.physicsObject;
