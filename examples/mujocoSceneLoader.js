@@ -17,7 +17,7 @@ export async function loadSceneFromURL(mujoco, filename, scene, gui, params ) {
 
     // For each actuator, add a slider to control the actuator's position.
     // Add a separator between the sliders and the checkboxes.
-    if (gui.folders[0].folders.length > 1) { gui.folders[0].folders[0].destroy(); }
+    if (gui.folders[0].folders.length > 0) { gui.folders[0].folders[0].destroy(); }
     let actuatorFolder = gui.folders[0].addFolder( 'Actuator Control' );
     let act_range = model.actuator_ctrlrange();
     for (let i = 0; i < model.nu(); i++) {
