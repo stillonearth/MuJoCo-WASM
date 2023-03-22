@@ -71,7 +71,7 @@ async function init() {
 
   const reload = () => {
     scene.remove(scene.getObjectByName("MuJoCo Root"));
-    loadSceneFromURL(mujoco, params.scene, scene).then((returnArray) => {
+    loadSceneFromURL(mujoco, params.scene, scene, gui, params).then((returnArray) => {
       [model, state, simulation, bodies, lights] = returnArray;
     }); // Initialize the three.js Scene using this .xml Model
   };
@@ -124,7 +124,7 @@ async function init() {
     if (event.code === 'Backspace') { resetSimulation(); }
   });
 
-  // Add load keyframe slider.
+  // Add keyframe slider.
   simulationFolder.add(params, 'keyframeNumber', 0, model.nkey()-1, 1).name('Load Keyframe').onChange((value) => {
     if (value < model.nkey()) {
       simulation.qpos().set(model.key_qpos().slice(
@@ -133,26 +133,11 @@ async function init() {
   // Add sliders for ctrlnoiserate and ctrlnoisestd; min = 0, max = 2, step = 0.01
   simulationFolder.add(params, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate' );
   simulationFolder.add(params, 'ctrlnoisestd' , 0.0, 2.0, 0.01).name('Noise scale');
-
-  // For each actuator, add a slider to control the actuator's position.
-  // Add a separator between the sliders and the checkboxes.
-  let actuatorFolder = gui.addFolder( 'Actuator Control' );
-  let act_range = model.actuator_ctrlrange();
-  for (let i = 0; i < model.nu(); i++) {
-    if (!model.actuator_ctrllimited()[i]) { continue; }
-    let name = "Actuator " + i;
-    params[name] = 0.0;
-    // Add a listener to update the actuator's position when the slider is moved.
-    actuatorFolder.add(params, name, act_range[2 * i], act_range[2 * i + 1], 0.01).name(name).listen()
-      .onChange((value) => { simulation.ctrl()[i] = value; });
-  }
-  actuatorFolder.close();
-
   gui.open();
 
   await downloadExampleScenesFolder(mujoco);    // Download the the examples to MuJoCo's virtual file system
   [model, state, simulation, bodies, lights] =  // Initialize the three.js Scene using this .xml Model
-    await loadSceneFromURL(mujoco, "humanoid.xml", scene);
+    await loadSceneFromURL(mujoco, "humanoid.xml", scene, gui, params);
 }
 
 function onWindowResize() {

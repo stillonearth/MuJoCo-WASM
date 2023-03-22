@@ -1,18 +1,35 @@
 import  *  as  THREE     from 'three';
 import { Reflector     } from './utils/Reflector.js';
+import { GUI           } from '../../node_modules/three/examples/jsm/libs/lil-gui.module.min.js';
 import load_mujoco/*, {mujoco}*/ from '../dist/mujoco_wasm.js';
 
 
 /** Loads a scene for MuJoCo
  * @param {mujoco} mujoco
  * @param {string} filename
- * @param {THREE.Scene} scene */
-export async function loadSceneFromURL(mujoco, filename, scene ) {
+ * @param {THREE.Scene} scene
+ * @param {GUI} gui */
+export async function loadSceneFromURL(mujoco, filename, scene, gui, params ) {
     // Load in the state from XML
     let model       = mujoco.Model.load_from_xml("/working/"+filename);
     let state       = new mujoco.State     (model);
     let simulation  = new mujoco.Simulation(model, state);
 
+    // For each actuator, add a slider to control the actuator's position.
+    // Add a separator between the sliders and the checkboxes.
+    if (gui.folders.length > 0) { gui.folders[0].destroy(); }
+    let actuatorFolder = gui.addFolder( 'Actuator Control' );
+    let act_range = model.actuator_ctrlrange();
+    for (let i = 0; i < model.nu(); i++) {
+      if (!model.actuator_ctrllimited()[i]) { continue; }
+      let name = "Actuator " + i;
+      params[name] = 0.0;
+      // Add two-way listeners sycnhronize the slider with the control in the system
+      actuatorFolder.add(params, name, act_range[2 * i], act_range[2 * i + 1], 0.01).name(name).listen()
+        .onChange((value) => { simulation.ctrl()[i] = value; });
+    }
+    actuatorFolder.close();
+  
     // Decode the null-terminated string names
     let textDecoder = new TextDecoder("utf-8");
     let fullString  = textDecoder.decode(model.names());
