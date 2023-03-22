@@ -22,6 +22,11 @@ let simulation  = new mujoco.Simulation(model, state);
 // Whether the simulation is running or paused.
 let paused = false;
 
+// Ctrlnoise.
+let ctrlnoisestd = 0.0;
+let ctrlnoiserate = 0.0;
+let ctrlnoise = new Float64Array(model.nu());
+
 let container, controls;
 let camera, scene, renderer;
 const params = { scene: "humanoid.xml" };
@@ -96,6 +101,15 @@ async function init() {
     }
   });
 
+  // Add a slider button for ctrlnoiserate and ctrlnoisestd.
+  // min = 0, max = 2, step = 0.01
+  gui.add({ ctrlnoiserate: 0.0 }, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate').onChange((value) => {
+    ctrlnoiserate = value;
+  });
+  gui.add({ ctrlnoisestd: 0.0 }, 'ctrlnoisestd', 0.0, 2.0, 0.01).name('Noise scale').onChange((value) => {
+    ctrlnoisestd = value;
+  });
+
   gui.open();
 
   await downloadExampleScenesFolder(mujoco);    // Download the the examples to MuJoCo's virtual file system
@@ -114,42 +128,69 @@ function animate(time) {
   render(time);
 }
 
+// Standard normal random number generator using Box-Muller transform.
+function standardNormal() {
+  let u = 1 - Math.random();
+  let v = Math.random();
+  let z = Math.sqrt( -2.0 * Math.log( u ) ) * Math.cos( 2.0 * Math.PI * v );
+  return z;
+}
+
 let mujoco_time = 0.0;
 function render(timeMS) {
-  if (paused) { return; }
-
   controls.update();
 
-  // Update MuJoCo Simulation
-  let timestep = model.getOptions().timestep;
-  if (timeMS - mujoco_time > 35.0) { mujoco_time = timeMS; }
-  while (mujoco_time < timeMS) {
-    simulation.step();
-
-    // Reset Applied Forces
-    for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; }
-
-    // Update the forces on the dragged body
-    let dragged = dragStateManager.physicsObject;
-    if (dragged && dragged.bodyID) {
-      for (let b = 0; b < model.nbody(); b++) {
-        if (bodies[b]) {
-          getPosition  (simulation.xpos (), b, bodies[b].position);
-          getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
-          bodies[b].updateWorldMatrix();
+  if (!paused) {
+    let timestep = model.getOptions().timestep;
+    if (timeMS - mujoco_time > 35.0) { mujoco_time = timeMS; }
+    while (mujoco_time < timeMS) {
+      // Inject noise.
+      if (ctrlnoisestd > 0.0) {
+        let rate = Math.exp(-timestep / Math.max(1e-10, ctrlnoiserate));
+        let scale = ctrlnoisestd * Math.sqrt(1 - rate * rate);
+        console.log("rate: " + rate + ", scale: " + scale);
+        for (let i = 0; i < model.nu(); i++) {
+          ctrlnoise[i] = rate * ctrlnoise[i] + scale * standardNormal();
+          simulation.ctrl()[i] = ctrlnoise[i];
         }
       }
 
-      let bodyID = dragged.bodyID;
-      dragStateManager.update(); // Update the world-space force origin
-      let force = toMujocoPos(dragStateManager.currentWorld.clone().sub(dragStateManager.worldHit).multiplyScalar(model.body_mass()[bodyID] * 250));
-      let point = toMujocoPos(dragStateManager.worldHit    .clone());
-      simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, bodyID); // Body ID
+      // Clear old perturbations, apply new ones.
+      for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; }
+      let dragged = dragStateManager.physicsObject;
+      if (dragged && dragged.bodyID) {
+        for (let b = 0; b < model.nbody(); b++) {
+          if (bodies[b]) {
+            getPosition  (simulation.xpos (), b, bodies[b].position);
+            getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
+            bodies[b].updateWorldMatrix();
+          }
+        }
+        let bodyID = dragged.bodyID;
+        dragStateManager.update(); // Update the world-space force origin
+        let force = toMujocoPos(dragStateManager.currentWorld.clone().sub(dragStateManager.worldHit).multiplyScalar(model.body_mass()[bodyID] * 250));
+        let point = toMujocoPos(dragStateManager.worldHit.clone());
+        simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, bodyID);
+
+        // TODO: Apply pose perturbations (mocap bodies only).
+      }
+
+      simulation.step();
+
+      mujoco_time += timestep * 1000.0;
+    }
+  }  // End if (!paused)
+  else {
+    // TODO: Apply pose perturbations (mocap and dynamic bodies).
+    let dragged = dragStateManager.physicsObject;
+    if (dragged && dragged.bodyID) {
+
     }
 
-    mujoco_time += timestep * 1000.0;
+    simulation.forward();
   }
 
+  // Update body transforms.
   for (let b = 0; b < model.nbody(); b++) {
     if (bodies[b]) {
       getPosition  (simulation.xpos (), b, bodies[b].position);
@@ -158,7 +199,7 @@ function render(timeMS) {
     }
   }
 
-  // Set the transforms of lights
+  // Update light transforms.
   let tmpVec = new THREE.Vector3();
   for (let l = 0; l < model.nlight(); l++) {
     if (lights[l]) {
@@ -168,6 +209,7 @@ function render(timeMS) {
     }
   }
 
+  // Render!
   renderer.render( scene, camera );
 }
 
