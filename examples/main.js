@@ -21,7 +21,7 @@ let simulation  = new mujoco.Simulation(model, state);
 
 let container, controls;
 let camera, scene, renderer;
-const params = { scene: "humanoid.xml", paused: false, ctrlnoiserate: 0.0, ctrlnoisestd: 0.0 };
+const params = { scene: "humanoid.xml", paused: false, ctrlnoiserate: 0.0, ctrlnoisestd: 0.0, keyframeNumber:0 };
 /** @type {DragStateManager} */
 let dragStateManager;
 let bodies, lights;
@@ -122,13 +122,11 @@ async function init() {
     if (event.code === 'Backspace') { resetSimulation(); }
   });
 
-  // Add load keyframe button.
-  const loadKeyframe = () => {
-    if (model.nkey() > 0) {
-      simulation.qpos().set(model.key_qpos().slice(0, model.nq()));
-    }
-  };
-  gui.add({ load: () => { loadKeyframe(); } }, 'load').name('Load Keyframe');
+  // Add load keyframe slider.
+  gui.add(params, 'keyframeNumber', 0, model.nkey()-1, 1).name('Load Keyframe').onChange((value) => {
+    if (value < model.nkey()) {
+      simulation.qpos().set(model.key_qpos().slice(
+        value * model.nq(), (value + 1) * model.nq())); }});
 
   // Add sliders for ctrlnoiserate and ctrlnoisestd; min = 0, max = 2, step = 0.01
   gui.add(params, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate' );
