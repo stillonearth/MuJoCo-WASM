@@ -25,6 +25,8 @@ const params = { scene: "humanoid.xml", paused: false, ctrlnoiserate: 0.0, ctrln
 /** @type {DragStateManager} */
 let dragStateManager;
 let bodies, lights;
+let tmpVec  = new THREE.Vector3();
+let tmpQuat = new THREE.Quaternion();
 
 async function init() {
   container = document.createElement( 'div' );
@@ -158,7 +160,24 @@ function render(timeMS) {
     dragStateManager.update(); // Update the world-space force origin
     let dragged = dragStateManager.physicsObject;
     if (dragged && dragged.bodyID) {
+      let b = dragged.bodyID;
+      getPosition  (simulation.xpos (), b, tmpVec , false); // Get raw coordinate from MuJoCo
+      getQuaternion(simulation.xquat(), b, tmpQuat, false); // Get raw coordinate from MuJoCo
 
+      let offset = toMujocoPos(dragStateManager.currentWorld.clone()
+        .sub(dragStateManager.worldHit).multiplyScalar(0.1));
+      // Can't get this to behave properly...
+      //simulation.applyPose(b,
+      //  tmpVec.x + offset.x,
+      //  tmpVec.y + offset.y,
+      //  tmpVec.z + offset.z,
+      //  tmpQuat.x, tmpQuat.y, tmpQuat.z, tmpQuat.w, 1);
+      //  //0,0,0,1, 1);
+      // Set the root body's position directly...
+      let addr = model.jnt_qposadr()[model.body_jntadr()[model.body_rootid()[b]]];
+      simulation.qpos()[addr+0] += offset.x;
+      simulation.qpos()[addr+1] += offset.y;
+      simulation.qpos()[addr+2] += offset.z;
     }
 
     simulation.forward();
@@ -174,7 +193,6 @@ function render(timeMS) {
   }
 
   // Update light transforms.
-  let tmpVec = new THREE.Vector3();
   for (let l = 0; l < model.nlight(); l++) {
     if (lights[l]) {
       getPosition(simulation.light_xpos(), l, lights[l].position);

@@ -309,23 +309,38 @@ export async function downloadExampleScenesFolder(mujoco) {
  * @param {Float32Array|Float64Array} buffer
  * @param {number} index
  * @param {THREE.Vector3} target */
-export function getPosition(buffer, index, target) {
+export function getPosition(buffer, index, target, swizzle = true) {
+  if (swizzle) {
     return target.set(
-         buffer[(index * 3) + 0],
-         buffer[(index * 3) + 2],
-        -buffer[(index * 3) + 1]);
+       buffer[(index * 3) + 0],
+       buffer[(index * 3) + 2],
+      -buffer[(index * 3) + 1]);
+  } else {
+    return target.set(
+       buffer[(index * 3) + 0],
+       buffer[(index * 3) + 1],
+       buffer[(index * 3) + 2]);
+  }
 }
 
 /** Access the quaternion at index, swizzle for three.js, and apply to the target THREE.Quaternion
  * @param {Float32Array|Float64Array} buffer
  * @param {number} index
  * @param {THREE.Quaternion} target */
-export function getQuaternion(buffer, index, target) {
+export function getQuaternion(buffer, index, target, swizzle = true) {
+  if (swizzle) {
     return target.set(
-        -buffer[(index * 4) + 1],
-        -buffer[(index * 4) + 3],
-         buffer[(index * 4) + 2],
-        -buffer[(index * 4) + 0]);
+      -buffer[(index * 4) + 1],
+      -buffer[(index * 4) + 3],
+       buffer[(index * 4) + 2],
+      -buffer[(index * 4) + 0]);
+  } else {
+    return target.set(
+       buffer[(index * 4) + 0],
+       buffer[(index * 4) + 1],
+       buffer[(index * 4) + 2],
+       buffer[(index * 4) + 3]);
+  }
 }
 
 /** Converts this Vector3's Handedness to MuJoCo's Coordinate Handedness
