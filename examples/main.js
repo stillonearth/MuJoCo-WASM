@@ -76,9 +76,13 @@ async function init() {
   // Add scene selection dropdown.
   const reload = () => {
     scene.remove(scene.getObjectByName("MuJoCo Root"));
-    loadSceneFromURL(mujoco, params.scene, scene, gui, params, updateGUICallbacks).then((returnArray) => {
+    loadSceneFromURL(mujoco, params.scene, scene).then((returnArray) => {
       [model, state, simulation, bodies, lights] = returnArray;
     });
+    simulation.forward();
+    for (let i = 0; i < updateGUICallbacks.length; i++) {
+      updateGUICallbacks[i](model, simulation, params);
+    }
   };
   gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml"})
     .name('Example Scene').onChange(_ => { reload(); });
@@ -284,7 +288,7 @@ async function init() {
 
   await downloadExampleScenesFolder(mujoco);    // Download the the examples to MuJoCo's virtual file system
   [model, state, simulation, bodies, lights] =  // Initialize the three.js Scene using this .xml Model
-    await loadSceneFromURL(mujoco, "humanoid.xml", scene, gui, params, updateGUICallbacks);
+    await loadSceneFromURL(mujoco, "humanoid.xml", scene);
 }
 
 function onWindowResize() {

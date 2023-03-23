@@ -9,7 +9,7 @@ import load_mujoco/*, {mujoco}*/ from '../dist/mujoco_wasm.js';
  * @param {string} filename
  * @param {THREE.Scene} scene
  * @param {GUI} gui */
-export async function loadSceneFromURL(mujoco, filename, scene, gui, params, updateGUICallbacks) {
+export async function loadSceneFromURL(mujoco, filename, scene) {
     // Load in the state from XML
     let model       = mujoco.Model.load_from_xml("/working/"+filename);
     let state       = new mujoco.State     (model);
@@ -225,11 +225,6 @@ export async function loadSceneFromURL(mujoco, filename, scene, gui, params, upd
         bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; bodies[b].bodyID = b; bodies[b].has_custom_mesh = false;
         bodies[0].add(bodies[b]);
       }
-    }
-
-    simulation.forward();
-    for (let i = 0; i < updateGUICallbacks.length; i++) {
-      updateGUICallbacks[i](model, simulation, params);
     }
 
     return [model, state, simulation, bodies, lights]
