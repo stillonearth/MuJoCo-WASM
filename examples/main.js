@@ -19,9 +19,11 @@ let model       = new mujoco.Model("/working/humanoid.xml");
 let state       = new mujoco.State(model);
 let simulation  = new mujoco.Simulation(model, state);
 
+let updateGUICallbacks = [];
+
 let container, controls;
 let camera, scene, renderer;
-const params = { scene: "humanoid.xml", paused: false, ctrlnoiserate: 0.0, ctrlnoisestd: 0.0, keyframeNumber:0 };
+const params = { scene: "humanoid.xml", paused: false, help: false, ctrlnoiserate: 0.0, ctrlnoisestd: 0.0, keyframeNumber:0 };
 /** @type {DragStateManager} */
 let dragStateManager;
 let bodies, lights;
@@ -69,75 +71,220 @@ async function init() {
   // Initialize the Drag State Manager.
   dragStateManager = new DragStateManager(scene, renderer, camera, container.parentElement, controls);
 
+  const gui = new GUI();
+
+  // Add scene selection dropdown.
   const reload = () => {
     scene.remove(scene.getObjectByName("MuJoCo Root"));
-    loadSceneFromURL(mujoco, params.scene, scene, gui, params).then((returnArray) => {
+    loadSceneFromURL(mujoco, params.scene, scene, gui, params, updateGUICallbacks).then((returnArray) => {
       [model, state, simulation, bodies, lights] = returnArray;
-    }); // Initialize the three.js Scene using this .xml Model
+    });
   };
-
-  const gui = new GUI();
-  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml", /*"Arm": "arm26.xml", "Adhesion": "adhesion.xml", "Boxes": "simple.xml" */})
+  gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml"})
     .name('Example Scene').onChange(_ => { reload(); });
 
-  let simulationFolder = gui.addFolder('Simulation');
+  // Add a help menu.
+  // Parameters:
+  //  Name: "Help".
+  //  When pressed, a help menu is displayed in the top left corner. When pressed again
+  //  the help menu is removed.
+  //  Can also be triggered by pressing F1.
+  // Has a dark transparent background.
+  // Has two columns: one for putting the action description, and one for the action key trigger.keyframeNumber
+  let keyInnerHTML = '';
+  let actionInnerHTML = '';
+  const displayHelpMenu = () => {
+    if (params.help) {
+      const helpMenu = document.createElement('div');
+      helpMenu.style.position = 'absolute';
+      helpMenu.style.top = '10px';
+      helpMenu.style.left = '10px';
+      helpMenu.style.color = 'white';
+      helpMenu.style.font = 'normal 18px Arial';
+      helpMenu.style.backgroundColor = 'rgba(0, 0, 0, 0.5)';
+      helpMenu.style.padding = '10px';
+      helpMenu.style.borderRadius = '10px';
+      helpMenu.style.display = 'flex';
+      helpMenu.style.flexDirection = 'column';
+      helpMenu.style.alignItems = 'center';
+      helpMenu.style.justifyContent = 'center';
+      helpMenu.style.width = '400px';
+      helpMenu.style.height = '400px';
+      helpMenu.style.overflow = 'auto';
+      helpMenu.style.zIndex = '1000';
 
-  // Add pause simulation checkbox (can also be triggered with spacebar).
-  simulationFolder.add(params, 'paused').name('Pause Simulation');
+      const helpMenuTitle = document.createElement('div');
+      helpMenuTitle.style.font = 'bold 24px Arial';
+      helpMenuTitle.innerHTML = '';
+      helpMenu.appendChild(helpMenuTitle);
+
+      const helpMenuTable = document.createElement('table');
+      helpMenuTable.style.width = '100%';
+      helpMenuTable.style.marginTop = '10px';
+      helpMenu.appendChild(helpMenuTable);
+
+      const helpMenuTableBody = document.createElement('tbody');
+      helpMenuTable.appendChild(helpMenuTableBody);
+
+      const helpMenuRow = document.createElement('tr');
+      helpMenuTableBody.appendChild(helpMenuRow);
+
+      const helpMenuActionColumn = document.createElement('td');
+      helpMenuActionColumn.style.width = '50%';
+      helpMenuActionColumn.style.textAlign = 'right';
+      helpMenuActionColumn.style.paddingRight = '10px';
+      helpMenuRow.appendChild(helpMenuActionColumn);
+
+      const helpMenuKeyColumn = document.createElement('td');
+      helpMenuKeyColumn.style.width = '50%';
+      helpMenuKeyColumn.style.textAlign = 'left';
+      helpMenuKeyColumn.style.paddingLeft = '10px';
+      helpMenuRow.appendChild(helpMenuKeyColumn);
+
+      const helpMenuActionText = document.createElement('div');
+      helpMenuActionText.innerHTML = actionInnerHTML;
+      helpMenuActionColumn.appendChild(helpMenuActionText);
+
+      const helpMenuKeyText = document.createElement('div');
+      helpMenuKeyText.innerHTML = keyInnerHTML;
+      helpMenuKeyColumn.appendChild(helpMenuKeyText);
+
+      // Close buttom in the top.
+      const helpMenuCloseButton = document.createElement('button');
+      helpMenuCloseButton.innerHTML = 'Close';
+      helpMenuCloseButton.style.position = 'absolute';
+      helpMenuCloseButton.style.top = '10px';
+      helpMenuCloseButton.style.right = '10px';
+      helpMenuCloseButton.style.zIndex = '1001';
+      helpMenuCloseButton.onclick = () => {
+        helpMenu.remove();
+      };
+      helpMenu.appendChild(helpMenuCloseButton);
+
+      document.body.appendChild(helpMenu);
+    } else {
+      document.body.removeChild(document.body.lastChild);
+    }
+  }
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'F1') {
+      params.help = !params.help;
+      displayHelpMenu();
+    }
+  });
+  keyInnerHTML += 'F1<br>';
+  actionInnerHTML += 'Help<br>';
+
+  let simulationFolder = gui.addFolder("Simulation");
+
+  // Add pause simulation checkbox.
+  // Parameters:
+  //  Under "Simulation" folder.
+  //  Name: "Pause Simulation".
+  //  When paused, a "pause" text in white is displayed in the top left corner.
+  //  Can also be triggered by pressing the spacebar.
+  const pauseSimulation = simulationFolder.add(params, 'paused').name('Pause Simulation');
+  pauseSimulation.onChange((value) => {
+    if (value) {
+      const pausedText = document.createElement('div');
+      pausedText.style.position = 'absolute';
+      pausedText.style.top = '10px';
+      pausedText.style.left = '10px';
+      pausedText.style.color = 'white';
+      pausedText.style.font = 'normal 18px Arial';
+      pausedText.innerHTML = 'pause';
+      container.appendChild(pausedText);
+    } else {
+      container.removeChild(container.lastChild);
+    }
+  });
   document.addEventListener('keydown', (event) => {
     if (event.code === 'Space') {
       params.paused = !params.paused;
-      const button = document.querySelector('.lil-gui input[type="checkbox"]');
-      button.checked = params.paused;
-      // If the button is pressed, write "paused" text in the top left corner of the window.
-      if (params.paused) {
-        const text = document.createElement('div');
-        text.style.position = 'absolute';
-        text.style.top = '10px';
-        text.style.left = '10px';
-        text.style.color = 'white';
-        text.style.font = 'normal 18px sans-serif';
-        text.innerHTML = 'Paused';
-        document.body.appendChild(text);
-      } else {
-        document.body.removeChild(document.body.lastChild);
-      }
+      pauseSimulation.setValue(params.paused);
     }
   });
+  actionInnerHTML += 'Play / Pause<br>';
+  keyInnerHTML += 'Space<br>';
 
-  // Add reload simulation button (can also be triggered with ctrl+L).
-  simulationFolder.add({ reload: () => { reload(); } }, 'reload').name('Reload Scene');
+  // Add reload model button.
+  // Parameters:
+  //  Under "Simulation" folder.
+  //  Name: "Reload".
+  //  When pressed, calls the reload function.
+  //  Can also be triggered by pressing ctrl + L.
+  simulationFolder.add({reload: () => { reload(); }}, 'reload').name('Reload');
   document.addEventListener('keydown', (event) => {
     if (event.ctrlKey && event.code === 'KeyL') {
       reload();
     }
   });
 
-  // Add reset simulation button (can also be triggered with backspace).
+  // Add reset simulation button.
+  // Parameters:
+  //  Under "Simulation" folder.
+  //  Name: "Reset".
+  //  When pressed, resets the simulation to the initial state.
+  //  Can also be triggered by pressing backspace.
   const resetSimulation = () => {
     simulation.resetData();
     simulation.forward();
-    // TODO: reset actuator slider positions.
   };
-  simulationFolder.add({ reset: () => { resetSimulation(); } }, 'reset').name('Reset Simulation');
+  simulationFolder.add({reset: () => { resetSimulation(); }}, 'reset').name('Reset');
   document.addEventListener('keydown', (event) => {
-    if (event.code === 'Backspace') { resetSimulation(); }
+    if (event.code === 'Backspace') {
+      resetSimulation();
+    }
   });
 
   // Add keyframe slider.
-  simulationFolder.add(params, 'keyframeNumber', 0, model.nkey()-1, 1).name('Load Keyframe').onChange((value) => {
+  let keyframeNumber = model.nkey();
+  let keyframeGUI = simulationFolder.add({keyframeNumber: keyframeNumber}, 'keyframeNumber', 0, keyframeNumber - 1, 1).name('Load Keyframe').listen();
+  updateGUICallbacks.push((model, simulation, params) => {
+    keyframeNumber = model.nkey();
+    keyframeGUI.setValue(params.keyframeNumber);
+    if (keyframeNumber > 0) keyframeGUI.max(keyframeNumber - 1);
+  });
+  keyframeGUI.onChange((value) => {
     if (value < model.nkey()) {
       simulation.qpos().set(model.key_qpos().slice(
         value * model.nq(), (value + 1) * model.nq())); }});
 
-  // Add sliders for ctrlnoiserate and ctrlnoisestd; min = 0, max = 2, step = 0.01
+  // Add sliders for ctrlnoiserate and ctrlnoisestd; min = 0, max = 2, step = 0.01.
   simulationFolder.add(params, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate' );
   simulationFolder.add(params, 'ctrlnoisestd' , 0.0, 2.0, 0.01).name('Noise scale');
+
+  // Add actuator sliders.
+  let actuatorFolder = gui.addFolder("Actuators");
+  const addActuators = (model, simulation, params) => {
+    let act_range = model.actuator_ctrlrange();
+    let actuatorGUIs = [];
+    for (let i = 0; i < model.nu(); i++) {
+      if (!model.actuator_ctrllimited()[i]) { continue; }
+      let name = "Actuator " + i;
+      params[name] = 0.0;
+      let actuatorGUI = actuatorFolder.add(params, name, act_range[2 * i], act_range[2 * i + 1], 0.01).name(name).listen();
+      actuatorGUIs.push(actuatorGUI);
+      actuatorGUI.onChange((value) => {
+        simulation.ctrl()[i] = value;
+      });
+    }
+    return actuatorGUIs;
+  };
+  let actuatorGUIs = addActuators(model, simulation, params);
+  updateGUICallbacks.push((model, simulation, params) => {
+    for (let i = 0; i < actuatorGUIs.length; i++) {
+      actuatorGUIs[i].destroy();
+    }
+    actuatorGUIs = addActuators(model, simulation, params);
+  });
+  actuatorFolder.close();
+
   gui.open();
 
   await downloadExampleScenesFolder(mujoco);    // Download the the examples to MuJoCo's virtual file system
   [model, state, simulation, bodies, lights] =  // Initialize the three.js Scene using this .xml Model
-    await loadSceneFromURL(mujoco, "humanoid.xml", scene, gui, params);
+    await loadSceneFromURL(mujoco, "humanoid.xml", scene, gui, params, updateGUICallbacks);
 }
 
 function onWindowResize() {
