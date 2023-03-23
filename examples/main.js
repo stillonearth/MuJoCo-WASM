@@ -30,6 +30,11 @@ let bodies, lights;
 let tmpVec  = new THREE.Vector3();
 let tmpQuat = new THREE.Quaternion();
 
+const resetCamera = () => {
+  // TODO: Use free camera parameters from MuJoCo
+  camera.position.set( 2.0, 1.7, 1.7 );
+}
+
 async function init() {
   container = document.createElement( 'div' );
   document.body.appendChild( container );
@@ -38,10 +43,14 @@ async function init() {
   scene.name = 'scene';
 
   camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 0.001, 100 );
-  camera.position.set( 2.0, 1.7, 1.7 );
-
   camera.name = 'PerspectiveCamera';
+  resetCamera(camera);
   scene.add(camera);
+  // Make sure we reset the camera when the scene is changed or reloaded.
+  updateGUICallbacks.push((model, simulation, params) => {
+    resetCamera(camera);
+  });
+
   scene.background = new THREE.Color(0.15, 0.25, 0.35);
   scene.fog = new THREE.Fog(scene.background, 15, 25.5 );
 
@@ -78,11 +87,12 @@ async function init() {
     scene.remove(scene.getObjectByName("MuJoCo Root"));
     loadSceneFromURL(mujoco, params.scene, scene).then((returnArray) => {
       [model, state, simulation, bodies, lights] = returnArray;
+      simulation.forward();
+      for (let i = 0; i < updateGUICallbacks.length; i++) {
+        updateGUICallbacks[i](model, simulation, params);
+      }
     });
-    simulation.forward();
-    for (let i = 0; i < updateGUICallbacks.length; i++) {
-      updateGUICallbacks[i](model, simulation, params);
-    }
+
   };
   gui.add(params, 'scene', { "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml", "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml", "Flag": "flag.xml", "Mug": "mug.xml"})
     .name('Example Scene').onChange(_ => { reload(); });
@@ -223,6 +233,8 @@ async function init() {
       reload();
     }
   });
+  actionInnerHTML += 'Reload XML<br>';
+  keyInnerHTML += 'Ctrl L<br>';
 
   // Add reset simulation button.
   // Parameters:
@@ -240,19 +252,29 @@ async function init() {
       resetSimulation();
     }
   });
+  actionInnerHTML += 'Reset simulation<br>';
+  keyInnerHTML += 'Backspace<br>';
 
   // Add keyframe slider.
-  let keyframeNumber = model.nkey();
-  let keyframeGUI = simulationFolder.add({keyframeNumber: keyframeNumber}, 'keyframeNumber', 0, keyframeNumber - 1, 1).name('Load Keyframe').listen();
-  updateGUICallbacks.push((model, simulation, params) => {
-    keyframeNumber = model.nkey();
-    keyframeGUI.setValue(params.keyframeNumber);
-    if (keyframeNumber > 0) keyframeGUI.max(keyframeNumber - 1);
-  });
+  let nkeys = model.nkey();
+  let keyframeGUI = simulationFolder.add(params, "keyframeNumber", 0, nkeys - 1, 1).name('Load Keyframe').listen();
   keyframeGUI.onChange((value) => {
     if (value < model.nkey()) {
+      console.log("Loading keyframe " + value + "...");
       simulation.qpos().set(model.key_qpos().slice(
         value * model.nq(), (value + 1) * model.nq())); }});
+  updateGUICallbacks.push((model, simulation, params) => {
+    let nkeys = model.nkey();
+    console.log("new model loaded. has " + nkeys + " keyframes.");
+    if (nkeys > 0) {
+      keyframeGUI.max(nkeys - 1);
+      keyframeGUI.domElement.style.opacity = 1.0;
+    } else {
+      // Disable keyframe slider if no keyframes are available.
+      keyframeGUI.max(0);
+      keyframeGUI.domElement.style.opacity = 0.5;
+    }
+  });
 
   // Add sliders for ctrlnoiserate and ctrlnoisestd; min = 0, max = 2, step = 0.01.
   simulationFolder.add(params, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate' );
@@ -283,6 +305,16 @@ async function init() {
     actuatorGUIs = addActuators(model, simulation, params);
   });
   actuatorFolder.close();
+
+  // Add function that resets the camera to the default position.
+  // Can be triggered by pressing ctrl + A.
+  document.addEventListener('keydown', (event) => {
+    if (event.ctrlKey && event.code === 'KeyA') {
+      resetCamera(camera);
+    }
+  });
+  actionInnerHTML += 'Reset free camera<br>';
+  keyInnerHTML += 'Ctrl A<br>';
 
   gui.open();
 
