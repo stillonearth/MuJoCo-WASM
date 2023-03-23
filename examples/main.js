@@ -221,37 +221,36 @@ function render(timeMS) {
         pos[addr+2] += offset.z;
       } else {
         // Set the root body's position directly...
-        //b = model.body_rootid()[b];
-        //let addr = model.jnt_qposadr()[model.body_jntadr()[b]];
-        //let pos = simulation.qpos();
-        //pos[addr+0] += offset.x;
-        //pos[addr+1] += offset.y;
-        //pos[addr+2] += offset.z;
+        b = model.body_rootid()[b];
+        let addr = model.jnt_qposadr()[model.body_jntadr()[b]];
+        let pos = simulation.qpos();
+        pos[addr+0] += offset.x;
+        pos[addr+1] += offset.y;
+        pos[addr+2] += offset.z;
 
         // Clear old perturbations, apply new ones.
-        for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; }
-        let dragged = dragStateManager.physicsObject;
-        if (dragged && dragged.bodyID) {
-          for (let b = 0; b < model.nbody(); b++) {
-            if (bodies[b]) {
-              getPosition  (simulation.xpos (), b, bodies[b].position);
-              getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
-              bodies[b].updateWorldMatrix();
-            }
-          }
-          let bodyID = dragged.bodyID;
-          dragStateManager.update(); // Update the world-space force origin
-          let force = toMujocoPos(dragStateManager.currentWorld.clone()
-            .sub(dragStateManager.worldHit).multiplyScalar(model.body_mass()[bodyID] * 250));
-          let point = toMujocoPos(dragStateManager.worldHit.clone());
-          // This force is dumped into xrfc_applied
-          simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, bodyID);
+        //for (let i = 0; i < simulation.qfrc_applied().length; i++) { simulation.qfrc_applied()[i] = 0.0; }
+        //let dragged = dragStateManager.physicsObject;
+        //if (dragged && dragged.bodyID) {
+        //  for (let b = 0; b < model.nbody(); b++) {
+        //    if (bodies[b]) {
+        //      getPosition  (simulation.xpos (), b, bodies[b].position);
+        //      getQuaternion(simulation.xquat(), b, bodies[b].quaternion);
+        //      bodies[b].updateWorldMatrix();
+        //    }
+        //  }
+        //  let bodyID = dragged.bodyID;
+        //  dragStateManager.update(); // Update the world-space force origin
+        //  let force = toMujocoPos(dragStateManager.currentWorld.clone()
+        //    .sub(dragStateManager.worldHit).multiplyScalar(model.body_mass()[bodyID] * 0.1));
+        //  let point = toMujocoPos(dragStateManager.worldHit.clone());
+        //  // This force is dumped into xrfc_applied
+        //  simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, bodyID);
+        //  simulation.integratePos(simulation.qpos().byteOffset, simulation.qfrc_applied().byteOffset, 1);
 
-          // Integrate from there...
 
-
-          // TODO: Apply pose perturbations (mocap bodies only).
-        }
+        //  // TODO: Apply pose perturbations (mocap bodies only).
+        //}
 
       }
     }
