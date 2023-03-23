@@ -560,7 +560,7 @@ public:
   void   inverse             (                    ) { return mj_inverse                  (_model->ptr(), _state->ptr()); }
   void   forwardSkip         (int skipstage, int skipsensor) { return mj_forwardSkip              (_model->ptr(), _state->ptr(), skipstage, skipsensor); }
   void   inverseSkip         (int skipstage, int skipsensor) { return mj_inverseSkip              (_model->ptr(), _state->ptr(), skipstage, skipsensor); }
-  void   defaultSolRefImp    (mjtNum * solref, mjtNum * solimp) { return mj_defaultSolRefImp         (solref, solimp      ); }
+  void   defaultSolRefImp    (int solref, int solimp) { return mj_defaultSolRefImp         (reinterpret_cast<mjtNum*>(solref), reinterpret_cast<mjtNum*>(solimp)); }
   int    sizeModel           (                    ) { return mj_sizeModel                (_model->ptr()       ); }
   void   resetData           (                    ) { return mj_resetData                (_model->ptr(), _state->ptr()); }
   void   resetDataDebug      (unsigned char debug_value) { return mj_resetDataDebug           (_model->ptr(), _state->ptr(), debug_value); }
@@ -571,7 +571,7 @@ public:
   void   printModel          (std::string filename) { return mj_printModel               (_model->ptr(), filename.c_str()); }
   void   printFormattedData  (std::string filename, std::string float_format) { return mj_printFormattedData       (_model->ptr(), _state->ptr(), filename.c_str(), float_format.c_str()); }
   void   printData           (std::string filename) { return mj_printData                (_model->ptr(), _state->ptr(), filename.c_str()); }
-  void   _printMat           (const mjtNum * mat, int nr, int nc) { return mju_printMat                (mat, nr, nc         ); }
+  void   _printMat           (int mat, int nr, int nc) { return mju_printMat                (reinterpret_cast<mjtNum*>(mat), nr, nc); }
   void   fwdPosition         (                    ) { return mj_fwdPosition              (_model->ptr(), _state->ptr()); }
   void   fwdVelocity         (                    ) { return mj_fwdVelocity              (_model->ptr(), _state->ptr()); }
   void   fwdActuation        (                    ) { return mj_fwdActuation             (_model->ptr(), _state->ptr()); }
@@ -598,12 +598,12 @@ public:
   void   transmission        (                    ) { return mj_transmission             (_model->ptr(), _state->ptr()); }
   void   crbCalculate        (                    ) { return mj_crb                      (_model->ptr(), _state->ptr()); }
   void   factorM             (                    ) { return mj_factorM                  (_model->ptr(), _state->ptr()); }
-  void   solveM              (mjtNum * x, const mjtNum * y, int n) { return mj_solveM                   (_model->ptr(), _state->ptr(), x, y, n); }
-  void   solveM2             (mjtNum * x, const mjtNum * y, int n) { return mj_solveM2                  (_model->ptr(), _state->ptr(), x, y, n); }
+  void   solveM              (int x, int y, int n ) { return mj_solveM                   (_model->ptr(), _state->ptr(), reinterpret_cast<mjtNum*>(x), reinterpret_cast<mjtNum*>(y), n); }
+  void   solveM2             (int x, int y, int n ) { return mj_solveM2                  (_model->ptr(), _state->ptr(), reinterpret_cast<mjtNum*>(x), reinterpret_cast<mjtNum*>(y), n); }
   void   comVel              (                    ) { return mj_comVel                   (_model->ptr(), _state->ptr()); }
   void   passive             (                    ) { return mj_passive                  (_model->ptr(), _state->ptr()); }
   void   subtreeVel          (                    ) { return mj_subtreeVel               (_model->ptr(), _state->ptr()); }
-  void   rne                 (int flg_acc, mjtNum * result) { return mj_rne                      (_model->ptr(), _state->ptr(), flg_acc, result); }
+  void   rne                 (int flg_acc, int result) { return mj_rne                      (_model->ptr(), _state->ptr(), flg_acc, reinterpret_cast<mjtNum*>(result)); }
   void   rnePostConstraint   (                    ) { return mj_rnePostConstraint        (_model->ptr(), _state->ptr()); }
   void   collision           (                    ) { return mj_collision                (_model->ptr(), _state->ptr()); }
   void   makeConstraint      (                    ) { return mj_makeConstraint           (_model->ptr(), _state->ptr()); }
@@ -612,15 +612,15 @@ public:
   int    isPyramidal         (                    ) { return mj_isPyramidal              (_model->ptr()       ); }
   int    isSparse            (                    ) { return mj_isSparse                 (_model->ptr()       ); }
   int    isDual              (                    ) { return mj_isDual                   (_model->ptr()       ); }
-  void   mulJacVec           (mjtNum * res, const mjtNum * vec) { return mj_mulJacVec                (_model->ptr(), _state->ptr(), res, vec); }
-  void   mulJacTVec          (mjtNum * res, const mjtNum * vec) { return mj_mulJacTVec               (_model->ptr(), _state->ptr(), res, vec); }
-  void   jacSubtreeCom       (mjtNum * jacp, int body) { return mj_jacSubtreeCom            (_model->ptr(), _state->ptr(), jacp, body); }
+  void   mulJacVec           (int res, int vec    ) { return mj_mulJacVec                (_model->ptr(), _state->ptr(), reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(vec)); }
+  void   mulJacTVec          (int res, int vec    ) { return mj_mulJacTVec               (_model->ptr(), _state->ptr(), reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(vec)); }
+  void   jacSubtreeCom       (int jacp, int body  ) { return mj_jacSubtreeCom            (_model->ptr(), _state->ptr(), reinterpret_cast<mjtNum*>(jacp), body); }
   int    name2id             (int type, std::string name) { return mj_name2id                  (_model->ptr(), type, name.c_str()); }
   std::string id2name             (int type, int id    ) { return std::string(mj_id2name                  (_model->ptr(), type, id)); }
-  void   fullM               (mjtNum * dst, const mjtNum * M) { return mj_fullM                    (_model->ptr(), dst, M); }
-  void   differentiatePos    (mjtNum * qvel, mjtNum dt, const mjtNum * qpos1, const mjtNum * qpos2) { return mj_differentiatePos         (_model->ptr(), qvel, dt, qpos1, qpos2); }
-  void   integratePos        (mjtNum * qpos, const mjtNum * qvel, mjtNum dt) { return mj_integratePos             (_model->ptr(), qpos, qvel, dt); }
-  void   normalizeQuat       (mjtNum * qpos       ) { return mj_normalizeQuat            (_model->ptr(), qpos ); }
+  void   fullM               (int dst, int M      ) { return mj_fullM                    (_model->ptr(), reinterpret_cast<mjtNum*>(dst), reinterpret_cast<mjtNum*>(M)); }
+  void   differentiatePos    (int qvel, mjtNum dt, int qpos1, int qpos2) { return mj_differentiatePos         (_model->ptr(), reinterpret_cast<mjtNum*>(qvel), dt, reinterpret_cast<mjtNum*>(qpos1), reinterpret_cast<mjtNum*>(qpos2)); }
+  void   integratePos        (int qpos, int qvel, mjtNum dt) { return mj_integratePos             (_model->ptr(), reinterpret_cast<mjtNum*>(qpos), reinterpret_cast<mjtNum*>(qvel), dt); }
+  void   normalizeQuat       (int qpos            ) { return mj_normalizeQuat            (_model->ptr(), reinterpret_cast<mjtNum*>(qpos)); }
   mjtNum getTotalmass        (                    ) { return mj_getTotalmass             (_model->ptr()       ); }
   std::string getPluginConfig     (int plugin_id, std::string attrib) { return std::string(mj_getPluginConfig          (_model->ptr(), plugin_id, attrib.c_str())); }
   void   loadPluginLibrary   (std::string path    ) { return mj_loadPluginLibrary        (path.c_str()        ); }
@@ -642,36 +642,36 @@ public:
   void   _writeLog           (std::string type, std::string msg) { return mju_writeLog                (type.c_str(), msg.c_str()); }
   int    activate            (std::string filename) { return mj_activate                 (filename.c_str()    ); }
   void   deactivate          (                    ) { return mj_deactivate               (                    ); }
-  void   _zero               (mjtNum * res, int n ) { return mju_zero                    (res, n              ); }
-  void   _fill               (mjtNum * res, mjtNum val, int n) { return mju_fill                    (res, val, n         ); }
-  void   _copy               (mjtNum * res, const mjtNum * data, int n) { return mju_copy                    (res, data, n        ); }
-  mjtNum _sum                (const mjtNum * vec, int n) { return mju_sum                     (vec, n              ); }
-  mjtNum _L1                 (const mjtNum * vec, int n) { return mju_L1                      (vec, n              ); }
-  void   _scl                (mjtNum * res, const mjtNum * vec, mjtNum scl, int n) { return mju_scl                     (res, vec, scl, n    ); }
-  void   _add                (mjtNum * res, const mjtNum * vec1, const mjtNum * vec2, int n) { return mju_add                     (res, vec1, vec2, n  ); }
-  void   _sub                (mjtNum * res, const mjtNum * vec1, const mjtNum * vec2, int n) { return mju_sub                     (res, vec1, vec2, n  ); }
-  void   _addTo              (mjtNum * res, const mjtNum * vec, int n) { return mju_addTo                   (res, vec, n         ); }
-  void   _subFrom            (mjtNum * res, const mjtNum * vec, int n) { return mju_subFrom                 (res, vec, n         ); }
-  void   _addToScl           (mjtNum * res, const mjtNum * vec, mjtNum scl, int n) { return mju_addToScl                (res, vec, scl, n    ); }
-  void   _addScl             (mjtNum * res, const mjtNum * vec1, const mjtNum * vec2, mjtNum scl, int n) { return mju_addScl                  (res, vec1, vec2, scl, n); }
-  mjtNum _normalize          (mjtNum * res, int n ) { return mju_normalize               (res, n              ); }
-  mjtNum _norm               (const mjtNum * res, int n) { return mju_norm                    (res, n              ); }
-  mjtNum _dot                (const mjtNum * vec1, const mjtNum * vec2, int n) { return mju_dot                     (vec1, vec2, n       ); }
-  void   _mulMatVec          (mjtNum * res, const mjtNum * mat, const mjtNum * vec, int nr, int nc) { return mju_mulMatVec               (res, mat, vec, nr, nc); }
-  void   _mulMatTVec         (mjtNum * res, const mjtNum * mat, const mjtNum * vec, int nr, int nc) { return mju_mulMatTVec              (res, mat, vec, nr, nc); }
-  mjtNum _mulVecMatVec       (const mjtNum * vec1, const mjtNum * mat, const mjtNum * vec2, int n) { return mju_mulVecMatVec            (vec1, mat, vec2, n  ); }
-  void   _transpose          (mjtNum * res, const mjtNum * mat, int nr, int nc) { return mju_transpose               (res, mat, nr, nc    ); }
-  void   _symmetrize         (mjtNum * res, const mjtNum * mat, int n) { return mju_symmetrize              (res, mat, n         ); }
-  void   _eye                (mjtNum * mat, int n ) { return mju_eye                     (mat, n              ); }
-  void   _mulMatMat          (mjtNum * res, const mjtNum * mat1, const mjtNum * mat2, int r1, int c1, int c2) { return mju_mulMatMat               (res, mat1, mat2, r1, c1, c2); }
-  void   _mulMatMatT         (mjtNum * res, const mjtNum * mat1, const mjtNum * mat2, int r1, int c1, int r2) { return mju_mulMatMatT              (res, mat1, mat2, r1, c1, r2); }
-  void   _mulMatTMat         (mjtNum * res, const mjtNum * mat1, const mjtNum * mat2, int r1, int c1, int c2) { return mju_mulMatTMat              (res, mat1, mat2, r1, c1, c2); }
-  void   _sqrMatTD           (mjtNum * res, const mjtNum * mat, const mjtNum * diag, int nr, int nc) { return mju_sqrMatTD                (res, mat, diag, nr, nc); }
-  int    _cholFactor         (mjtNum * mat, int n, mjtNum mindiag) { return mju_cholFactor              (mat, n, mindiag     ); }
-  void   _cholSolve          (mjtNum * res, const mjtNum * mat, const mjtNum * vec, int n) { return mju_cholSolve               (res, mat, vec, n    ); }
-  int    _cholUpdate         (mjtNum * mat, mjtNum * x, int n, int flg_plus) { return mju_cholUpdate              (mat, x, n, flg_plus ); }
-  void   _encodePyramid      (mjtNum * pyramid, const mjtNum * force, const mjtNum * mu, int dim) { return mju_encodePyramid           (pyramid, force, mu, dim); }
-  void   _decodePyramid      (mjtNum * force, const mjtNum * pyramid, const mjtNum * mu, int dim) { return mju_decodePyramid           (force, pyramid, mu, dim); }
+  void   _zero               (int res, int n      ) { return mju_zero                    (reinterpret_cast<mjtNum*>(res), n); }
+  void   _fill               (int res, mjtNum val, int n) { return mju_fill                    (reinterpret_cast<mjtNum*>(res), val, n); }
+  void   _copy               (int res, int data, int n) { return mju_copy                    (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(data), n); }
+  mjtNum _sum                (int vec, int n      ) { return mju_sum                     (reinterpret_cast<mjtNum*>(vec), n); }
+  mjtNum _L1                 (int vec, int n      ) { return mju_L1                      (reinterpret_cast<mjtNum*>(vec), n); }
+  void   _scl                (int res, int vec, mjtNum scl, int n) { return mju_scl                     (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(vec), scl, n); }
+  void   _add                (int res, int vec1, int vec2, int n) { return mju_add                     (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(vec1), reinterpret_cast<mjtNum*>(vec2), n); }
+  void   _sub                (int res, int vec1, int vec2, int n) { return mju_sub                     (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(vec1), reinterpret_cast<mjtNum*>(vec2), n); }
+  void   _addTo              (int res, int vec, int n) { return mju_addTo                   (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(vec), n); }
+  void   _subFrom            (int res, int vec, int n) { return mju_subFrom                 (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(vec), n); }
+  void   _addToScl           (int res, int vec, mjtNum scl, int n) { return mju_addToScl                (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(vec), scl, n); }
+  void   _addScl             (int res, int vec1, int vec2, mjtNum scl, int n) { return mju_addScl                  (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(vec1), reinterpret_cast<mjtNum*>(vec2), scl, n); }
+  mjtNum _normalize          (int res, int n      ) { return mju_normalize               (reinterpret_cast<mjtNum*>(res), n); }
+  mjtNum _norm               (int res, int n      ) { return mju_norm                    (reinterpret_cast<mjtNum*>(res), n); }
+  mjtNum _dot                (int vec1, int vec2, int n) { return mju_dot                     (reinterpret_cast<mjtNum*>(vec1), reinterpret_cast<mjtNum*>(vec2), n); }
+  void   _mulMatVec          (int res, int mat, int vec, int nr, int nc) { return mju_mulMatVec               (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(mat), reinterpret_cast<mjtNum*>(vec), nr, nc); }
+  void   _mulMatTVec         (int res, int mat, int vec, int nr, int nc) { return mju_mulMatTVec              (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(mat), reinterpret_cast<mjtNum*>(vec), nr, nc); }
+  mjtNum _mulVecMatVec       (int vec1, int mat, int vec2, int n) { return mju_mulVecMatVec            (reinterpret_cast<mjtNum*>(vec1), reinterpret_cast<mjtNum*>(mat), reinterpret_cast<mjtNum*>(vec2), n); }
+  void   _transpose          (int res, int mat, int nr, int nc) { return mju_transpose               (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(mat), nr, nc); }
+  void   _symmetrize         (int res, int mat, int n) { return mju_symmetrize              (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(mat), n); }
+  void   _eye                (int mat, int n      ) { return mju_eye                     (reinterpret_cast<mjtNum*>(mat), n); }
+  void   _mulMatMat          (int res, int mat1, int mat2, int r1, int c1, int c2) { return mju_mulMatMat               (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(mat1), reinterpret_cast<mjtNum*>(mat2), r1, c1, c2); }
+  void   _mulMatMatT         (int res, int mat1, int mat2, int r1, int c1, int r2) { return mju_mulMatMatT              (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(mat1), reinterpret_cast<mjtNum*>(mat2), r1, c1, r2); }
+  void   _mulMatTMat         (int res, int mat1, int mat2, int r1, int c1, int c2) { return mju_mulMatTMat              (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(mat1), reinterpret_cast<mjtNum*>(mat2), r1, c1, c2); }
+  void   _sqrMatTD           (int res, int mat, int diag, int nr, int nc) { return mju_sqrMatTD                (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(mat), reinterpret_cast<mjtNum*>(diag), nr, nc); }
+  int    _cholFactor         (int mat, int n, mjtNum mindiag) { return mju_cholFactor              (reinterpret_cast<mjtNum*>(mat), n, mindiag); }
+  void   _cholSolve          (int res, int mat, int vec, int n) { return mju_cholSolve               (reinterpret_cast<mjtNum*>(res), reinterpret_cast<mjtNum*>(mat), reinterpret_cast<mjtNum*>(vec), n); }
+  int    _cholUpdate         (int mat, int x, int n, int flg_plus) { return mju_cholUpdate              (reinterpret_cast<mjtNum*>(mat), reinterpret_cast<mjtNum*>(x), n, flg_plus); }
+  void   _encodePyramid      (int pyramid, int force, int mu, int dim) { return mju_encodePyramid           (reinterpret_cast<mjtNum*>(pyramid), reinterpret_cast<mjtNum*>(force), reinterpret_cast<mjtNum*>(mu), dim); }
+  void   _decodePyramid      (int force, int pyramid, int mu, int dim) { return mju_decodePyramid           (reinterpret_cast<mjtNum*>(force), reinterpret_cast<mjtNum*>(pyramid), reinterpret_cast<mjtNum*>(mu), dim); }
   mjtNum _springDamper       (mjtNum pos0, mjtNum vel0, mjtNum Kp, mjtNum Kv, mjtNum dt) { return mju_springDamper            (pos0, vel0, Kp, Kv, dt); }
   mjtNum _min                (mjtNum a, mjtNum b  ) { return mju_min                     (a, b                ); }
   mjtNum _max                (mjtNum a, mjtNum b  ) { return mju_max                     (a, b                ); }
@@ -683,12 +683,12 @@ public:
   std::string _writeNumBytes      (size_t nbytes       ) { return std::string(mju_writeNumBytes           (nbytes              )); }
   std::string _warningText        (int warning, size_t info) { return std::string(mju_warningText             (warning, info       )); }
   int    _isBad              (mjtNum x            ) { return mju_isBad                   (x                   ); }
-  int    _isZero             (mjtNum * vec, int n ) { return mju_isZero                  (vec, n              ); }
-  mjtNum _standardNormal     (mjtNum * num2       ) { return mju_standardNormal          (num2                ); }
-  void   _insertionSort      (mjtNum * list, int n) { return mju_insertionSort           (list, n             ); }
+  int    _isZero             (int vec, int n      ) { return mju_isZero                  (reinterpret_cast<mjtNum*>(vec), n); }
+  mjtNum _standardNormal     (int num2            ) { return mju_standardNormal          (reinterpret_cast<mjtNum*>(num2)); }
+  void   _insertionSort      (int list, int n     ) { return mju_insertionSort           (reinterpret_cast<mjtNum*>(list), n); }
   mjtNum _Halton             (int index, int base ) { return mju_Halton                  (index, base         ); }
   mjtNum _sigmoid            (mjtNum x            ) { return mju_sigmoid                 (x                   ); }
-  void   _transitionFD       (mjtNum eps, mjtByte centered, mjtNum * A, mjtNum * B, mjtNum * C, mjtNum * D) { return mjd_transitionFD            (_model->ptr(), _state->ptr(), eps, centered, A, B, C, D); }
+  void   _transitionFD       (mjtNum eps, mjtByte centered, int A, int B, int C, int D) { return mjd_transitionFD            (_model->ptr(), _state->ptr(), eps, centered, reinterpret_cast<mjtNum*>(A), reinterpret_cast<mjtNum*>(B), reinterpret_cast<mjtNum*>(C), reinterpret_cast<mjtNum*>(D)); }
   int    _pluginCount        (                    ) { return mjp_pluginCount             (                    ); }
 
 

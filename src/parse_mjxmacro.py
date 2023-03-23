@@ -111,9 +111,10 @@ for function in functions.FUNCTIONS:
             def_params.append(param.name+".c_str()")
             def_typescript.append(param.name + " : string")
         elif("mjtNum *" in param.decltype):
-            def_args  .append(str(param)) # UNTESTED, WE DON'T KNOW IF THIS WORKS
-            def_params.append(param.name)
-            def_typescript.append(param.name + " : Float64Array")
+            def_args  .append("int "+param.name)#(str(param)) # UNTESTED, WE DON'T KNOW IF THIS WORKS
+            #def_params.append(param.name +'["buffer"].as<mjtNum*>()')
+            def_params.append('reinterpret_cast<mjtNum*>('+param.name +')') #.global("byteOffset").as<unsigned>()
+            def_typescript.append(param.name + "ByteOffset : number")
             need_raw_pinters = True
         elif (not ("*" in param_type) and not ("[" in param_type) and not (param_type == "mjfPluginLibraryLoadCallback")):
             def_args  .append(str(param))
@@ -129,8 +130,8 @@ for function in functions.FUNCTIONS:
             return_decl = "std::string"
             to_return = "std::string(" + to_return + ")"
         auto_gen_lines["data_definitions"].append("  "+return_decl.ljust(6)+" "+name.ljust(20)+"("+(", ".join(def_args)).ljust(20)+") { return "+to_return+"); }")
-        auto_gen_lines["data_bindings"   ].append('      .function('+('"'+name+'"').ljust(23)+' , &Simulation::'+name.ljust(22)+(')'if not need_raw_pinters else ', allow_raw_pointers())'))
-        auto_gen_lines["data_typescript" ].append("  /** "+ functions.FUNCTIONS[function].doc + ("[UNTESTED; NEEDS RAW POINTERS TO ARRAYS]" if need_raw_pinters else "") +"*/")
+        auto_gen_lines["data_bindings"   ].append('      .function('+('"'+name+'"').ljust(23)+' , &Simulation::'+name.ljust(22)+(')'if not need_raw_pinters else ', allow_raw_pointers())')) #<arg<mjtNum*>>
+        auto_gen_lines["data_typescript" ].append("  /** "+ functions.FUNCTIONS[function].doc + ("[Pass the TypedArray.byteOffset in place of the TypedArray!]" if need_raw_pinters else "") +"*/")
         returnType = functions.FUNCTIONS[function].return_type
         returnType = returnType.inner_type.name if "*" in returnType.decl() else returnType.name
         returnType = returnType.replace("mjtNum","number").replace("int","number").replace("float","number").replace("char", "string")
