@@ -1,26 +1,27 @@
 import  *  as  THREE     from 'three';
 import { Reflector     } from './utils/Reflector.js';
-import { GUI           } from '../node_modules/three/examples/jsm/libs/lil-gui.module.min.js';
-import load_mujoco/*, {mujoco}*/ from '../dist/mujoco_wasm.js';
+import   load_mujoco     from '../dist/mujoco_wasm.js';
 
+// Load the MuJoCo WASM module.
+const mujoco = await load_mujoco();
 
 /** Loads a scene for MuJoCo
  * @param {mujoco} mujoco
  * @param {string} filename
  * @param {THREE.Scene} scene
- * @param {GUI} gui */
+*/
 export async function loadSceneFromURL(mujoco, filename, scene) {
-    // Load in the state from XML
-    let model       = mujoco.Model.load_from_xml("/working/"+filename);
-    let state       = new mujoco.State     (model);
+    // Load in the state from XML.
+    let model = mujoco.Model.load_from_xml("/working/"+filename);
+    let state = new mujoco.State(model);
     let simulation  = new mujoco.Simulation(model, state);
 
-    // Decode the null-terminated string names
+    // Decode the null-terminated string names.
     let textDecoder = new TextDecoder("utf-8");
-    let fullString  = textDecoder.decode(model.names());
-    let names       = fullString.split(textDecoder.decode(new ArrayBuffer(1)));
-    console.log(names);
+    let fullString = textDecoder.decode(model.names());
+    let names = fullString.split(textDecoder.decode(new ArrayBuffer(1)));
 
+    // Create the root object.
     let mujocoRoot = new THREE.Group();
     mujocoRoot.name = "MuJoCo Root"
     scene.add(mujocoRoot);
@@ -32,42 +33,61 @@ export async function loadSceneFromURL(mujoco, filename, scene) {
     /** @type {THREE.Light[]} */
     let lights = [];
 
+    // Default material definition.
     let material = new THREE.MeshPhysicalMaterial();
     material.color = new THREE.Color(1, 1, 1);
 
+    // Loop through the MuJoCo geoms and recreate them in three.js.
     for (let g = 0; g < model.ngeom(); g++) {
       // Only visualize geom groups up to 2 (same default behavior as simulate).
       if (!(model.geom_group()[g] < 3)) { continue; }
 
+      // Get the body ID and type of the geom.
       let b = model.geom_bodyid()[g];
-      let type = model.geom_type  ()[g];
+      let type = model.geom_type()[g];
       let size = [
         model.geom_size()[(g*3) + 0],
         model.geom_size()[(g*3) + 1],
-        model.geom_size()[(g*3) + 2]];
-      // Figure out how to use model.name_bodyadr()[b]
-      console.log("Found geometry", g, " for body", b, ", Type:", type, ", named:", names[b+1], "with mesh at:", model.geom_dataid()[g]);
+        model.geom_size()[(g*3) + 2]
+      ];
 
-      if (!(b in bodies)) { bodies[b] = new THREE.Group(); bodies[b].name = names[b + 1]; bodies[b].bodyID = b; bodies[b].has_custom_mesh = false; }
-      if (bodies[b].has_custom_mesh && type != 7) { continue; }
+      // Create the body if it doesn't exist.
+      if (!(b in bodies)) {
+        bodies[b] = new THREE.Group();
+        bodies[b].name = names[model.name_bodyadr()[b]];;
+        bodies[b].bodyID = b;
+        bodies[b].has_custom_mesh = false;
+      }
 
+      // TODO: add explanation.
+      if (bodies[b].has_custom_mesh && type != 7) {
+        continue;
+      }
+
+      // Set the default geometry. In MuJoCo, this is a sphere.
       let geometry = new THREE.SphereGeometry(size[0] * 0.5);
-      if (type == 0)        { // Plane is 0
-        //geometry = new THREE.PlaneGeometry(size[0], size[1]); // Can't rotate this...
-        //geometry = new THREE.BoxGeometry(100, 0.0001, 100);
-      } else if (type == 1) { // Heightfield is 1
-      } else if (type == 2) { // Sphere is 2
+      if (type == mujoco.mjtGeom.mjGEOM_PLANE.value) {
+        // Nothing to do here.
+      }
+      else if (type == mujoco.mjtGeom.mjGEOM_HFIELD.value) {
+        // TODO: Implement this.
+      }
+      else if (type == mujoco.mjtGeom.mjGEOM_SPHERE.value) {
         geometry = new THREE.SphereGeometry(size[0]);
-      } else if (type == 3) { // Capsule is 3
+      }
+      else if (type == mujoco.mjtGeom.mjGEOM_CAPSULE.value) {
         geometry = new THREE.CapsuleGeometry(size[0], size[1] * 2.0, 20, 20);
-      } else if (type == 4) { // Ellipsoid is 4
+      }
+      else if (type == type == mujoco.mjtGeom.mjGEOM_ELLIPSOID.value) {
         geometry = new THREE.SphereGeometry(1); // Stretch this below
-      } else if (type == 5) { // Cylinder is 5
-        // size[0] is radius, size[1] is half-height in MuJoCo.
+      }
+      else if (type == mujoco.mjtGeom.mjGEOM_CYLINDER.value) {
         geometry = new THREE.CylinderGeometry(size[0], size[0], size[1] * 2.0);
-      } else if (type == 6) { // Box is 6
+      }
+      else if (type == mujoco.mjtGeom.mjGEOM_BOX.value) {
         geometry = new THREE.BoxGeometry(size[0] * 2.0, size[2] * 2.0, size[1] * 2.0);
-      } else if (type == 7) { // Generic Mesh is 7
+      }
+      else if (type == mujoco.mjtGeom.mjGEOM_MESH.value) {
         let meshID = model.geom_dataid()[g];
 
         if (!(meshID in meshes)) {
@@ -110,6 +130,7 @@ export async function loadSceneFromURL(mujoco, filename, scene) {
 
         bodies[b].has_custom_mesh = true;
       }
+      // Done with geometry creation.
 
       // Set the Material Properties of incoming bodies
       let texture = undefined;
@@ -190,6 +211,7 @@ export async function loadSceneFromURL(mujoco, filename, scene) {
       if (type == 4) { mesh.scale.set(size[0], size[2], size[1]) } // Stretch the Ellipsoid
     }
 
+    // Parse lights.
     for (let l = 0; l < model.nlight(); l++) {
       let light = new THREE.SpotLight();
       if (model.light_directional()[l]) {
