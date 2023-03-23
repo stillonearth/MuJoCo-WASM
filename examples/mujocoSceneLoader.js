@@ -1,15 +1,11 @@
-import  *  as  THREE     from 'three';
-import { Reflector     } from './utils/Reflector.js';
-import   load_mujoco     from '../dist/mujoco_wasm.js';
-
-// Load the MuJoCo WASM module.
-const mujoco = await load_mujoco();
+import * as THREE from 'three';
+import { Reflector } from './utils/Reflector.js';
 
 /** Loads a scene for MuJoCo
- * @param {mujoco} mujoco
- * @param {string} filename
- * @param {THREE.Scene} scene
-*/
+ * @param {mujoco} mujoco This is a reference to the mujoco namespace object
+ * @param {string} filename This is the name of the .xml file in the /working/ directory of the MuJoCo/Emscripten Virtual File System
+ * @param {THREE.Scene} scene The three.js Scene Object to add the MuJoCo model elements to
+ */
 export async function loadSceneFromURL(mujoco, filename, scene) {
     // Load in the state from XML.
     let model = mujoco.Model.load_from_xml("/working/"+filename);
@@ -59,35 +55,23 @@ export async function loadSceneFromURL(mujoco, filename, scene) {
         bodies[b].has_custom_mesh = false;
       }
 
-      // TODO: add explanation.
-      if (bodies[b].has_custom_mesh && type != 7) {
-        continue;
-      }
-
       // Set the default geometry. In MuJoCo, this is a sphere.
       let geometry = new THREE.SphereGeometry(size[0] * 0.5);
       if (type == mujoco.mjtGeom.mjGEOM_PLANE.value) {
         // Nothing to do here.
-      }
-      else if (type == mujoco.mjtGeom.mjGEOM_HFIELD.value) {
+      } else if (type == mujoco.mjtGeom.mjGEOM_HFIELD.value) {
         // TODO: Implement this.
-      }
-      else if (type == mujoco.mjtGeom.mjGEOM_SPHERE.value) {
+      } else if (type == mujoco.mjtGeom.mjGEOM_SPHERE.value) {
         geometry = new THREE.SphereGeometry(size[0]);
-      }
-      else if (type == mujoco.mjtGeom.mjGEOM_CAPSULE.value) {
+      } else if (type == mujoco.mjtGeom.mjGEOM_CAPSULE.value) {
         geometry = new THREE.CapsuleGeometry(size[0], size[1] * 2.0, 20, 20);
-      }
-      else if (type == type == mujoco.mjtGeom.mjGEOM_ELLIPSOID.value) {
+      } else if (type == mujoco.mjtGeom.mjGEOM_ELLIPSOID.value) {
         geometry = new THREE.SphereGeometry(1); // Stretch this below
-      }
-      else if (type == mujoco.mjtGeom.mjGEOM_CYLINDER.value) {
+      } else if (type == mujoco.mjtGeom.mjGEOM_CYLINDER.value) {
         geometry = new THREE.CylinderGeometry(size[0], size[0], size[1] * 2.0);
-      }
-      else if (type == mujoco.mjtGeom.mjGEOM_BOX.value) {
+      } else if (type == mujoco.mjtGeom.mjGEOM_BOX.value) {
         geometry = new THREE.BoxGeometry(size[0] * 2.0, size[2] * 2.0, size[1] * 2.0);
-      }
-      else if (type == mujoco.mjtGeom.mjGEOM_MESH.value) {
+      } else if (type == mujoco.mjtGeom.mjGEOM_MESH.value) {
         let meshID = model.geom_dataid()[g];
 
         if (!(meshID in meshes)) {
@@ -147,7 +131,7 @@ export async function loadSceneFromURL(mujoco, filename, scene) {
           model.mat_rgba()[(matId * 4) + 2],
           model.mat_rgba()[(matId * 4) + 3]];
 
-        // Construct Texture from
+        // Construct Texture from model.tex_rgb
         texture = undefined;
         let texId = model.mat_texid()[matId];
         if (texId != -1) {
