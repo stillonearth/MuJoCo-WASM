@@ -1,7 +1,7 @@
 <p align="center">
   <a href="https://zalo.github.io/mujoco_wasm/"><img src="./examples/MuJoCoWasmLogo.png" href></a>
 </p>
-<p align="center">
+<p align="left">
   <a href="https://github.com/zalo/mujoco_wasm/deployments/activity_log?environment=github-pages">
       <img src="https://img.shields.io/github/deployments/zalo/mujoco_wasm/github-pages?label=Github%20Pages%20Deployment" title="Github Pages Deployment"></a>
   <!--<a href="https://github.com/zalo/mujoco_wasm/deployments/activity_log?environment=Production">
@@ -14,11 +14,17 @@
       <img src="https://img.shields.io/badge/license-MIT-brightgreen" title="License: MIT"></a>
 </p>
 
-MuJoCo built with emscripten for use in JavaScript and WebAssembly. This includes MuJoCo 2.3.1 built as static library and a simple example application.
+## The Power of MuJoCo in your Browser.
+
+Load and Run MuJoCo 2.3.1 Models using JavaScript and WebAssembly.
 
 This repo is a fork of @stillonearth 's starter repository, adding tons of functionality and a comprehensive example scene.
 
-## Usage
+### [See the Live Demo Here](https://zalo.github.io/mujoco_wasm/)
+
+### [See a more Advanced Example Here](https://kzakka.com/robopianist/)
+
+## Building
 
 **1. Install emscripten**
 
