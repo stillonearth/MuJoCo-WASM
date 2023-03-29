@@ -1,4 +1,18 @@
-# mujoco_wasm
+<p align="center">
+  <a href="https://zalo.github.io/mujoco_wasm/"><img src="./examples/MuJoCoWasmLogo.png" href></a>
+</p>
+<p align="center">
+  <a href="https://github.com/zalo/mujoco_wasm/deployments/activity_log?environment=github-pages">
+      <img src="https://img.shields.io/github/deployments/zalo/mujoco_wasm/github-pages?label=Github%20Pages%20Deployment" title="Github Pages Deployment"></a>
+  <!--<a href="https://github.com/zalo/mujoco_wasm/deployments/activity_log?environment=Production">
+      <img src="https://img.shields.io/github/deployments/zalo/mujoco_wasm/Production?label=Vercel%20Deployment" title="Vercel Deployment"></a> -->
+  <!--<a href="https://lgtm.com/projects/g/zalo/mujoco_wasm/context:javascript">
+      <img alt="Language grade: JavaScript" src="https://img.shields.io/lgtm/grade/javascript/g/zalo/mujoco_wasm.svg?logo=lgtm&logoWidth=18"/></a> -->
+  <a href="https://github.com/zalo/mujoco_wasm/commits/main">
+      <img src="https://img.shields.io/github/last-commit/zalo/mujoco_wasm" title="Last Commit Date"></a>
+  <a href="https://github.com/zalo/mujoco_wasm/blob/main/LICENSE">
+      <img src="https://img.shields.io/badge/license-MIT-brightgreen" title="License: MIT"></a>
+</p>
 
 MuJoCo built with emscripten for use in JavaScript and WebAssembly. This includes MuJoCo 2.3.1 built as static library and a simple example application.
 
@@ -49,4 +63,4 @@ Typescript definitions are available.
 
 So far, most mjModel and mjData state variables and functions (that do not require custom structs) are exposed.
 
-Help appreciated.
+At some point, I'd like to de-opinionate the binding and make it match the original MuJoCo API better.
