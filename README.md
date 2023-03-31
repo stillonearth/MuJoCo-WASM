@@ -17,7 +17,7 @@ make
 
 *3. (Optional) Update MuJoCo libs*
 
-Build MuJoCo libs with wasm target and place to lib. Currently v0.3.1 included.
+Build MuJoCo libs with wasm target and place to lib. Currently `v2.3.1` included.
 
 ## JavaScript API
 
