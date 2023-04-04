@@ -1,6 +1,6 @@
 # MuJoCo-WASM
 
-MuJoCo built with emscripten for use in JavaScript and WebAssembly. This includes MuJoCo 2.3.1 built as static library and a simple example application.
+MuJoCo built with emscripten for use in JavaScript and WebAssembly. This includes MuJoCo 2.3.3 built as static library and a simple example application.
 
 ## Usage
 
