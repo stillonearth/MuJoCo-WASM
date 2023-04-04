@@ -1,6 +1,6 @@
 # MuJoCo-WASM
 
-MuJoCo built with emscripten for use in JavaScript and WebAssembly. This includes MuJoCo 2.3.3 built as static library and a simple example application.
+MuJoCo built with emscripten for use in JavaScript and WebAssembly. This includes `MuJoCo v2.3.3` built as static library and a simple example application.
 
 ## Usage
 
@@ -15,9 +15,9 @@ emcmake cmake ..
 make
 ```
 
-*3. (Optional) Update MuJoCo libs*
+_3. (Optional) Update MuJoCo libs_
 
-Build MuJoCo libs with wasm target and place to lib. Currently `v2.3.1` included.
+Build MuJoCo libs with wasm target and place to lib. Currently `v2.3.3` included.
 
 ## JavaScript API
 
