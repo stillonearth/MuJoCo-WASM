@@ -19,10 +19,6 @@ emcmake cmake ..
 make
 ```
 
-_3. (Optional) Update MuJoCo libs_
-
-Build MuJoCo libs with wasm target and place to lib. Currently `v2.3.3` included.
-
 ## JavaScript API
 
 ```bash
