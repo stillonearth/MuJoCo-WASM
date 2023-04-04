@@ -4,6 +4,10 @@ MuJoCo built with emscripten for use in JavaScript and WebAssembly. This include
 
 ## Usage
 
+**0. (Optional) Build MuJoCo libs with WASM targets**
+
+This repo includes built MuJoCo libs for `v2.3.3`. If you want to build your own, follow the [instructions](https://github.com/stillonearth/MuJoCo-WASM/issues/1#issuecomment-1495814568).
+
 **1. Install emscripten**
 
 **2. Build MuJoCo-WASM application**
