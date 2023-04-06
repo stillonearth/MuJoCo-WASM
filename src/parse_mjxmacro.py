@@ -20,22 +20,22 @@ def parse_pointer_line(line:str, header_lines:list[str], mj_definitions:list[str
     if elements[3].startswith("MJ_M("):
         elements[3] = model_ptr+"->"+elements[3][5:]
     if parse_mode[1] == "model":
-        mj_definitions .append('  val  '+elements[1].ljust(22)+'() { return val(typed_memory_view(m->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', m->'+elements[1].ljust(22)+' )); }')
+        mj_definitions .append('  val  '+elements[1].ljust(22)+' () const { return val(typed_memory_view(m->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', m->'+elements[1].ljust(22)+' )); }')
     else:
-        mj_definitions .append('  val  '+elements[1].ljust(22)+'() { return val(typed_memory_view(_model->ptr()->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', _state->ptr()->'+elements[1].ljust(22)+' )); }')
-    emscripten_bindings.append('      .function('+('"'+elements[1]+'"').ljust(24)+', &'+("Model" if parse_mode[1] == "model" else "Simulation")+'::'+elements[1].ljust(22)+')')
+        mj_definitions .append('  val  '+elements[1].ljust(22)+' () const { return val(typed_memory_view(_model->ptr()->'+elements[2].ljust(15)+' * '+elements[3].ljust(9)+', _state->ptr()->'+elements[1].ljust(22)+' )); }')
+    emscripten_bindings.append('      .property('+('"'+elements[1]+'"').ljust(24)+', &'+("Model" if parse_mode[1] == "model" else "Simulation")+'::'+elements[1].ljust(22)+')')
     # Iterate through the original header file looking for comments
     for model_line in header_lines:
         if elements[0]+"* " in model_line and elements[1]+";" in model_line:
             comment = model_line.split("//")[1].strip()
             typescript_definitions.append("  /** "+ comment +"*/")
             break
-    typescript_definitions.append('  '+elements[1].ljust(22)+'(): '+types_to_array_types[elements[0]].rjust(12)+';')
+    typescript_definitions.append('  '+elements[1].ljust(22)+': '+types_to_array_types[elements[0]].rjust(12)+';')
 
 def parse_int_line(line:str, header_lines:list[str], mj_definitions:list[str], emscripten_bindings:list[str], typescript_definitions:list[str]):
     name = line.strip("    X(").split(""")""")[0].strip()
-    mj_definitions     .append('  int  '+name.ljust(14)+'() { return m->'+name.ljust(14)+'; }')
-    emscripten_bindings.append('      .function('+('"'+name+'"').ljust(24)+', &Model::'+name.ljust(22)+')')
+    mj_definitions     .append('  int  '+name.ljust(14)+'() const { return m->'+name.ljust(14)+'; }')
+    emscripten_bindings.append('      .property('+('"'+name+'"').ljust(24)+', &Model::'+name.ljust(22)+')')
 
     # Iterate through the file looking for comments
     for model_line in header_lines:
@@ -44,7 +44,7 @@ def parse_int_line(line:str, header_lines:list[str], mj_definitions:list[str], e
             typescript_definitions.append("  /** "+ comment +"*/")
             break
 
-    typescript_definitions.append('  '+name.ljust(22)+'(): '+('number').rjust(12)+';')
+    typescript_definitions.append('  '+name.ljust(22)+': '+('number').rjust(12)+';')
 
 
 with open("include/mujoco/mjmodel.h") as f:
@@ -111,10 +111,11 @@ for function in functions.FUNCTIONS:
             def_params.append(param.name+".c_str()")
             def_typescript.append(param.name + " : string")
         elif("mjtNum *" in param.decltype):
-            def_args  .append("int "+param.name)#(str(param)) # UNTESTED, WE DON'T KNOW IF THIS WORKS
+            def_args  .append("val "+param.name)#(str(param)) # UNTESTED, WE DON'T KNOW IF THIS WORKS
             #def_params.append(param.name +'["buffer"].as<mjtNum*>()')
-            def_params.append('reinterpret_cast<mjtNum*>('+param.name +')') #.global("byteOffset").as<unsigned>()
-            def_typescript.append(param.name + "ByteOffset : number")
+            #def_params.append('reinterpret_cast<mjtNum*>('+param.name +')') #.global("byteOffset").as<unsigned>()
+            def_params.append('reinterpret_cast<mjtNum*>('+param.name+'["byteOffset"].as<int>())') #.global("byteOffset").as<unsigned>()
+            def_typescript.append(param.name + " : Float64Array")
             need_raw_pinters = True
         elif (not ("*" in param_type) and not ("[" in param_type) and not (param_type == "mjfPluginLibraryLoadCallback")):
             def_args  .append(str(param))
@@ -131,7 +132,7 @@ for function in functions.FUNCTIONS:
             to_return = "std::string(" + to_return + ")"
         auto_gen_lines["data_definitions"].append("  "+return_decl.ljust(6)+" "+name.ljust(20)+"("+(", ".join(def_args)).ljust(20)+") { return "+to_return+"); }")
         auto_gen_lines["data_bindings"   ].append('      .function('+('"'+name+'"').ljust(23)+' , &Simulation::'+name.ljust(22)+(')'if not need_raw_pinters else ', allow_raw_pointers())')) #<arg<mjtNum*>>
-        auto_gen_lines["data_typescript" ].append("  /** "+ functions.FUNCTIONS[function].doc + ("[Pass the TypedArray.byteOffset in place of the TypedArray!]" if need_raw_pinters else "") +"*/")
+        auto_gen_lines["data_typescript" ].append("  /** "+ functions.FUNCTIONS[function].doc + ("    [Only works with MuJoCo Allocated Arrays!]" if need_raw_pinters else "") +"*/")
         returnType = functions.FUNCTIONS[function].return_type
         returnType = returnType.inner_type.name if "*" in returnType.decl() else returnType.name
         returnType = returnType.replace("mjtNum","number").replace("int","number").replace("float","number").replace("char", "string")

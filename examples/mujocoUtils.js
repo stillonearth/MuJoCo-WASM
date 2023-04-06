@@ -187,14 +187,14 @@ export function setupGUI(parentContext) {
   keyInnerHTML += 'Backspace<br>';
 
   // Add keyframe slider.
-  let nkeys = parentContext.model.nkey();
+  let nkeys = parentContext.model.nkey;
   let keyframeGUI = simulationFolder.add(parentContext.params, "keyframeNumber", 0, nkeys - 1, 1).name('Load Keyframe').listen();
   keyframeGUI.onChange((value) => {
-    if (value < parentContext.model.nkey()) {
-      parentContext.simulation.qpos().set(parentContext.model.key_qpos().slice(
-        value * parentContext.model.nq(), (value + 1) * parentContext.model.nq())); }});
+    if (value < parentContext.model.nkey) {
+      parentContext.simulation.qpos.set(parentContext.model.key_qpos.slice(
+        value * parentContext.model.nq, (value + 1) * parentContext.model.nq)); }});
   parentContext.updateGUICallbacks.push((model, simulation, params) => {
-    let nkeys = parentContext.model.nkey();
+    let nkeys = parentContext.model.nkey;
     console.log("new model loaded. has " + nkeys + " keyframes.");
     if (nkeys > 0) {
       keyframeGUI.max(nkeys - 1);
@@ -213,16 +213,16 @@ export function setupGUI(parentContext) {
   // Add actuator sliders.
   let actuatorFolder = simulationFolder.addFolder("Actuators");
   const addActuators = (model, simulation, params) => {
-    let act_range = model.actuator_ctrlrange();
+    let act_range = model.actuator_ctrlrange;
     let actuatorGUIs = [];
-    for (let i = 0; i < model.nu(); i++) {
-      if (!model.actuator_ctrllimited()[i]) { continue; }
+    for (let i = 0; i < model.nu; i++) {
+      if (!model.actuator_ctrllimited[i]) { continue; }
       let name = "Actuator " + i;
       parentContext.params[name] = 0.0;
       let actuatorGUI = actuatorFolder.add(parentContext.params, name, act_range[2 * i], act_range[2 * i + 1], 0.01).name(name).listen();
       actuatorGUIs.push(actuatorGUI);
       actuatorGUI.onChange((value) => {
-        simulation.ctrl()[i] = value;
+        simulation.ctrl[i] = value;
       });
     }
     return actuatorGUIs;
@@ -271,7 +271,7 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
   
     // Decode the null-terminated string names.
     let textDecoder = new TextDecoder("utf-8");
-    let fullString = textDecoder.decode(model.names());
+    let fullString = textDecoder.decode(model.names);
     let names = fullString.split(textDecoder.decode(new ArrayBuffer(1)));
 
     // Create the root object.
@@ -291,23 +291,23 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
     material.color = new THREE.Color(1, 1, 1);
 
     // Loop through the MuJoCo geoms and recreate them in three.js.
-    for (let g = 0; g < model.ngeom(); g++) {
+    for (let g = 0; g < model.ngeom; g++) {
       // Only visualize geom groups up to 2 (same default behavior as simulate).
-      if (!(model.geom_group()[g] < 3)) { continue; }
+      if (!(model.geom_group[g] < 3)) { continue; }
 
       // Get the body ID and type of the geom.
-      let b = model.geom_bodyid()[g];
-      let type = model.geom_type()[g];
+      let b = model.geom_bodyid[g];
+      let type = model.geom_type[g];
       let size = [
-        model.geom_size()[(g*3) + 0],
-        model.geom_size()[(g*3) + 1],
-        model.geom_size()[(g*3) + 2]
+        model.geom_size[(g*3) + 0],
+        model.geom_size[(g*3) + 1],
+        model.geom_size[(g*3) + 2]
       ];
 
       // Create the body if it doesn't exist.
       if (!(b in bodies)) {
         bodies[b] = new THREE.Group();
-        bodies[b].name = names[model.name_bodyadr()[b]];;
+        bodies[b].name = names[model.name_bodyadr[b]];
         bodies[b].bodyID = b;
         bodies[b].has_custom_mesh = false;
       }
@@ -329,14 +329,14 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
       } else if (type == mujoco.mjtGeom.mjGEOM_BOX.value) {
         geometry = new THREE.BoxGeometry(size[0] * 2.0, size[2] * 2.0, size[1] * 2.0);
       } else if (type == mujoco.mjtGeom.mjGEOM_MESH.value) {
-        let meshID = model.geom_dataid()[g];
+        let meshID = model.geom_dataid[g];
 
         if (!(meshID in meshes)) {
           geometry = new THREE.BufferGeometry(); // TODO: Populate the Buffer Geometry with Generic Mesh Data
 
           let vertex_buffer = model.mesh_vert().subarray(
-             model.mesh_vertadr()[meshID] * 3,
-            (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
+             model.mesh_vertadr[meshID] * 3,
+            (model.mesh_vertadr[meshID]  + model.mesh_vertnum[meshID]) * 3);
           for (let v = 0; v < vertex_buffer.length; v+=3){
             //vertex_buffer[v + 0] =  vertex_buffer[v + 0];
             let temp             =  vertex_buffer[v + 1];
@@ -345,8 +345,8 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
           }
 
           let normal_buffer = model.mesh_normal().subarray(
-             model.mesh_vertadr()[meshID] * 3,
-            (model.mesh_vertadr()[meshID]  + model.mesh_vertnum()[meshID]) * 3);
+             model.mesh_vertadr[meshID] * 3,
+            (model.mesh_vertadr[meshID]  + model.mesh_vertnum[meshID]) * 3);
           for (let v = 0; v < normal_buffer.length; v+=3){
             //normal_buffer[v + 0] =  normal_buffer[v + 0];
             let temp             =  normal_buffer[v + 1];
@@ -355,11 +355,11 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
           }
 
           let uv_buffer = model.mesh_texcoord().subarray(
-             model.mesh_texcoordadr()[meshID] * 2,
-            (model.mesh_texcoordadr()[meshID]  + model.mesh_vertnum()[meshID]) * 2);
-          let triangle_buffer = model.mesh_face().subarray(
+             model.mesh_texcoordadr[meshID] * 2,
+            (model.mesh_texcoordadr[meshID]  + model.mesh_vertnum[meshID]) * 2);
+          let triangle_buffer = model.mesh_face.subarray(
              model.mesh_faceadr()[meshID] * 3,
-            (model.mesh_faceadr()[meshID]  + model.mesh_facenum()[meshID]) * 3);
+            (model.mesh_faceadr()[meshID]  + model.mesh_facenum[meshID]) * 3);
           geometry.setAttribute("position", new THREE.BufferAttribute(vertex_buffer, 3));
           geometry.setAttribute("normal"  , new THREE.BufferAttribute(normal_buffer, 3));
           geometry.setAttribute("uv"      , new THREE.BufferAttribute(    uv_buffer, 2));
@@ -376,26 +376,26 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
       // Set the Material Properties of incoming bodies
       let texture = undefined;
       let color = [
-        model.geom_rgba()[(g * 4) + 0],
-        model.geom_rgba()[(g * 4) + 1],
-        model.geom_rgba()[(g * 4) + 2],
-        model.geom_rgba()[(g * 4) + 3]];
-      if (model.geom_matid()[g] != -1) {
-        let matId = model.geom_matid()[g];
+        model.geom_rgba[(g * 4) + 0],
+        model.geom_rgba[(g * 4) + 1],
+        model.geom_rgba[(g * 4) + 2],
+        model.geom_rgba[(g * 4) + 3]];
+      if (model.geom_matid[g] != -1) {
+        let matId = model.geom_matid[g];
         color = [
-          model.mat_rgba()[(matId * 4) + 0],
-          model.mat_rgba()[(matId * 4) + 1],
-          model.mat_rgba()[(matId * 4) + 2],
-          model.mat_rgba()[(matId * 4) + 3]];
+          model.mat_rgba[(matId * 4) + 0],
+          model.mat_rgba[(matId * 4) + 1],
+          model.mat_rgba[(matId * 4) + 2],
+          model.mat_rgba[(matId * 4) + 3]];
 
         // Construct Texture from model.tex_rgb
         texture = undefined;
-        let texId = model.mat_texid()[matId];
+        let texId = model.mat_texid[matId];
         if (texId != -1) {
-          let width    = model.tex_width ()[texId];
-          let height   = model.tex_height()[texId];
-          let offset   = model.tex_adr   ()[texId];
-          let rgbArray = model.tex_rgb   ();
+          let width    = model.tex_width [texId];
+          let height   = model.tex_height[texId];
+          let offset   = model.tex_adr   [texId];
+          let rgbArray = model.tex_rgb   ;
           let rgbaArray = new Uint8Array(width * height * 4);
           for (let p = 0; p < width * height; p++){
             rgbaArray[(p * 4) + 0] = rgbArray[offset + ((p * 3) + 0)];
@@ -427,10 +427,10 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
           color: new THREE.Color(color[0], color[1], color[2]),
           transparent: color[3] < 1.0,
           opacity: color[3],
-          specularIntensity: model.geom_matid()[g] != -1 ?       model.mat_specular   ()[model.geom_matid()[g]] *0.5 : undefined,
-          reflectivity     : model.geom_matid()[g] != -1 ?       model.mat_reflectance()[model.geom_matid()[g]] : undefined,
-          roughness        : model.geom_matid()[g] != -1 ? 1.0 - model.mat_shininess  ()[model.geom_matid()[g]] : undefined,
-          metalness        : model.geom_matid()[g] != -1 ? 0.1 : undefined,
+          specularIntensity: model.geom_matid[g] != -1 ?       model.mat_specular   [model.geom_matid[g]] *0.5 : undefined,
+          reflectivity     : model.geom_matid[g] != -1 ?       model.mat_reflectance[model.geom_matid[g]] : undefined,
+          roughness        : model.geom_matid[g] != -1 ? 1.0 - model.mat_shininess  [model.geom_matid[g]] : undefined,
+          metalness        : model.geom_matid[g] != -1 ? 0.1 : undefined,
           map              : texture
         });
       }
@@ -447,20 +447,20 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
       mesh.receiveShadow = type != 7;
       mesh.bodyID = b;
       bodies[b].add(mesh);
-      getPosition  (model.geom_pos (), g, mesh.position  );
-      if (type != 0) { getQuaternion(model.geom_quat(), g, mesh.quaternion); }
+      getPosition  (model.geom_pos, g, mesh.position  );
+      if (type != 0) { getQuaternion(model.geom_quat, g, mesh.quaternion); }
       if (type == 4) { mesh.scale.set(size[0], size[2], size[1]) } // Stretch the Ellipsoid
     }
 
     // Parse lights.
-    for (let l = 0; l < model.nlight(); l++) {
+    for (let l = 0; l < model.nlight; l++) {
       let light = new THREE.SpotLight();
-      if (model.light_directional()[l]) {
+      if (model.light_directional[l]) {
         light = new THREE.DirectionalLight();
       } else {
         light = new THREE.SpotLight();
       }
-      light.decay = model.light_attenuation()[l] * 100;
+      light.decay = model.light_attenuation[l] * 100;
       light.penumbra = 0.5;
       light.castShadow = true; // default false
 
@@ -477,7 +477,7 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
       lights.push(light);
     }
 
-    for (let b = 0; b < model.nbody(); b++) {
+    for (let b = 0; b < model.nbody; b++) {
       //let parent_body = model.body_parentid()[b];
       if (b == 0 || !bodies[0]) {
         mujocoRoot.add(bodies[b]);

@@ -104,7 +104,7 @@ export class MuJoCoDemo {
         if (this.params["ctrlnoisestd"] > 0.0) {
           let rate  = Math.exp(-timestep / Math.max(1e-10, this.params["ctrlnoiserate"]));
           let scale = this.params["ctrlnoisestd"] * Math.sqrt(1 - rate * rate);
-          let currentCtrl = this.simulation.ctrl();
+          let currentCtrl = this.simulation.ctrl;
           for (let i = 0; i < currentCtrl.length; i++) {
             currentCtrl[i] = rate * currentCtrl[i] + scale * standardNormal();
             this.params["Actuator " + i] = currentCtrl[i];
@@ -112,19 +112,19 @@ export class MuJoCoDemo {
         }
 
         // Clear old perturbations, apply new ones.
-        for (let i = 0; i < this.simulation.qfrc_applied().length; i++) { this.simulation.qfrc_applied()[i] = 0.0; }
+        for (let i = 0; i < this.simulation.qfrc_applied.length; i++) { this.simulation.qfrc_applied[i] = 0.0; }
         let dragged = this.dragStateManager.physicsObject;
         if (dragged && dragged.bodyID) {
-          for (let b = 0; b < this.model.nbody(); b++) {
+          for (let b = 0; b < this.model.nbody; b++) {
             if (this.bodies[b]) {
-              getPosition  (this.simulation.xpos (), b, this.bodies[b].position);
-              getQuaternion(this.simulation.xquat(), b, this.bodies[b].quaternion);
+              getPosition  (this.simulation.xpos , b, this.bodies[b].position);
+              getQuaternion(this.simulation.xquat, b, this.bodies[b].quaternion);
               this.bodies[b].updateWorldMatrix();
             }
           }
           let bodyID = dragged.bodyID;
           this.dragStateManager.update(); // Update the world-space force origin
-          let force = toMujocoPos(this.dragStateManager.currentWorld.clone().sub(this.dragStateManager.worldHit).multiplyScalar(this.model.body_mass()[bodyID] * 250));
+          let force = toMujocoPos(this.dragStateManager.currentWorld.clone().sub(this.dragStateManager.worldHit).multiplyScalar(this.model.body_mass[bodyID] * 250));
           let point = toMujocoPos(this.dragStateManager.worldHit.clone());
           this.simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, bodyID);
 
@@ -141,27 +141,59 @@ export class MuJoCoDemo {
       let dragged = this.dragStateManager.physicsObject;
       if (dragged && dragged.bodyID) {
         let b = dragged.bodyID;
-        getPosition  (this.simulation.xpos (), b, this.tmpVec , false); // Get raw coordinate from MuJoCo
-        getQuaternion(this.simulation.xquat(), b, this.tmpQuat, false); // Get raw coordinate from MuJoCo
+        getPosition  (this.simulation.xpos , b, this.tmpVec , false); // Get raw coordinate from MuJoCo
+        getQuaternion(this.simulation.xquat, b, this.tmpQuat, false); // Get raw coordinate from MuJoCo
 
         let offset = toMujocoPos(this.dragStateManager.currentWorld.clone()
           .sub(this.dragStateManager.worldHit).multiplyScalar(0.3));
-        if (this.model.body_mocapid()[b] >= 0) {
+        if (this.model.body_mocapid[b] >= 0) {
           // Set the root body's mocap position...
           console.log("Trying to move mocap body", b);
-          let addr = this.model.body_mocapid()[b] * 3;
-          let pos  = this.simulation.mocap_pos();
+          let addr = this.model.body_mocapid[b] * 3;
+          let pos  = this.simulation.mocap_pos;
           pos[addr+0] += offset.x;
           pos[addr+1] += offset.y;
           pos[addr+2] += offset.z;
         } else {
           // Set the root body's position directly...
-          let root = this.model.body_rootid()[b];
-          let addr = this.model.jnt_qposadr()[this.model.body_jntadr()[root]];
-          let pos  = this.simulation.qpos();
+          let root = this.model.body_rootid[b];
+          let addr = this.model.jnt_qposadr[this.model.body_jntadr[root]];
+          let pos  = this.simulation.qpos;
           pos[addr+0] += offset.x;
           pos[addr+1] += offset.y;
           pos[addr+2] += offset.z;
+
+          //// Save the original root body position
+          //let x  = pos[addr + 0], y  = pos[addr + 1], z  = pos[addr + 2];
+          //let xq = pos[addr + 3], yq = pos[addr + 4], zq = pos[addr + 5], wq = pos[addr + 6];
+
+          //// Clear old perturbations, apply new ones.
+          //for (let i = 0; i < this.simulation.qfrc_applied().length; i++) { this.simulation.qfrc_applied()[i] = 0.0; }
+          //for (let bi = 0; bi < this.model.nbody(); bi++) {
+          //  if (this.bodies[b]) {
+          //    getPosition  (this.simulation.xpos (), bi, this.bodies[bi].position);
+          //    getQuaternion(this.simulation.xquat(), bi, this.bodies[bi].quaternion);
+          //    this.bodies[bi].updateWorldMatrix();
+          //  }
+          //}
+          ////dragStateManager.update(); // Update the world-space force origin
+          //let force = toMujocoPos(this.dragStateManager.currentWorld.clone()
+          //  .sub(this.dragStateManager.worldHit).multiplyScalar(this.model.body_mass()[b] * 0.01));
+          //let point = toMujocoPos(this.dragStateManager.worldHit.clone());
+          //// This force is dumped into xrfc_applied
+          //this.simulation.applyForce(force.x, force.y, force.z, 0, 0, 0, point.x, point.y, point.z, b);
+          //this.simulation.integratePos(this.simulation.qpos(), this.simulation.qfrc_applied(), 1);
+
+          //// Add extra drag to the root body
+          //pos[addr + 0] = x  + (pos[addr + 0] - x ) * 0.1;
+          //pos[addr + 1] = y  + (pos[addr + 1] - y ) * 0.1;
+          //pos[addr + 2] = z  + (pos[addr + 2] - z ) * 0.1;
+          //pos[addr + 3] = xq + (pos[addr + 3] - xq) * 0.1;
+          //pos[addr + 4] = yq + (pos[addr + 4] - yq) * 0.1;
+          //pos[addr + 5] = zq + (pos[addr + 5] - zq) * 0.1;
+          //pos[addr + 6] = wq + (pos[addr + 6] - wq) * 0.1;
+
+
         }
       }
 
@@ -169,19 +201,19 @@ export class MuJoCoDemo {
     }
 
     // Update body transforms.
-    for (let b = 0; b < this.model.nbody(); b++) {
+    for (let b = 0; b < this.model.nbody; b++) {
       if (this.bodies[b]) {
-        getPosition  (this.simulation.xpos (), b, this.bodies[b].position);
-        getQuaternion(this.simulation.xquat(), b, this.bodies[b].quaternion);
+        getPosition  (this.simulation.xpos , b, this.bodies[b].position);
+        getQuaternion(this.simulation.xquat, b, this.bodies[b].quaternion);
         this.bodies[b].updateWorldMatrix();
       }
     }
 
     // Update light transforms.
-    for (let l = 0; l < this.model.nlight(); l++) {
+    for (let l = 0; l < this.model.nlight; l++) {
       if (this.lights[l]) {
-        getPosition(this.simulation.light_xpos(), l, this.lights[l].position);
-        getPosition(this.simulation.light_xdir(), l, this.tmpVec);
+        getPosition(this.simulation.light_xpos, l, this.lights[l].position);
+        getPosition(this.simulation.light_xdir, l, this.tmpVec);
         this.lights[l].lookAt(this.tmpVec.add(this.lights[l].position));
       }
     }
