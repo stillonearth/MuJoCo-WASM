@@ -34,6 +34,7 @@ public:
   mjModel *ptr       () { return m; }
   mjModel getVal     () { return *m; }
   mjOption getOptions() { return (*m).opt; }
+  void free          () { return mju_free(m); }
 
   // MJMODEL_DEFINITIONS
 
@@ -46,6 +47,7 @@ public:
   State(Model m)  { d = mj_makeData(m.ptr()); }
   mjData *ptr  () { return d; }
   mjData getVal() { return *d; }
+  void free    () { return mju_free(d); }
 
 private:
   mjData *d;
