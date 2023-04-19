@@ -334,7 +334,7 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
         if (!(meshID in meshes)) {
           geometry = new THREE.BufferGeometry(); // TODO: Populate the Buffer Geometry with Generic Mesh Data
 
-          let vertex_buffer = model.mesh_vert().subarray(
+          let vertex_buffer = model.mesh_vert.subarray(
              model.mesh_vertadr[meshID] * 3,
             (model.mesh_vertadr[meshID]  + model.mesh_vertnum[meshID]) * 3);
           for (let v = 0; v < vertex_buffer.length; v+=3){
@@ -344,7 +344,7 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
             vertex_buffer[v + 2] = -temp;
           }
 
-          let normal_buffer = model.mesh_normal().subarray(
+          let normal_buffer = model.mesh_normal.subarray(
              model.mesh_vertadr[meshID] * 3,
             (model.mesh_vertadr[meshID]  + model.mesh_vertnum[meshID]) * 3);
           for (let v = 0; v < normal_buffer.length; v+=3){
@@ -354,12 +354,12 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
             normal_buffer[v + 2] = -temp;
           }
 
-          let uv_buffer = model.mesh_texcoord().subarray(
+          let uv_buffer = model.mesh_texcoord.subarray(
              model.mesh_texcoordadr[meshID] * 2,
             (model.mesh_texcoordadr[meshID]  + model.mesh_vertnum[meshID]) * 2);
           let triangle_buffer = model.mesh_face.subarray(
-             model.mesh_faceadr()[meshID] * 3,
-            (model.mesh_faceadr()[meshID]  + model.mesh_facenum[meshID]) * 3);
+             model.mesh_faceadr[meshID] * 3,
+            (model.mesh_faceadr[meshID]  + model.mesh_facenum[meshID]) * 3);
           geometry.setAttribute("position", new THREE.BufferAttribute(vertex_buffer, 3));
           geometry.setAttribute("normal"  , new THREE.BufferAttribute(normal_buffer, 3));
           geometry.setAttribute("uv"      , new THREE.BufferAttribute(    uv_buffer, 2));
