@@ -218,6 +218,33 @@ export class MuJoCoDemo {
       }
     }
 
+    // Update tendon transforms.
+    let numWraps = 0;
+    if (this.mujocoRoot && this.mujocoRoot.cylinders) {
+      let mat = new THREE.Matrix4();
+      for (let t = 0; t < this.model.ntendon; t++) {
+        let startW = this.simulation.ten_wrapadr[t];
+        for (let w = startW; w < startW + this.simulation.ten_wrapnum[t]; w++) {
+          let tendonStart = getPosition(this.simulation.wrap_xpos, (w * 2)    , new THREE.Vector3());
+          let tendonEnd   = getPosition(this.simulation.wrap_xpos, (w * 2) + 1, new THREE.Vector3());
+          let tendonAvg = new THREE.Vector3().addVectors(tendonStart, tendonEnd).multiplyScalar(0.5);
+        
+          mat.compose(tendonAvg, new THREE.Quaternion().setFromUnitVectors(
+            new THREE.Vector3(0, 1, 0), tendonEnd.clone().sub(tendonStart).normalize()),
+            new THREE.Vector3(0.003, tendonStart.distanceTo(tendonEnd), 0.003));
+            this.mujocoRoot.cylinders.setMatrixAt(numWraps, mat);
+
+          this.mujocoRoot.spheres.setMatrixAt((numWraps*2)    , mat.compose(tendonStart, new THREE.Quaternion(), new THREE.Vector3(0.003, 0.003, 0.003)));
+          this.mujocoRoot.spheres.setMatrixAt((numWraps*2) + 1, mat.compose(tendonEnd  , new THREE.Quaternion(), new THREE.Vector3(0.003, 0.003, 0.003)));
+          numWraps++;
+        }
+      }
+      this.mujocoRoot.cylinders.count = numWraps/2;
+      this.mujocoRoot.spheres  .count = numWraps;
+      this.mujocoRoot.cylinders.instanceMatrix.needsUpdate = true;
+      this.mujocoRoot.spheres  .instanceMatrix.needsUpdate = true;
+    }
+
     // Render!
     this.renderer.render( this.scene, this.camera );
   }

@@ -29,7 +29,7 @@ export function setupGUI(parentContext) {
   parentContext.gui.add(parentContext.params, 'scene', {
     "Humanoid": "humanoid.xml", "Cassie": "agility_cassie/scene.xml",
     "Hammock": "hammock.xml", "Balloons": "balloons.xml", "Hand": "shadow_hand/scene_right.xml",
-    "Flag": "flag.xml", "Mug": "mug.xml"
+    "Flag": "flag.xml", "Mug": "mug.xml", "Tendon": "model_with_tendon.xml"
   }).name('Example Scene').onChange(reload);
 
   // Add a help menu.
@@ -452,6 +452,22 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
       if (type == 4) { mesh.scale.set(size[0], size[2], size[1]) } // Stretch the Ellipsoid
     }
 
+    // Parse tendons.
+    let tendonMat = new THREE.MeshPhongMaterial();
+    tendonMat.color = new THREE.Color(0.8, 0.3, 0.3);
+    mujocoRoot.cylinders = new THREE.InstancedMesh(
+        new THREE.CylinderGeometry(1, 1, 1),
+        tendonMat, 1023);
+    mujocoRoot.cylinders.receiveShadow = true;
+    mujocoRoot.cylinders.castShadow    = true;
+    mujocoRoot.add(mujocoRoot.cylinders);
+    mujocoRoot.spheres = new THREE.InstancedMesh(
+        new THREE.SphereGeometry(1, 10, 10),
+        tendonMat, 1023);
+    mujocoRoot.spheres.receiveShadow = true;
+    mujocoRoot.spheres.castShadow    = true;
+    mujocoRoot.add(mujocoRoot.spheres);
+
     // Parse lights.
     for (let l = 0; l < model.nlight; l++) {
       let light = new THREE.SpotLight();
@@ -476,6 +492,10 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
       }
       lights.push(light);
     }
+    if (model.nlight == 0) {
+      let light = new THREE.DirectionalLight();
+      mujocoRoot.add(light);
+    }
 
     for (let b = 0; b < model.nbody; b++) {
       //let parent_body = model.body_parentid()[b];
@@ -489,6 +509,8 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
         bodies[0].add(bodies[b]);
       }
     }
+  
+    parent.mujocoRoot = mujocoRoot;
 
     return [model, state, simulation, bodies, lights]
 }
@@ -544,7 +566,8 @@ export async function downloadExampleScenesFolder(mujoco) {
     "shadow_hand/scene_left.xml",
     "shadow_hand/scene_right.xml",
     "simple.xml",
-    "slider_crank.xml"
+    "slider_crank.xml",
+    "model_with_tendon.xml",
   ];
 
   let requests = allFiles.map((url) => fetch("./examples/scenes/" + url));
