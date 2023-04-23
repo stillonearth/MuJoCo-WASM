@@ -225,23 +225,27 @@ export class MuJoCoDemo {
       for (let t = 0; t < this.model.ntendon; t++) {
         let startW = this.simulation.ten_wrapadr[t];
         let r = this.model.tendon_width[t];
-        for (let w = startW; w < startW + this.simulation.ten_wrapnum[t]; w++) {
-          let tendonStart = getPosition(this.simulation.wrap_xpos, (w * 2)    , new THREE.Vector3());
-          let tendonEnd   = getPosition(this.simulation.wrap_xpos, (w * 2) + 1, new THREE.Vector3());
-          let tendonAvg = new THREE.Vector3().addVectors(tendonStart, tendonEnd).multiplyScalar(0.5);
-        
-          mat.compose(tendonAvg, new THREE.Quaternion().setFromUnitVectors(
-            new THREE.Vector3(0, 1, 0), tendonEnd.clone().sub(tendonStart).normalize()),
-            new THREE.Vector3(r, tendonStart.distanceTo(tendonEnd), r));
-            this.mujocoRoot.cylinders.setMatrixAt(numWraps, mat);
+        for (let w = startW; w < startW + this.simulation.ten_wrapnum[t] -1 ; w++) {
+          let tendonStart = getPosition(this.simulation.wrap_xpos, w    , new THREE.Vector3());
+          let tendonEnd   = getPosition(this.simulation.wrap_xpos, w + 1, new THREE.Vector3());
+          let tendonAvg   = new THREE.Vector3().addVectors(tendonStart, tendonEnd).multiplyScalar(0.5);
 
-          this.mujocoRoot.spheres.setMatrixAt((numWraps*2)    , mat.compose(tendonStart, new THREE.Quaternion(), new THREE.Vector3(r, r, r)));
-          this.mujocoRoot.spheres.setMatrixAt((numWraps*2) + 1, mat.compose(tendonEnd  , new THREE.Quaternion(), new THREE.Vector3(r, r, r)));
-          numWraps++;
+          let validStart = tendonStart.length() > 0.01;
+          let validEnd   = tendonEnd  .length() > 0.01;
+
+          if (validStart) { this.mujocoRoot.spheres.setMatrixAt(numWraps    , mat.compose(tendonStart, new THREE.Quaternion(), new THREE.Vector3(r, r, r))); }
+          if (validEnd  ) { this.mujocoRoot.spheres.setMatrixAt(numWraps + 1, mat.compose(tendonEnd  , new THREE.Quaternion(), new THREE.Vector3(r, r, r))); }
+          if (validStart && validEnd) {
+            mat.compose(tendonAvg, new THREE.Quaternion().setFromUnitVectors(
+              new THREE.Vector3(0, 1, 0), tendonEnd.clone().sub(tendonStart).normalize()),
+              new THREE.Vector3(r, tendonStart.distanceTo(tendonEnd), r));
+            this.mujocoRoot.cylinders.setMatrixAt(numWraps, mat);
+            numWraps++;
+          }
         }
       }
-      this.mujocoRoot.cylinders.count = numWraps/2;
-      this.mujocoRoot.spheres  .count = numWraps;
+      this.mujocoRoot.cylinders.count = numWraps;
+      this.mujocoRoot.spheres  .count = numWraps+1;
       this.mujocoRoot.cylinders.instanceMatrix.needsUpdate = true;
       this.mujocoRoot.spheres  .instanceMatrix.needsUpdate = true;
     }

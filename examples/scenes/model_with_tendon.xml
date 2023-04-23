@@ -32,6 +32,18 @@
 			<geom name="pg1" type="sphere" pos="0.0 0.0 0.3" size="0.024" rgba=".5 .5 .9 .4"/>
 			<joint name="IFmcp" pos="0 0 0.3" axis="0 1 0" range="-25 60"/>
 			<site name="ps3" pos="0.035 0.00 0.32"/>
+
+			<body name="middle">
+				<geom type="capsule" fromto="0.1 0 0.3 0.2 0 0.3" size=".015"/>
+				<geom name="mg2" type="cylinder" fromto="0.1 0.005 0.3 0.1 -0.005 0.3"
+					size="0.020" rgba=".5 .5 .9 .4"/>
+				<joint name="IFpip" pos="0.1 0 0.3"/>
+				<site name="ms4" pos="0.12 0 0.315"/>
+				<site name="ms5" pos="0.13 0 0.32"/>
+				<site name="ms5a" pos="0.2 0 0.315"/>
+				<site name="side2" pos="0.1 0 0.33"/>
+			</body>
+
 		</body>
 	</worldbody>
 
@@ -40,6 +52,18 @@
 			<site site="bs3"/>
 			<geom geom="pg1"/>
 			<site site="ps3"/>
+
+			<pulley divisor="2"/>
+			<site site="ps3"/>
+			<geom geom="mg2" sidesite="side2"/>
+			<site site="ms4"/>
+
+			<pulley divisor="2"/>
+			<site site="ps3"/>
+			<geom geom="mg2" sidesite="side2"/>
+			<site site="ms5"/>
+			<site site="ms5a"/>
+
 		</spatial>
 	</tendon>
 </mujoco>
