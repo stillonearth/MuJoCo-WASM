@@ -245,7 +245,7 @@ export class MuJoCoDemo {
         }
       }
       this.mujocoRoot.cylinders.count = numWraps;
-      this.mujocoRoot.spheres  .count = numWraps+1;
+      this.mujocoRoot.spheres  .count = numWraps > 0 ? numWraps + 1: 0;
       this.mujocoRoot.cylinders.instanceMatrix.needsUpdate = true;
       this.mujocoRoot.spheres  .instanceMatrix.needsUpdate = true;
     }
