@@ -210,6 +210,9 @@ export function setupGUI(parentContext) {
   simulationFolder.add(parentContext.params, 'ctrlnoiserate', 0.0, 2.0, 0.01).name('Noise rate' );
   simulationFolder.add(parentContext.params, 'ctrlnoisestd' , 0.0, 2.0, 0.01).name('Noise scale');
 
+  let textDecoder = new TextDecoder("utf-8");
+  let nullChar    = textDecoder.decode(new ArrayBuffer(1));
+
   // Add actuator sliders.
   let actuatorFolder = simulationFolder.addFolder("Actuators");
   const addActuators = (model, simulation, params) => {
@@ -217,7 +220,10 @@ export function setupGUI(parentContext) {
     let actuatorGUIs = [];
     for (let i = 0; i < model.nu; i++) {
       if (!model.actuator_ctrllimited[i]) { continue; }
-      let name = "Actuator " + i;
+      let name = textDecoder.decode(
+        parentContext.model.names.subarray(
+          parentContext.model.name_actuatoradr[i])).split(nullChar)[0];
+
       parentContext.params[name] = 0.0;
       let actuatorGUI = actuatorFolder.add(parentContext.params, name, act_range[2 * i], act_range[2 * i + 1], 0.01).name(name).listen();
       actuatorGUIs.push(actuatorGUI);

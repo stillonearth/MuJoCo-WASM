@@ -24,12 +24,19 @@ class Model {
 public:
   Model() { m = NULL; }
   Model(const std::string filename) {
-    char error[1000] = "Could not load xml model";
-    m = mj_loadXML(filename.c_str(), 0, error, 1000); 
-    if (!m) { finish(error, m); }
+    if(0 == filename.compare(filename.length() - 3, 3, "mjb")){
+      char error[1000] = "Could not load mjb model";
+      m = mj_loadModel(filename.c_str(), 0); 
+      if (!m) { finish(error, m); }
+    } else {
+      char error[1000] = "Could not load xml model";
+      m = mj_loadXML(filename.c_str(), 0, error, 1000); 
+      if (!m) { finish(error, m); }
+    }
   }
 
   static Model load_from_xml(const std::string filename) { return Model(filename); }
+  static Model load_from_mjb(const std::string filename) { return Model(filename); }
 
   mjModel *ptr       () { return m; }
   mjModel getVal     () { return *m; }
@@ -942,6 +949,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
   class_<Model>("Model")
       .constructor<>(&Model::load_from_xml)
       .class_function("load_from_xml", &Model::load_from_xml)
+      .class_function("load_from_mjb", &Model::load_from_mjb)
       .function("ptr", &Model::ptr, allow_raw_pointers())
       .function("getVal"          , &Model::getVal      )
       .function("getOptions"      , &Model::getOptions  )
