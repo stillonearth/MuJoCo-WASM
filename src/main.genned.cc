@@ -415,6 +415,7 @@ public:
 
   State *state() { return _state; }
   Model *model() { return _model; }
+  void    free() { mju_free(_state); mju_free(_model); }
 
   void applyForce(
     mjtNum fx, mjtNum fy, mjtNum fz, 
@@ -951,6 +952,7 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
       .class_function("load_from_xml", &Model::load_from_xml)
       .class_function("load_from_mjb", &Model::load_from_mjb)
       .function("ptr", &Model::ptr, allow_raw_pointers())
+      .function("free"            , &Model::free        )
       .function("getVal"          , &Model::getVal      )
       .function("getOptions"      , &Model::getOptions  )
       // MJMODEL_BINDINGS
@@ -1305,14 +1307,16 @@ EMSCRIPTEN_BINDINGS(mujoco_wasm) {
   class_<State>("State")
       .constructor<Model>()
       .function("ptr"   , &State::ptr, allow_raw_pointers())
+      .function("free"  , &State::free  )
       .function("getVal", &State::getVal);
 
   class_<Simulation>("Simulation")
       .constructor<Model *, State *>()
       .function("state"     , &Simulation::state, allow_raw_pointers())
       .function("model"     , &Simulation::model, allow_raw_pointers())
+      .function("free"      , &Simulation::free      )
       .function("applyForce", &Simulation::applyForce)
-      .function("applyPose" , &Simulation::applyPose)
+      .function("applyPose" , &Simulation::applyPose )
       // MJDATA_BINDINGS
       .property("qpos"                  , &Simulation::qpos                  )
       .property("qvel"                  , &Simulation::qvel                  )

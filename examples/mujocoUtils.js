@@ -282,7 +282,7 @@ export async function loadSceneFromURL(mujoco, filename, parent) {
     let model = parent.model;
     let state = parent.state;
     let simulation = parent.simulation;
-  
+
     // Decode the null-terminated string names.
     let textDecoder = new TextDecoder("utf-8");
     let fullString = textDecoder.decode(model.names);

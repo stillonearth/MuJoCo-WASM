@@ -714,6 +714,8 @@ export enum mjtLRMode {
 export interface Model {
   new (filename : string) : Model;
   load_from_xml(str: string): Model;
+  /** Free the memory associated with the model */
+  free(): void;
   /** Retrive various parameters of the current simulation */
   getOptions(): any;
   // MODEL_INTERFACE
@@ -1413,12 +1415,16 @@ export interface Model {
 
 export interface State {
   new (model : Model) : State;
+  /** Free the memory associated with the state */
+  free(): void;
 }
 
 export interface Simulation {
   new (model : Model, state : State) : Simulation;
   state() : State;
   model() : Model;
+  /** Free the memory associated with both the model and the state in the simulation */
+  free()  : void;
   /** Apply cartesian force and torque (outside xfrc_applied mechanism) */
   applyForce(fx: number, fy: number, fz: number, tx: number, ty: number, tz: number, px: number, py: number, pz: number, body_id: number): void;
   
