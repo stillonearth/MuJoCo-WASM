@@ -266,6 +266,14 @@ export function setupGUI(parentContext) {
  * @param {MuJoCoDemo} parent The three.js Scene Object to add the MuJoCo model elements to
  */
 export async function loadSceneFromURL(mujoco, filename, parent) {
+    // Free the old simulation.
+    if (parent.simulation != null) {
+      parent.simulation.free();
+      parent.model      = null;
+      parent.state      = null;
+      parent.simulation = null;
+    }
+
     // Load in the state from XML.
     parent.model       = mujoco.Model.load_from_xml("/working/"+filename);
     parent.state       = new mujoco.State(parent.model);
